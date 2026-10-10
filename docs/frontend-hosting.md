@@ -4,11 +4,40 @@ The compiled frontend uses the existing Mezo testnet payment contract. Publishin
 
 ## Current result
 
-The frontend is published at **https://mezo-runway-testnet.vercel.app**. The production build and 12 browser tests passed on October 10, 2026. Deployment `dpl_EqEcUoxwxi7tdj9ca4fixtppdZSh` is READY in team `supunthks-projects`, project `mezo-runway-testnet`, production environment. This was a local tested build; the workspace is not a Git checkout, so no commit SHA applies.
+The frontend is published at **https://mezo-runway-testnet.vercel.app**, in team `supunthks-projects`, project `mezo-runway-testnet`. The production build and 12 browser tests passed on October 10, 2026. Its first deployment, `dpl_EqEcUoxwxi7tdj9ca4fixtppdZSh`, used a local tested static build before the Git repository existed.
+
+The existing Vercel project is now connected to [SupunThk/runway](https://github.com/SupunThk/runway), with `main` as the production branch. New pushes to `main` build from GitHub and deploy to the same public URL. Other branches can receive Vercel preview deployments. The GitHub Actions checks also run on pushes and pull requests; they do not currently block Vercel promotion.
 
 The connector initially rejected project creation with HTTP 403. The mapped CLI fallback completed its sign-in flow and successfully created and published the new project. The existing unrelated project was not modified. Future CLI deployments require a valid local Vercel login; sign in directly rather than pasting tokens or wallet keys into chat.
 
-## Publish the tested static build
+## Normal workflow: deploy through GitHub
+
+Commit and push changes to `main`:
+
+```powershell
+git add <changed-files>
+git commit -m "Describe the change"
+git push origin main
+```
+
+Vercel's Git integration performs the deployment without exporting a Vercel token to GitHub Actions. Review the build result in the Vercel dashboard and repeat the public-site verification after deployment.
+
+The source-build settings are:
+
+| Setting | Value |
+| --- | --- |
+| Repository | `SupunThk/runway` |
+| Production branch | `main` |
+| Root directory | Repository root |
+| Node.js | `24.x` |
+| Framework | Other |
+| Install command | `corepack pnpm install --frozen-lockfile` |
+| Build command | `corepack pnpm build` |
+| Output directory | `apps/web/dist` |
+
+The project has the five public `VITE_` settings from `.env.example` for production, preview and development. `ENABLE_EXPERIMENTAL_COREPACK=1` selects the repository's pinned pnpm version. These values identify the testnet, RPC, explorer, MUSD token and payment contract; no wallet private key is needed. The ignored local `.env` is not uploaded from GitHub. See [Vercel's Corepack configuration](https://vercel.com/docs/builds/configure-a-build).
+
+## Fallback: publish a local static build
 
 From `C:\Projects\MEZO`, run:
 
@@ -31,6 +60,6 @@ Open the HTTPS URL Vercel prints, then directly open and refresh `/schedules/1` 
 
 Check wallet discovery with Brave or Rabby on the HTTPS site. The browser must allow the wallet to connect to this new site; the localhost connection permission does not automatically transfer. Public recipient links must work for another person without a Vercel login. Source verification, borrowing integration, and a security audit remain separate tasks.
 
-## Deploy from source instead
+## Source configuration
 
-The root `vercel.json` configures the pnpm build and output directory `apps/web/dist`. For a source build, configure the public `VITE_MUSD_ADDRESS` and `VITE_PAYMENT_CONTRACT_ADDRESS` in the hosting project, along with any RPC overrides. Use the verified values from `.env.example`. No private key is needed. The static-build method above already embeds the public configuration and avoids an additional remote build.
+The root `vercel.json` configures the pnpm build, output directory `apps/web/dist`, and `/schedules/:id` fallback. Vercel's project configuration matches it. If contract or network configuration changes, update the public Vercel environment settings and redeploy; changing only your local `.env` does not change a GitHub build. The fallback static-build method embeds the local public configuration and avoids a remote source build.
