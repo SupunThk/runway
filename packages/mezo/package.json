@@ -1,0 +1,12 @@
+{
+  "name": "@runway/mezo",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "viem": "2.57.4"
+  }
+}

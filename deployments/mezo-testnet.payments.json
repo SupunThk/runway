@@ -1,0 +1,22 @@
+{
+  "address": "0x01A1662F2EB6C15Bfb2c8fd010c53c9055478b7D",
+  "chainId": 31611,
+  "transactionHash": "0xdb151ec249a704f17390ba6b35ef5458924deff142a796995c60773c3a80f45f",
+  "deploymentBlock": "16083735",
+  "deployer": "0x1ac891Ce491851AC87851D62B9184c75A76f55cF",
+  "musd": "0x118917a40FAF1CD7a13dB0Ef56C86De7973Ac503",
+  "verifiedAt": "2026-10-10T13:00:51.247Z",
+  "verificationBlock": "16083752",
+  "verification": "Successful founder creation; exact local creation bytecode and constructor arguments; deployed code and immutable MUSD verified through RPC. Explorer source verification not yet performed.",
+  "compiler": {
+    "version": "0.8.28",
+    "evmVersion": "london",
+    "optimizerRuns": 200
+  },
+  "sourceSha256": "39a68162565adcdce8fc653d509e0d7db1474cb733cac2b6bc2c33dbd0252323",
+  "creationBytecodeHash": "0xb98ceef3281fcb2aa755f6786fffb7a9bb4226a3c0c35c433ac255a4bbc5529c",
+  "deployedBytecodeHash": "0xc7eb8df864b38e1d68e27564eaeeeff4f8d5058391ef873a7ef673bdaee4a0c2",
+  "artifact": "contracts/out/RunwayPayments.sol/RunwayPayments.json",
+  "scheduleCountAtVerification": "0",
+  "outstandingObligationsAtVerification": "0"
+}

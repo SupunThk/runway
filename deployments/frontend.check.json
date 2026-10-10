@@ -1,0 +1,12 @@
+{
+  "checkedAt": "2026-10-10T13:55:36.964Z",
+  "origin": "https://mezo-runway-testnet.vercel.app",
+  "authenticated": false,
+  "homepage": "passed",
+  "completedSchedule": "passed",
+  "cancelledSchedule": "passed",
+  "directLinkReload": "passed",
+  "mobile": "passed",
+  "pageErrors": [],
+  "cancelledScheduleText": "Schedule #2\nCANCELLED\n\nRecipient: 0x99d7…1b09\n\nTotal funded\n1 MUSD\nAlready claimed\n0.628333333333333333 MUSD\nClaimable now\n0 MUSD\nTotal earned by recipient\n0.628333333333333333 MUSD\nRefunded to sender\n0.371666666666666667 MUSD\n\nCancellation settled. All earned MUSD has been paid; the unearned portion was refunded to the sender.\n\n10/10/2026, 7:03:06 PM → 10/10/2026, 7:13:06 PM (your local timezone)\n\nClaim to recipient\nRecipient link ↗"
+}

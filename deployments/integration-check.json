@@ -1,0 +1,37 @@
+{
+  "checkedAt": "2026-10-10T13:06:27.723Z",
+  "rpc": "https://rpc.test.mezo.org",
+  "checks": {
+    "chainId": 31611,
+    "block": "16083821",
+    "musd": {
+      "address": "0x118917a40FAF1CD7a13dB0Ef56C86De7973Ac503",
+      "name": "Mezo USD",
+      "symbol": "MUSD",
+      "decimals": 18,
+      "bytecodeBytes": 6437
+    },
+    "founder": {
+      "address": "0x1ac891Ce491851AC87851D62B9184c75A76f55cF",
+      "btcBaseUnits": "13999999753485794",
+      "musdBaseUnits": "1800000000000000000000"
+    },
+    "contractor": {
+      "address": "0x99d7a7dcf20a0ac9fc3D03Cd90b0a1F4BC561b09",
+      "btcBaseUnits": "1000000000000000",
+      "musdBaseUnits": "0"
+    },
+    "borrowing": {
+      "status": "pending ABI and deployed-contract verification"
+    },
+    "payments": {
+      "address": "0x01A1662F2EB6C15Bfb2c8fd010c53c9055478b7D",
+      "musd": "0x118917a40FAF1CD7a13dB0Ef56C86De7973Ac503",
+      "status": "deployed bytecode and immutable MUSD verified"
+    },
+    "paymentTransactions": {
+      "status": "deployment verified; schedule creation, claim and cancellation receipts pending"
+    }
+  },
+  "complete": false
+}

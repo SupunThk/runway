@@ -1,0 +1,23 @@
+{
+  "chainId": 31611,
+  "rpc": "https://rpc.test.mezo.org",
+  "explorer": "https://explorer.test.mezo.org",
+  "networkSource": "https://mezo.org/docs/developers/getting-started/configure-environment/",
+  "contracts": {
+    "musd": {
+      "address": "0x118917a40FAF1CD7a13dB0Ef56C86De7973Ac503",
+      "source": "https://github.com/mezo-org/musd/blob/main/solidity/artifacts/deployments/matsnet/MUSD.json",
+      "abiSource": "viem standard ERC-20 ABI; only metadata, balance, allowance and approval methods",
+      "status": "bytecode and ERC-20 metadata verified; see integration-check.json",
+      "verificationDate": "2026-10-10"
+    },
+    "payments": {
+      "address": "0x01A1662F2EB6C15Bfb2c8fd010c53c9055478b7D",
+      "status": "RPC and local creation bytecode verified; see mezo-testnet.payments.json",
+      "record": "deployments/mezo-testnet.payments.json"
+    },
+    "borrowing": {
+      "status": "not verified"
+    }
+  }
+}

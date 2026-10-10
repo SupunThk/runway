@@ -1,0 +1,75 @@
+{
+  "checkedAt": "2026-10-10T13:48:22.115Z",
+  "chainId": 31611,
+  "block": "16084332",
+  "chainTime": "2026-10-10T13:48:15.000Z",
+  "contract": "0x01A1662F2EB6C15Bfb2c8fd010c53c9055478b7D",
+  "scheduleId": "2",
+  "schedule": {
+    "sender": "0x1ac891Ce491851AC87851D62B9184c75A76f55cF",
+    "recipient": "0x99d7a7dcf20a0ac9fc3D03Cd90b0a1F4BC561b09",
+    "total": "1000000000000000000",
+    "start": "1791639186",
+    "end": "1791639786",
+    "claimed": "628333333333333333",
+    "cancelled": true,
+    "vestedAtCancellation": "628333333333333333",
+    "referenceHash": "0x0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "startUTC": "2026-10-10T13:33:06.000Z",
+  "endUTC": "2026-10-10T13:43:06.000Z",
+  "totalMUSD": "1",
+  "claimedMUSD": "0.628333333333333333",
+  "claimableMUSD": "0",
+  "recipientBalanceMUSD": "1.628333333333333333",
+  "contractBalanceMUSD": "0",
+  "historyFromBlock": "16083735",
+  "historyComplete": true,
+  "events": [
+    {
+      "event": "ScheduleCreated",
+      "transactionHash": "0x572f350a72b1d000e3a2b4b565827875207055914d8ec1618cba89ec885acddf",
+      "blockNumber": "16084125",
+      "args": {
+        "scheduleId": "2",
+        "sender": "0x1ac891Ce491851AC87851D62B9184c75A76f55cF",
+        "recipient": "0x99d7a7dcf20a0ac9fc3D03Cd90b0a1F4BC561b09",
+        "total": "1000000000000000000",
+        "start": "1791639186",
+        "end": "1791639786",
+        "referenceHash": "0x0000000000000000000000000000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "event": "Claimed",
+      "transactionHash": "0x087c8c22de279e1b5ae2817632e48fee67b2a51c2f8ca819bd1fca546f758ef0",
+      "blockNumber": "16084212",
+      "args": {
+        "scheduleId": "2",
+        "recipient": "0x99d7a7dcf20a0ac9fc3D03Cd90b0a1F4BC561b09",
+        "amount": "533333333333333333"
+      }
+    },
+    {
+      "event": "Cancelled",
+      "transactionHash": "0xc925c772c8205fcfd90721cd52a731945ccdbd5d07086a52592c5195571eb90c",
+      "blockNumber": "16084224",
+      "args": {
+        "scheduleId": "2",
+        "sender": "0x1ac891Ce491851AC87851D62B9184c75A76f55cF",
+        "refund": "371666666666666667",
+        "vested": "628333333333333333"
+      }
+    },
+    {
+      "event": "Claimed",
+      "transactionHash": "0x450fb17cfe85d50da8c81cbc520641e50f908f4102fd3032bc6dd10b7edb5ce6",
+      "blockNumber": "16084264",
+      "args": {
+        "scheduleId": "2",
+        "recipient": "0x99d7a7dcf20a0ac9fc3D03Cd90b0a1F4BC561b09",
+        "amount": "95000000000000000"
+      }
+    }
+  ]
+}

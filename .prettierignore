@@ -1,0 +1,7 @@
+pnpm-lock.yaml
+node_modules
+.tools
+contracts/out
+contracts/cache
+apps/web/dist
+*.md

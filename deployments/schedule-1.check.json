@@ -1,0 +1,74 @@
+{
+  "checkedAt": "2026-10-10T13:48:19.702Z",
+  "chainId": 31611,
+  "block": "16084331",
+  "chainTime": "2026-10-10T13:48:11.000Z",
+  "contract": "0x01A1662F2EB6C15Bfb2c8fd010c53c9055478b7D",
+  "scheduleId": "1",
+  "schedule": {
+    "sender": "0x1ac891Ce491851AC87851D62B9184c75A76f55cF",
+    "recipient": "0x99d7a7dcf20a0ac9fc3D03Cd90b0a1F4BC561b09",
+    "total": "1000000000000000000",
+    "start": "1791637873",
+    "end": "1791638173",
+    "claimed": "1000000000000000000",
+    "cancelled": false,
+    "vestedAtCancellation": "0",
+    "referenceHash": "0x0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "startUTC": "2026-10-10T13:11:13.000Z",
+  "endUTC": "2026-10-10T13:16:13.000Z",
+  "totalMUSD": "1",
+  "claimedMUSD": "1",
+  "claimableMUSD": "0",
+  "recipientBalanceMUSD": "1.628333333333333333",
+  "contractBalanceMUSD": "0",
+  "historyFromBlock": "16083735",
+  "historyComplete": true,
+  "events": [
+    {
+      "event": "ScheduleCreated",
+      "transactionHash": "0xfac8ba60aa596866f153789a7dd33c564c9c8495fdddfe86200470362d658303",
+      "blockNumber": "16083857",
+      "args": {
+        "scheduleId": "1",
+        "sender": "0x1ac891Ce491851AC87851D62B9184c75A76f55cF",
+        "recipient": "0x99d7a7dcf20a0ac9fc3D03Cd90b0a1F4BC561b09",
+        "total": "1000000000000000000",
+        "start": "1791637873",
+        "end": "1791638173",
+        "referenceHash": "0x0000000000000000000000000000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "event": "Claimed",
+      "transactionHash": "0xd52fce720b4cf7192738354e6ccde5c9a8e8bf540cfa565ab0186e551460678f",
+      "blockNumber": "16083892",
+      "args": {
+        "scheduleId": "1",
+        "recipient": "0x99d7a7dcf20a0ac9fc3D03Cd90b0a1F4BC561b09",
+        "amount": "190000000000000000"
+      }
+    },
+    {
+      "event": "Claimed",
+      "transactionHash": "0xc6a6580303c5beb2834d4faa2d2933c25711da75fedaf5618ec4db14cc826421",
+      "blockNumber": "16083908",
+      "args": {
+        "scheduleId": "1",
+        "recipient": "0x99d7a7dcf20a0ac9fc3D03Cd90b0a1F4BC561b09",
+        "amount": "270000000000000000"
+      }
+    },
+    {
+      "event": "Claimed",
+      "transactionHash": "0x5d37071bbfdc35a96a53976a75b3b088d9aff0c57b6d749e66258aeabfcdcb72",
+      "blockNumber": "16084088",
+      "args": {
+        "scheduleId": "1",
+        "recipient": "0x99d7a7dcf20a0ac9fc3D03Cd90b0a1F4BC561b09",
+        "amount": "540000000000000000"
+      }
+    }
+  ]
+}

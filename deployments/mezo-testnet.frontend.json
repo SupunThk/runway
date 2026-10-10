@@ -1,0 +1,22 @@
+{
+  "url": "https://mezo-runway-testnet.vercel.app",
+  "deploymentUrl": "https://mezo-runway-testnet-hmi1g6kog-supunthks-projects.vercel.app",
+  "deploymentId": "dpl_EqEcUoxwxi7tdj9ca4fixtppdZSh",
+  "projectId": "prj_xVu0NEGFRc47pJFYnZI87erHvqoX",
+  "projectName": "mezo-runway-testnet",
+  "teamId": "team_0003YMxdv6pi0w9vMdCToeSG",
+  "teamSlug": "supunthks-projects",
+  "target": "production",
+  "readyState": "READY",
+  "source": "local tested Vite static build",
+  "commit": null,
+  "chainId": 31611,
+  "paymentContract": "0x01A1662F2EB6C15Bfb2c8fd010c53c9055478b7D",
+  "verificationReport": "deployments/frontend.check.json",
+  "artifacts": [
+    { "file": "index.html", "sha1": "bd3b5029b74a9fc2c1f7450b728ee242a3e5d9ec" },
+    { "file": "assets/ccip-v0rCJD1A.js", "sha1": "06e7d81c72206e511f6a745f20f995379f8347aa" },
+    { "file": "assets/index-CSem3qec.css", "sha1": "8f2ac0325e65ec5ba13fcb0548dbabc2628f5ec8" },
+    { "file": "assets/index-DknFkXL_.js", "sha1": "60279adda43787397cd39e6db1d94f09ad74bf7a" }
+  ]
+}

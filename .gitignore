@@ -1,0 +1,14 @@
+node_modules/
+.env
+.env.*
+!.env.example
+.tools/
+apps/web/dist/
+contracts/out/
+contracts/cache/
+contracts/broadcast/
+playwright-report/
+test-results/
+*.log
+.publish/
+.vercel/

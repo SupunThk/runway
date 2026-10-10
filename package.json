@@ -1,0 +1,38 @@
+{
+  "name": "mezo-runway",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "packageManager": "pnpm@10.34.6",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @runway/web dev",
+    "build": "pnpm --filter @runway/web build",
+    "prepare:hosting": "pnpm build && node scripts/prepare-frontend-deploy.mjs",
+    "typecheck": "pnpm --filter @runway/web typecheck",
+    "test": "vitest run",
+    "format": "prettier --write .",
+    "format:check": "prettier --check apps packages scripts tests playwright.config.ts vitest.config.ts",
+    "verify:integration": "node --env-file-if-exists=.env scripts/verify-integration.mjs",
+    "test:contracts": "node scripts/forge.mjs test --root contracts",
+    "build:contracts": "node scripts/forge.mjs build --root contracts",
+    "test:browser": "playwright test",
+    "deploy:browser": "pnpm build:contracts && node --env-file-if-exists=.env scripts/deploy-browser.mjs"
+  },
+  "devDependencies": {
+    "@foundry-rs/forge": "1.7.1",
+    "@openzeppelin/contracts": "5.0.2",
+    "@playwright/test": "1.64.0",
+    "@types/node": "24.19.2",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.2",
+    "prettier": "3.9.10",
+    "typescript": "7.0.2",
+    "viem": "2.57.4",
+    "vite": "8.3.4",
+    "vitest": "5.0.3"
+  }
+}

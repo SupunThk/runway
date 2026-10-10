@@ -1,0 +1,12 @@
+node_modules
+.env
+.env.*
+!.env.example
+.tools
+contracts
+deployments
+test-results
+playwright-report
+*.log
+.publish
+.vercel
