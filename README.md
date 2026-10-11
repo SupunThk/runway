@@ -2,7 +2,7 @@
 
 Fully funded MUSD contractor payments on Mezo testnet. A sender deposits the entire amount, entitlement accrues linearly, and claims transfer earned MUSD to an immutable recipient. Cancellation refunds unvested funds and preserves earned entitlement.
 
-**Status:** Live Mezo testnet payments with verified full-payment and cancellation journeys, transaction history, JSON receipts, CSV export, pending-transaction recovery, verified read-only borrowing and hypothetical BTC price-stress scenarios. Complete schedule pagination is implemented and tested locally. Implementation began October 10, before the brief's October 16 build start; organizer approval remains unconfirmed.
+**Status:** Live Mezo testnet payments with verified full-payment and cancellation journeys, transaction history, JSON receipts, CSV export, pending-transaction recovery, verified read-only borrowing, hypothetical BTC price-stress scenarios and complete schedule pagination. The payment contract's source is exact-match verified on the explorer. Implementation began October 10, before the brief's October 16 build start; organizer approval remains unconfirmed.
 
 ## Run locally
 
@@ -49,8 +49,8 @@ The borrowing view reads an existing testnet loan for a connected wallet or an e
 
 The deployed borrowing view includes a hypothetical BTC price-drop slider, preset scenarios and the estimated price at the protocol collateral threshold. Scenarios hold snapshot debt and collateral fixed and are hidden when price checks fail or data is stale.
 
-The local dashboard loads sent and received schedules in pages of 20 IDs per direction, with no total discovery cap. All loaded pages share a source block; refresh obtains a new snapshot. Duplicate IDs appear once. Funded obligations count only the connected account's sent schedules and are labelled as a partial subtotal until discovery finishes. Failed pages preserve earlier results and can be retried. See [schedule pagination](docs/schedule-pagination.md).
+The deployed dashboard loads sent and received schedules in pages of 20 IDs per direction, with no total discovery cap. All loaded pages share a source block; refresh obtains a new snapshot. Duplicate IDs appear once. Funded obligations count only the connected account's sent schedules and are labelled as a partial subtotal until discovery finishes. Failed pages preserve earlier results and can be retried. See [schedule pagination](docs/schedule-pagination.md).
 
-Remaining release work includes publishing pagination and adversarial/stateful invariant coverage. The current source is a testnet prototype and has not received independent security review.
+The existing payment contract is [source verified on the explorer](https://explorer.test.mezo.org/address/0x01A1662F2EB6C15Bfb2c8fd010c53c9055478b7D?tab=contract). Reproduction and evidence: [explorer verification](docs/explorer-verification.md). The local Solidity suite passes 24 tests, including adversarial token/reentrancy cases and two independent-model stateful invariant campaigns; see [security tests](docs/security-testing.md). Remaining work includes demo/submission materials and release review. The current source is a testnet prototype and has not received independent security review.
 
 OpenZeppelin utilities are MIT-licensed; preserve their notices. No MUSD protocol implementation code has been copied. Other dependency licenses are supplied in their packages.

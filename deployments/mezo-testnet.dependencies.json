@@ -13,11 +13,12 @@
     },
     "payments": {
       "address": "0x01A1662F2EB6C15Bfb2c8fd010c53c9055478b7D",
-      "status": "RPC and local creation bytecode verified; see mezo-testnet.payments.json",
+      "status": "RPC, local creation bytecode and explorer source exact-match verified; see mezo-testnet.payments.json and mezo-testnet.explorer.check.json",
       "record": "deployments/mezo-testnet.payments.json"
     },
     "borrowing": {
-      "status": "not verified"
+      "status": "read-only integration verified and deployed; pinned proxy implementations and source links in docs/borrowing.md",
+      "record": "deployments/mezo-testnet.borrowing.check.json"
     }
   }
 }

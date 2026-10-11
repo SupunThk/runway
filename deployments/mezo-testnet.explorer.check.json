@@ -1,0 +1,33 @@
+{
+  "checkedAt": "2026-10-11T04:47:42.937Z",
+  "address": "0x01A1662F2EB6C15Bfb2c8fd010c53c9055478b7D",
+  "chainId": 31611,
+  "explorerUrl": "https://explorer.test.mezo.org/address/0x01A1662F2EB6C15Bfb2c8fd010c53c9055478b7D?tab=contract",
+  "apiUrl": "https://api.explorer.test.mezo.org/api/v2/smart-contracts/0x01A1662F2EB6C15Bfb2c8fd010c53c9055478b7D",
+  "verified": true,
+  "fullyVerified": true,
+  "partiallyVerified": false,
+  "explorerLicenseType": "none",
+  "compiler": "0.8.28+commit.7893614a",
+  "evmVersion": "london",
+  "optimizerRuns": 200,
+  "sourceInput": "deployments/verification/RunwayPayments.standard-input.json",
+  "sourceInputSha256": "f08c4cf79d5dc938920679c2382e25c272bf659bacaa61bed09f6f89d92e73d2",
+  "sourcePaths": [
+    "src/RunwayPayments.sol",
+    "../node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol",
+    "../node_modules/@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol",
+    "../node_modules/@openzeppelin/contracts/utils/ReentrancyGuard.sol",
+    "../node_modules/@openzeppelin/contracts/utils/math/Math.sol",
+    "../node_modules/@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol",
+    "../node_modules/@openzeppelin/contracts/utils/Address.sol"
+  ],
+  "sourceSha256": "39a68162565adcdce8fc653d509e0d7db1474cb733cac2b6bc2c33dbd0252323",
+  "creationBytecodeHash": "0xb98ceef3281fcb2aa755f6786fffb7a9bb4226a3c0c35c433ac255a4bbc5529c",
+  "deployedBytecodeHash": "0xc7eb8df864b38e1d68e27564eaeeeff4f8d5058391ef873a7ef673bdaee4a0c2",
+  "constructorArguments": "0x000000000000000000000000118917a40faf1cd7a13db0ef56c86de7973ac503",
+  "creationTransaction": "0xdb151ec249a704f17390ba6b35ef5458924deff142a796995c60773c3a80f45f",
+  "explorerVerifiedAt": "2026-10-11T04:46:08.009609Z",
+  "creationEvidence": "Blockscout indexed creation transaction, input and successful result; live RPC deployed bytecode",
+  "newTransactions": 0
+}

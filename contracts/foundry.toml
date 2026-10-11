@@ -11,3 +11,8 @@ allow_paths = ["../node_modules"]
 
 [profile.default.fuzz]
 runs = 256
+
+[profile.default.invariant]
+runs = 128
+depth = 128
+fail_on_revert = true

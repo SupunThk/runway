@@ -1,8 +1,14 @@
 # Integration evidence
 
+## Latest release and explorer verification — October 11, 2026
+
+Schedule pagination was deployed from `5bfc3d9` as production deployment `dpl_H7pmgZy2eM5L922hodW5FoKyL5UQ`. Public HTTPS browser checks reconciled schedules 1/2 for founder and contractor at block 16095225, with complete coverage, no page errors, no mobile overflow and no new transactions. Borrowing and price-stress scenarios are also deployed.
+
+The existing payment contract is now [source verified with an exact match](https://explorer.test.mezo.org/address/0x01A1662F2EB6C15Bfb2c8fd010c53c9055478b7D?tab=contract). Blockscout confirmed full verification at `2026-10-11T04:46:08.009609Z`. All seven source files match the original artifact metadata and already-public GitHub sources. Compiler settings, constructor, indexed creation transaction and current RPC deployed bytecode were checked. The public explorer page was verified in a browser. Evidence and reproduction: [explorer verification](explorer-verification.md), [API report](../deployments/mezo-testnet.explorer.check.json). No new blockchain transactions were submitted. Earlier pending statements below describe historical stages.
+
 ## Latest borrowing verification — October 11, 2026
 
-The read-only borrowing reader now verifies the official testnet manager and price-feed proxy implementation slots, token/oracle bindings, deployed ABI signatures, accrued-interest and redistribution accounting, and protocol oracle freshness. Reads at a shared block reconcile the displayed collateral ratio with `getCurrentICR`. The founder has an active position; the contractor has none. Historical snapshots are in [borrowing check](../deployments/mezo-testnet.borrowing.check.json), and pinned primary source links and limitations are in [borrowing integration](borrowing.md). These checks required no new wallet transactions. The borrowing view is implemented locally, not yet deployed. Earlier pending statements below describe historical stages.
+The read-only borrowing reader verifies the official testnet manager and price-feed proxy implementation slots, token/oracle bindings, deployed ABI signatures, accrued-interest and redistribution accounting, and protocol oracle freshness. Reads at a shared block reconcile the displayed collateral ratio with `getCurrentICR`. The founder has an active position; the contractor has none. Historical snapshots are in [borrowing check](../deployments/mezo-testnet.borrowing.check.json), and pinned primary source links and limitations are in [borrowing integration](borrowing.md). These checks required no new wallet transactions. The borrowing view and hypothetical price-stress simulator are deployed. Earlier pending statements below describe historical stages.
 
 ## Initial verification — October 10, 2026
 

@@ -1,0 +1,353 @@
+{
+  "checkedAt": "2026-10-11T04:57:05.076Z",
+  "command": "node scripts/forge.mjs test --root contracts --json",
+  "passed": 24,
+  "failed": 0,
+  "invariantConfig": {
+    "runs": 128,
+    "depth": 128,
+    "failOnRevert": true,
+    "maxSchedules": 32,
+    "actors": 3
+  },
+  "productionSourceUnchanged": true,
+  "sourceSha256": "39a68162565adcdce8fc653d509e0d7db1474cb733cac2b6bc2c33dbd0252323",
+  "creationBytecodeHash": "0xb98ceef3281fcb2aa755f6786fffb7a9bb4226a3c0c35c433ac255a4bbc5529c",
+  "newTransactions": 0,
+  "suites": [
+    {
+      "name": "test/RunwayInvariant.t.sol:RunwayInvariantTest",
+      "tests": [
+        {
+          "name": "invariant_actorBalancesAndDiscovery()",
+          "status": "Success",
+          "kind": {
+            "Invariant": {
+              "runs": 128,
+              "calls": 16384,
+              "reverts": 0,
+              "metrics": {
+                "test/RunwayInvariant.t.sol:RunwayHandler.advance": {
+                  "calls": 2673,
+                  "reverts": 0,
+                  "discards": 0
+                },
+                "test/RunwayInvariant.t.sol:RunwayHandler.create": {
+                  "calls": 2720,
+                  "reverts": 0,
+                  "discards": 0
+                },
+                "test/RunwayInvariant.t.sol:RunwayHandler.unauthorizedCancel": {
+                  "calls": 2805,
+                  "reverts": 0,
+                  "discards": 0
+                },
+                "test/RunwayInvariant.t.sol:RunwayHandler.cancel": {
+                  "calls": 2746,
+                  "reverts": 0,
+                  "discards": 0
+                },
+                "test/RunwayInvariant.t.sol:RunwayHandler.claim": {
+                  "calls": 2727,
+                  "reverts": 0,
+                  "discards": 0
+                },
+                "test/RunwayInvariant.t.sol:RunwayHandler.donate": {
+                  "calls": 2713,
+                  "reverts": 0,
+                  "discards": 0
+                }
+              },
+              "failed_corpus_replays": 0,
+              "optimization_best_value": null
+            }
+          },
+          "reason": null
+        },
+        {
+          "name": "invariant_modelAccountingAndSolvency()",
+          "status": "Success",
+          "kind": {
+            "Invariant": {
+              "runs": 128,
+              "calls": 16384,
+              "reverts": 0,
+              "metrics": {
+                "test/RunwayInvariant.t.sol:RunwayHandler.donate": {
+                  "calls": 2713,
+                  "reverts": 0,
+                  "discards": 0
+                },
+                "test/RunwayInvariant.t.sol:RunwayHandler.unauthorizedCancel": {
+                  "calls": 2805,
+                  "reverts": 0,
+                  "discards": 0
+                },
+                "test/RunwayInvariant.t.sol:RunwayHandler.cancel": {
+                  "calls": 2746,
+                  "reverts": 0,
+                  "discards": 0
+                },
+                "test/RunwayInvariant.t.sol:RunwayHandler.claim": {
+                  "calls": 2727,
+                  "reverts": 0,
+                  "discards": 0
+                },
+                "test/RunwayInvariant.t.sol:RunwayHandler.advance": {
+                  "calls": 2673,
+                  "reverts": 0,
+                  "discards": 0
+                },
+                "test/RunwayInvariant.t.sol:RunwayHandler.create": {
+                  "calls": 2720,
+                  "reverts": 0,
+                  "discards": 0
+                }
+              },
+              "failed_corpus_replays": 0,
+              "optimization_best_value": null
+            }
+          },
+          "reason": null
+        },
+        {
+          "name": "testHandlerExercisesValidClaimsAndCancellation()",
+          "status": "Success",
+          "kind": {
+            "Unit": {
+              "gas": 936023
+            }
+          },
+          "reason": null
+        }
+      ]
+    },
+    {
+      "name": "test/RunwayPayments.t.sol:RunwayPaymentsTest",
+      "tests": [
+        {
+          "name": "testAtomicFundingAndDiscovery()",
+          "status": "Success",
+          "kind": {
+            "Unit": {
+              "gas": 294701
+            }
+          },
+          "reason": null
+        },
+        {
+          "name": "testAuthorizationAndEndCancellation()",
+          "status": "Success",
+          "kind": {
+            "Unit": {
+              "gas": 303376
+            }
+          },
+          "reason": null
+        },
+        {
+          "name": "testCancellationBeforeStartRefundsAll()",
+          "status": "Success",
+          "kind": {
+            "Unit": {
+              "gas": 276781
+            }
+          },
+          "reason": null
+        },
+        {
+          "name": "testCancellationPreservesVestedEntitlement()",
+          "status": "Success",
+          "kind": {
+            "Unit": {
+              "gas": 371019
+            }
+          },
+          "reason": null
+        },
+        {
+          "name": "testFuzzAccountingAcrossSchedules(uint96,uint8,bool)",
+          "status": "Success",
+          "kind": {
+            "Fuzz": {
+              "first_case": {
+                "gas": 583304,
+                "stipend": 21484
+              },
+              "runs": 256,
+              "mean_gas": 546316,
+              "median_gas": 561820,
+              "failed_corpus_replays": 0
+            }
+          },
+          "reason": null
+        },
+        {
+          "name": "testInsufficientAllowanceIsAtomic()",
+          "status": "Success",
+          "kind": {
+            "Unit": {
+              "gas": 36126
+            }
+          },
+          "reason": null
+        },
+        {
+          "name": "testInsufficientBalanceIsAtomic()",
+          "status": "Success",
+          "kind": {
+            "Unit": {
+              "gas": 31878
+            }
+          },
+          "reason": null
+        },
+        {
+          "name": "testInvalidInputs()",
+          "status": "Success",
+          "kind": {
+            "Unit": {
+              "gas": 40806
+            }
+          },
+          "reason": null
+        },
+        {
+          "name": "testPartialClaimsAndFinalRounding()",
+          "status": "Success",
+          "kind": {
+            "Unit": {
+              "gas": 332890
+            }
+          },
+          "reason": null
+        }
+      ]
+    },
+    {
+      "name": "test/RunwaySecurity.t.sol:RunwaySecurityTest",
+      "tests": [
+        {
+          "name": "testAllWriteEntryPointsRejectTokenReentrancy()",
+          "status": "Success",
+          "kind": {
+            "Unit": {
+              "gas": 2844953
+            }
+          },
+          "reason": null
+        },
+        {
+          "name": "testCancelAndClaimOrderingHaveIdenticalFinalAllocation()",
+          "status": "Success",
+          "kind": {
+            "Unit": {
+              "gas": 606052
+            }
+          },
+          "reason": null
+        },
+        {
+          "name": "testDiscoveryAcrossContractPageBoundary()",
+          "status": "Success",
+          "kind": {
+            "Unit": {
+              "gas": 16611571
+            }
+          },
+          "reason": null
+        },
+        {
+          "name": "testDonationsCannotBeClaimedOrRefundedAsEntitlements()",
+          "status": "Success",
+          "kind": {
+            "Unit": {
+              "gas": 384487
+            }
+          },
+          "reason": null
+        },
+        {
+          "name": "testFalseFundingReturnRevertsWithoutCreatingSchedule()",
+          "status": "Success",
+          "kind": {
+            "Unit": {
+              "gas": 65214
+            }
+          },
+          "reason": null
+        },
+        {
+          "name": "testFeeOnFundingRevertsAllStateAndBalances()",
+          "status": "Success",
+          "kind": {
+            "Unit": {
+              "gas": 349576
+            }
+          },
+          "reason": null
+        },
+        {
+          "name": "testFullPrecisionVestingWhenIntermediateProductOverflows()",
+          "status": "Success",
+          "kind": {
+            "Unit": {
+              "gas": 1845907
+            }
+          },
+          "reason": null
+        },
+        {
+          "name": "testInvalidConstructorAndContractRecipient()",
+          "status": "Success",
+          "kind": {
+            "Unit": {
+              "gas": 128185
+            }
+          },
+          "reason": null
+        },
+        {
+          "name": "testNoReturnTokenCompletesCancellationAndClaim()",
+          "status": "Success",
+          "kind": {
+            "Unit": {
+              "gas": 1555139
+            }
+          },
+          "reason": null
+        },
+        {
+          "name": "testOutgoingTransferFailuresAreAtomicAndRetryable()",
+          "status": "Success",
+          "kind": {
+            "Unit": {
+              "gas": 802126
+            }
+          },
+          "reason": null
+        },
+        {
+          "name": "testPermissionlessClaimPaysOnlyImmutableRecipient()",
+          "status": "Success",
+          "kind": {
+            "Unit": {
+              "gas": 367007
+            }
+          },
+          "reason": null
+        },
+        {
+          "name": "testUnknownIdsAndPaginationLimitsDoNotChangeState()",
+          "status": "Success",
+          "kind": {
+            "Unit": {
+              "gas": 39761
+            }
+          },
+          "reason": null
+        }
+      ]
+    }
+  ]
+}

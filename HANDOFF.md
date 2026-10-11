@@ -209,7 +209,7 @@ Validation: 21 unit/accounting tests, all 10 borrowing browser cases, TypeScript
 
 The simulator was deployed at the user's request from commit `074ce53`, production deployment `dpl_Chmxg3oKCkU4Mr58qPDowAUEEMNq`, READY at the existing public URL. Public browser verification at block 16094913 confirmed the founder scenarios, a 50% drop below the threshold, and the contractor's no-position state with the simulator absent. No page errors, mobile overflow or new transactions.
 
-### Complete schedule pagination (implemented locally October 11)
+### Complete schedule pagination (deployed October 11)
 
 After the simulator deployment, the user requested schedule pagination. `apps/web/src/schedules.ts` and the infinite query in `App.tsx` now load 20 IDs per direction per page with no total discovery cap. All pages share one source block. Sent and received offsets advance independently, exhausted directions stop, and merged rows are deduplicated and sorted by ID. Failed ID/detail pages preserve loaded rows and expose a retry button without skipping offsets. Refresh obtains a new head and refreshes loaded pages together; failed refreshes label retained snapshots. Direct schedule links remain available without a wallet.
 
@@ -217,9 +217,25 @@ Funded obligations now count only the connected account's sent schedules, using 
 
 Validation: all 42 browser tests, 21 unit/accounting tests, TypeScript and production build passed. Six new pagination cases include 121 sent + 22 received IDs (141 unique), cross-page overlaps, retries for ID/detail failures, exact page boundaries, empty accounts, refreshed snapshots, failed refreshes and account changes. Live local browser reads reconciled schedules 1/2 for the founder at block 16094995 and contractor at block 16094996. No page errors, mobile overflow, signing or transactions. Mobile screenshots visually inspected. Evidence: ignored `.tools/schedules-browser.check.json`, `.tools/schedules-mobile.png`, `.tools/schedules-live-mobile.png`. Existing bundle warning remains.
 
-Next: publish pagination when requested, then explorer source verification, stronger security tests and demo/submission materials. Borrowing and repayment should remain in Mezo until intentionally integrated. Do not estimate debt from wallet MUSD.
+Pagination was deployed at the user's request from `5bfc3d9`, production deployment `dpl_H7pmgZy2eM5L922hodW5FoKyL5UQ`, READY at the existing public URL. Public browser checks reconciled schedules 1/2 for both accounts at block 16095225 with no page errors, mobile overflow or new transactions.
 
-Other unfinished work: publish pagination when requested, explorer source verification, stronger security tests, demo/submission materials and any later release review.
+### Explorer source verification (completed October 11)
+
+The user requested beginning the next step after deploying pagination. RunwayPayments is now exact-match verified on the public Mezo testnet explorer. Blockscout confirmed full verification at `2026-10-11T04:46:08.009609Z`; API fields are verified=true, fullyVerified=true, partiallyVerified=false. Public browser page confirmed the exact-match banner, source, ABI, Solidity 0.8.28, London, 200 optimizer runs and official MUSD constructor. No new blockchain transactions.
+
+Reproduction: `node scripts/verify-explorer.mjs` checks without submission; `--submit` publishes matching public source. The script generates standard JSON and verifies every source hash against the original metadata, original source/creation hashes, indexed successful creation transaction and live RPC code. The RPC returned no old creation receipt during this session, so indexed creation evidence was used. Initial automatic approval review rejected publication as nonpublic source; unauthenticated GitHub checks proved all seven exact files already public, after which the same submission was approved. No action remains blocked.
+
+Evidence: `deployments/mezo-testnet.explorer.check.json`, `deployments/verification/RunwayPayments.standard-input.json`, `deployments/verification/public-source-check.json`; source license notices and official `OpenZeppelin.LICENSE` preserved. Blockscout's separate license metadata is `none`, while source SPDX declarations are MIT. Details: `docs/explorer-verification.md`. Ignored public browser screenshot: `.tools/explorer-verified.png`.
+
+### Adversarial/stateful contract security tests (completed locally October 11)
+
+The user requested the next security step. Added `contracts/test/RunwaySecurity.t.sol` (12 adversarial cases) and `contracts/test/RunwayInvariant.t.sol` (two independent-model invariant campaigns plus a deterministic handler exercise). `contracts/foundry.toml` now sets invariant runs=128, depth=128 and fail_on_revert=true. All 24 Solidity tests pass, including the original 256-case accounting fuzz test. Each invariant made 16,384 handler calls with zero unexpected reverts/discards.
+
+Adversarial cases test all nine cross-entry reentrancy combinations, fee/short funding, false/reverting transfers with full rollback/retry, caller-independent recipient-only claims, claim/cancel ordering, donations, no-return ERC-20 behavior, overflowing intermediate vesting arithmetic, invalid inputs/IDs and pagination over 100 IDs. The stateful handler models up to 32 schedules across three actors, tracking deposits, claims, refunds and donations independently of contract state. Invariants check escrow/obligation/global actor conservation, immutable fields, freeze/rounding behavior and discovery. `afterInvariant` advances through all ends and pays every remaining entitlement, proving zero obligations and only donated surplus remains. CI already runs these tests.
+
+Evidence: `deployments/security-tests.check.json`; details and limits: `docs/security-testing.md`. Final-run source SHA-256 and creation-bytecode hash match the original deployment. No production source/frontend changes or blockchain transactions. The user requested committing and pushing the tests, verification evidence and documentation to main; inspect git status/log for publication status. CI runs the full test suite, and the GitHub integration rebuilds the frontend on a main push. Ignored runner/raw output: `.tools/run-security-check.mjs`, `.tools/security-tests.raw.json`.
+
+Next: demo/submission materials and release review. Borrowing and repayment should remain in Mezo until intentionally integrated. Do not estimate debt from wallet MUSD. These local tests and exact source verification are not an independent audit.
 
 ## 9. Files to read or edit next
 
@@ -280,8 +296,8 @@ In the previous agent environment, default shell sandbox setup repeatedly failed
 - `.env`, `.tools`, `.publish`, `.vercel`, dependencies, generated builds, Foundry outputs and browser traces are ignored.
 - Keep deployment evidence distinct from explorer source verification and an audit.
 - Implementation started October 10, before the brief's October 16 build start. Organizer approval for early implementation remains unconfirmed; recorded in `docs/buildathon.md`.
-- Do not mark all of Wave 1 complete: history/receipts, CSV/recovery, borrowing reads and price-stress scenarios are deployed; schedule pagination is implemented locally; the other listed work remains.
+- Do not mark all of Wave 1 complete: history/receipts, CSV/recovery, borrowing reads, price-stress scenarios and pagination are deployed; explorer verification and local adversarial/stateful tests are complete; submission materials, release review and external confirmations remain.
 
 ## Suggested prompt for the next session
 
-> Read HANDOFF.md and inspect the current repository. Continue Runway from the local schedule pagination implementation. Verify or publish it if requested, then work on explorer source verification or stronger security coverage. Keep borrowing/repayment in Mezo and verify any public deployment.
+> Read HANDOFF.md and inspect the current repository. Pagination is deployed, explorer verification is complete, and local contract security tests pass all 24 cases. Continue with demo/submission materials and release review. Preserve the verified production contract, keep borrowing/repayment in Mezo and verify any public deployment.

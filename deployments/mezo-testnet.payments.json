@@ -7,7 +7,13 @@
   "musd": "0x118917a40FAF1CD7a13dB0Ef56C86De7973Ac503",
   "verifiedAt": "2026-10-10T13:00:51.247Z",
   "verificationBlock": "16083752",
-  "verification": "Successful founder creation; exact local creation bytecode and constructor arguments; deployed code and immutable MUSD verified through RPC. Explorer source verification not yet performed.",
+  "verification": "Successful founder creation; exact local creation bytecode and constructor arguments; deployed code and immutable MUSD verified through RPC. Explorer source exact-match verified October 11, 2026; see mezo-testnet.explorer.check.json.",
+  "explorerVerification": {
+    "status": "exact-match verified",
+    "verifiedAt": "2026-10-11T04:46:08.009609Z",
+    "record": "deployments/mezo-testnet.explorer.check.json",
+    "url": "https://explorer.test.mezo.org/address/0x01A1662F2EB6C15Bfb2c8fd010c53c9055478b7D?tab=contract"
+  },
   "compiler": {
     "version": "0.8.28",
     "evmVersion": "london",

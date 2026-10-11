@@ -1,6 +1,6 @@
 # Schedule discovery and pagination
 
-Implemented locally October 11, 2026; not yet deployed. The public release currently contains the BTC price stress simulator (`074ce53`).
+Deployed October 11, 2026 from `5bfc3d9`, production deployment `dpl_H7pmgZy2eM5L922hodW5FoKyL5UQ`, READY at the existing public Runway URL. Public browser checks reconciled schedules 1 and 2 for both accounts at block 16095225 with no page errors, mobile overflow or new transactions.
 
 The overview reads 20 sent IDs and 20 received IDs per page through the deployed contract's offset/limit getters. **Load more schedules** continues whichever direction still has results. Each direction advances by its raw returned count, independently of deduplication. Fewer than 20 IDs ends that direction; exactly 20 requires another read, which may be empty. There is no total discovery cap.
 

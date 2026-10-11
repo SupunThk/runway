@@ -1017,3 +1017,9 @@ This update supersedes the earlier pending settlement and hosting notes. Schedul
 The frontend is live at https://mezo-runway-testnet.vercel.app on Vercel (the implemented host replaces the earlier Netlify plan). Completed status, cancellation refund details and consistent-block schedule reads are implemented. All 12 browser tests, four calculation tests and the production build pass. Unauthenticated production browser checks pass for the homepage, both recipient links, refresh, exact settlement figures and mobile layout. See `deployments/frontend.check.json`, `deployments/mezo-testnet.frontend.json` and `docs/frontend-hosting.md`.
 
 Actual wallet signing on the new public origin, borrowing integration, receipt/CSV UI, pending recovery, complete pagination, adversarial/stateful tests and explorer source verification remain unfinished.
+
+### Latest implementation status — October 11, 2026
+
+This supersedes the historical pending implementation notes above. History/receipts, CSV export, pending recovery, read-only borrowing, hypothetical BTC price scenarios and complete schedule pagination are deployed and publicly verified. The existing payment source is exact-match verified on the explorer. Local security coverage now passes 24 Solidity tests, including adversarial token/reentrancy cases, the original 256-case accounting fuzz test and two stateful campaigns of 16,384 handler calls each with final settlement checks. Production source and creation bytecode are unchanged. Evidence and limits: `docs/security-testing.md`, `deployments/security-tests.check.json`, `docs/explorer-verification.md` and `HANDOFF.md`.
+
+Demo/submission materials, the final release review/tag, independent security review and previously documented external confirmations remain. Do not mark the entire release gate complete based on implementation tests alone.
