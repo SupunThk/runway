@@ -52,3 +52,8 @@ A browser check against the actual testnet RPC displayed the founder's 1800 MUSD
 ## Real payment follow-up — schedule 1
 
 Confirmed chain events and token balances at block 16083922 show a 1 MUSD schedule and two successful partial claims totaling 0.46 MUSD, with 0.54 MUSD remaining in the contract. The stored recipient matches the provided contractor address. Creation and claim hashes are documented in `docs/integration-verification.md`; the snapshot is in `deployments/schedule-1.check.json`. Final settlement, claim caller verification and cancellation testing remain pending. These transactions were submitted outside the agent's read-only verification.
+# Transaction history and receipts — October 11, 2026
+
+Local implementation passed TypeScript, the production build, all 4 accounting tests and all 14 browser tests. The two new browser cases reconcile schedule 1/2 event fixtures with displayed history and explorer links, verify exact cancellation/claim amounts and downloaded JSON evidence, and exercise deduplication, indexed RPC filters, 1,000-block chunk boundaries, pagination, failed-page retry with earlier records retained, and mobile width.
+
+A read-only local browser check against the live Mezo testnet RPC found all four saved events for each schedule. The first 10,000 blocks were correctly labelled partial (range 16083735–16093734; snapshot heads 16094162 and 16094164). The mobile screenshot was inspected. No new wallet transactions or deployment were performed. The existing JavaScript bundle-size warning remains. Receipts are downloadable contract event evidence; transaction-level network receipts remain accessible through explorer links.

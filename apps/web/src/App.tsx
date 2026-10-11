@@ -18,6 +18,7 @@ import {
 } from 'viem';
 import { paymentsAbi, TESTNET_CHAIN_ID } from '@runway/mezo';
 import { WalletConnection } from './WalletConnection';
+import { TransactionHistory } from './TransactionHistory';
 import {
   chainConfigValid,
   explorer,
@@ -43,6 +44,7 @@ export function App() {
   const [notice, setNotice] = useState('');
   const [hash, setHash] = useState<Hash>();
   const [busy, setBusy] = useState(false);
+  const [historyRevision, setHistoryRevision] = useState(0);
   const [view, setView] = useState<'overview' | 'create'>(
     new URLSearchParams(window.location.search).get('create') === '1'
       ? 'create'
@@ -201,6 +203,7 @@ export function App() {
           'Connect to Mezo testnet and verify the payment deployment first.',
         );
       await action();
+      setHistoryRevision((value) => value + 1);
       await Promise.all([balances.refetch(), schedules.refetch()]);
     } catch (error) {
       setNotice(errorText(error));
@@ -690,6 +693,10 @@ export function App() {
                           ) : null}
                           <a href={`/schedules/${s.id}`}>Recipient link ↗</a>
                         </div>
+                        <TransactionHistory
+                          scheduleId={s.id}
+                          revision={historyRevision}
+                        />
                       </article>
                     ))}
                   </div>

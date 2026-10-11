@@ -443,6 +443,24 @@ dd {
 .wallet-picker {
   position: relative;
 }
+.transaction-history {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #e0e6d9;
+  overflow-wrap: anywhere;
+}
+.history-list {
+  padding-left: 20px;
+}
+.history-list li {
+  padding: 14px 0;
+  border-bottom: 1px solid #e0e6d9;
+  font-size: 13px;
+}
+.history-list .section-heading {
+  flex-wrap: wrap;
+  gap: 8px;
+}
 .wallet-options {
   position: absolute;
   right: 0;
