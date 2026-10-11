@@ -15,7 +15,11 @@ await writeFile(
       framework: null,
       buildCommand: '',
       installCommand: '',
-      rewrites: [{ source: '/schedules/:id', destination: '/index.html' }],
+      rewrites: [
+        { source: '/schedules/:id', destination: '/index.html' },
+        { source: '/docs', destination: '/index.html' },
+        { source: '/docs/', destination: '/index.html' },
+      ],
     },
     null,
     2,

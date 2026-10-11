@@ -4,6 +4,12 @@ Fully funded MUSD contractor payments on Mezo testnet. A sender deposits the ent
 
 **Status:** Live Mezo testnet payments with verified full-payment and cancellation journeys, transaction history, JSON receipts, CSV export, pending-transaction recovery, verified read-only borrowing, hypothetical BTC price-stress scenarios and complete schedule pagination. The payment contract's source is exact-match verified on the explorer. Implementation began October 10, before the brief's October 16 build start; organizer approval remains unconfirmed.
 
+## User documentation
+
+Read the [user guide](docs/user-guide.md) for wallet setup, funding, claims, cancellation, history/receipts, borrowing scenarios and troubleshooting. The app includes the same guide at `/docs`, accessible through **Documentation** without a wallet connection, with a Markdown download.
+
+Guide content lives in `apps/web/src/guide.ts`. Run `pnpm docs:generate` after editing it to update the repository copy. Developer setup and verification instructions follow below.
+
 ## Run locally
 
 Use Node 24 and pnpm 10.34.6:

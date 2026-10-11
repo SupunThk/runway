@@ -14,6 +14,7 @@
     "typecheck": "pnpm --filter @runway/web typecheck",
     "test": "vitest run",
     "format": "prettier --write .",
+    "docs:generate": "node --experimental-strip-types scripts/export-user-guide.mjs",
     "format:check": "prettier --check apps packages scripts tests playwright.config.ts vitest.config.ts",
     "verify:integration": "node --env-file-if-exists=.env scripts/verify-integration.mjs",
     "test:contracts": "node scripts/forge.mjs test --root contracts",

@@ -426,6 +426,9 @@ export function App() {
           >
             ＋ <span>New schedule</span>
           </a>
+          <a href="/docs" className="nav">
+            <span aria-hidden="true">?</span> <span>Documentation</span>
+          </a>
         </nav>
         <div className="sidebar-bottom">
           <span className="network-dot" /> Mezo testnet

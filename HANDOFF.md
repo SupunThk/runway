@@ -298,6 +298,14 @@ In the previous agent environment, default shell sandbox setup repeatedly failed
 - Implementation started October 10, before the brief's October 16 build start. Organizer approval for early implementation remains unconfirmed; recorded in `docs/buildathon.md`.
 - Do not mark all of Wave 1 complete: history/receipts, CSV/recovery, borrowing reads, price-stress scenarios and pagination are deployed; explorer verification and local adversarial/stateful tests are complete; submission materials, release review and external confirmations remain.
 
+## User documentation prepared (October 11)
+
+Added a wallet-free `/docs` page linked from the app sidebar, covering setup, founder funding, contractor claims, cancellation with a worked example, paginated overview, history/JSON receipts/CSV, read-only borrowing/scenarios, pending recovery and release limits. Shared content in `apps/web/src/guide.ts` powers both the page and Markdown download; `pnpm docs:generate` writes `docs/user-guide.md` through `scripts/export-user-guide.mjs`. README links to the user guide. Vercel rewrites now include `/docs` and `/docs/` for direct visits.
+
+Validation: production TypeScript/Vite build passed. Local production-preview browser checks passed for both documentation routes, anchor links, identical Markdown download, navigation to/from New schedule, 390px/320px layouts without overflow, and no page errors. Documentation made no Mezo RPC requests and required no wallet. Desktop/mobile screenshots were visually inspected. Ignored checker/screenshots: `.tools/verify-user-guide.mjs`, `.tools/user-guide-desktop.png`, `.tools/user-guide-mobile.png`.
+
+The user authorized deploying these documentation changes. Publish through the normal GitHub `main` workflow and verify the public `/docs` page, Markdown download and navigation; inspect git/deployment status for the publication result. The fallback static-hosting preparation also includes both docs routes. Payment contract and transaction behavior were not changed.
+
 ## Suggested prompt for the next session
 
 > Read HANDOFF.md and inspect the current repository. Pagination is deployed, explorer verification is complete, and local contract security tests pass all 24 cases. Continue with demo/submission materials and release review. Preserve the verified production contract, keep borrowing/repayment in Mezo and verify any public deployment.
