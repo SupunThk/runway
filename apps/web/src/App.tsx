@@ -23,6 +23,7 @@ import { WalletConnection } from './WalletConnection';
 import { TransactionHistory } from './TransactionHistory';
 import { usePendingTransaction, type PendingTransaction } from './pending';
 import { PendingTransactionPanel } from './PendingTransactionPanel';
+import { BorrowingPosition } from './BorrowingPosition';
 import {
   chainConfigValid,
   explorer,
@@ -852,21 +853,7 @@ export function App() {
                     transaction.
                   </p>
                 </div>
-                <div className="info-card light">
-                  <span className="eyebrow">MEZO BORROWING</span>
-                  <h2>Your borrowing position</h2>
-                  <p>
-                    Position reads are not verified yet. No debt, collateral or
-                    risk values are being estimated.
-                  </p>
-                  <a
-                    href="https://testnet.mezo.org"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    Open Mezo testnet ↗
-                  </a>
-                </div>
+                <BorrowingPosition />
               </section>
             </>
           )}

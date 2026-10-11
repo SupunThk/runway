@@ -443,6 +443,24 @@ dd {
 .wallet-picker {
   position: relative;
 }
+.borrowing {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.borrowing form {
+  margin-top: 12px;
+}
+.borrowing a {
+  margin-top: 0;
+}
+.borrowing-values {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.borrowing-values dd {
+  font-size: 13px;
+}
 .transaction-history {
   margin-top: 20px;
   padding-top: 16px;
@@ -646,5 +664,8 @@ dd {
   }
   .schedule-card dl {
     gap: 18px;
+  }
+  .borrowing-values {
+    grid-template-columns: 1fr;
   }
 }

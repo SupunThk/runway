@@ -132,6 +132,8 @@ for (const scenario of [
         if (request.method === 'eth_chainId') result = '0x7b7b';
         else if (request.method === 'eth_blockNumber') result = '0x100';
         else if (request.method === 'eth_getBalance') result = '0x100';
+        else if (request.method === 'eth_getStorageAt')
+          result = toHex(0n, { size: 32 });
         else if (request.method === 'eth_getCode') result = '0x6000';
         else if (request.method === 'eth_getTransactionReceipt') {
           if (!resolved && scenario === 'rpc-error')
@@ -212,6 +214,15 @@ for (const scenario of [
             baseFeePerGas: '0x1',
           };
         else if (request.method === 'eth_call') {
+          if (
+            ![contract.toLowerCase(), token.toLowerCase()].includes(
+              request.params[0].to.toLowerCase(),
+            )
+          )
+            return error(
+              -32000,
+              'Borrowing reads unavailable in payment fixture',
+            );
           const abi =
             request.params[0].to.toLowerCase() === token.toLowerCase()
               ? erc20Abi

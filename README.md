@@ -2,7 +2,7 @@
 
 Fully funded MUSD contractor payments on Mezo testnet. A sender deposits the entire amount, entitlement accrues linearly, and claims transfer earned MUSD to an immutable recipient. Cancellation refunds unvested funds and preserves earned entitlement.
 
-**Status:** Local implementation with a verified payment contract on Mezo testnet. Real full-payment and cancellation journeys are verified, with zero remaining contract MUSD in the recorded checks. Completed payments and cancellation refunds are displayed in the dashboard. Borrowing data is not yet integrated. Implementation began October 10, before the brief's October 16 build start; organizer approval remains unconfirmed.
+**Status:** Live Mezo testnet payments with verified full-payment and cancellation journeys, transaction history, JSON receipts, CSV export and pending-transaction recovery. A verified read-only borrowing view is implemented locally; it has not yet been deployed. Implementation began October 10, before the brief's October 16 build start; organizer approval remains unconfirmed.
 
 ## Run locally
 
@@ -23,6 +23,7 @@ Vite loads public configuration from the root `.env`. The example includes verif
 ```text
 pnpm typecheck
 pnpm test
+pnpm test:browser
 pnpm build
 pnpm test:contracts
 pnpm verify:integration
@@ -44,6 +45,8 @@ The frontend is live at [mezo-runway-testnet.vercel.app](https://mezo-runway-tes
 
 See [Wave 1 checklist](wave1Steps.md), [integration evidence](docs/integration-verification.md), [product scope](docs/product-scope.md), and [buildathon readiness](docs/buildathon.md).
 
-Remaining release work includes adversarial/stateful invariant coverage, receipt history and CSV, pending transaction recovery, complete pagination and borrowing reads/scenarios. The current source is a testnet prototype and has not received independent security review.
+The borrowing view reads an existing testnet loan for a connected wallet or an entered public address. It shows protocol collateral, interest-inclusive debt, the fixed annual rate, and dated loan health only when price checks pass. Borrowing and repayments open in Mezo. See [borrowing integration](docs/borrowing.md); `node scripts/inspect-borrowing.mjs` records read-only evidence using the same reader.
+
+Remaining release work includes publishing the local borrowing view, price-stress scenarios, complete schedule pagination and adversarial/stateful invariant coverage. The current source is a testnet prototype and has not received independent security review.
 
 OpenZeppelin utilities are MIT-licensed; preserve their notices. No MUSD protocol implementation code has been copied. Other dependency licenses are supplied in their packages.

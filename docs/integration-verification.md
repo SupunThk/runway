@@ -1,5 +1,11 @@
 # Integration evidence
 
+## Latest borrowing verification — October 11, 2026
+
+The read-only borrowing reader now verifies the official testnet manager and price-feed proxy implementation slots, token/oracle bindings, deployed ABI signatures, accrued-interest and redistribution accounting, and protocol oracle freshness. Reads at a shared block reconcile the displayed collateral ratio with `getCurrentICR`. The founder has an active position; the contractor has none. Historical snapshots are in [borrowing check](../deployments/mezo-testnet.borrowing.check.json), and pinned primary source links and limitations are in [borrowing integration](borrowing.md). These checks required no new wallet transactions. The borrowing view is implemented locally, not yet deployed. Earlier pending statements below describe historical stages.
+
+## Initial verification — October 10, 2026
+
 The read-only verification command is `pnpm verify:integration`. Its machine-readable output is [integration-check.json](../deployments/integration-check.json).
 
 On October 10, 2026, the public RPC returned chain ID 31611. At block 16082936, the candidate MUSD address `0x118917a40FAF1CD7a13dB0Ef56C86De7973Ac503` had 6437 bytes of bytecode and returned name `Mezo USD`, symbol `MUSD`, and decimals `18`.

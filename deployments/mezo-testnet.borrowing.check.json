@@ -1,0 +1,41 @@
+{
+  "checkedAt": "2026-10-11T03:53:48.551Z",
+  "source": "https://github.com/mezo-org/musd/tree/aa25fd6defbe6c1385940e183ea7a0a3df4533d8/solidity",
+  "deployment": {
+    "chainId": 31611,
+    "manager": "0xE47c80e8c23f6B4A1aE41c34837a0599D5D16bb0",
+    "managerImplementation": "0x9aab567966983e95536fc460c12266fb0cc10b07",
+    "priceFeed": "0x86bCF0841622a5dAC14A313a15f96A95421b9366",
+    "priceImplementation": "0xec42b37c12b8d73d320f4075a1bcd58b306629c1",
+    "musd": "0x118917a40FAF1CD7a13dB0Ef56C86De7973Ac503",
+    "oracle": "0x7b7c000000000000000000000000000000000015"
+  },
+  "positions": [
+    {
+      "account": "0x1ac891Ce491851AC87851D62B9184c75A76f55cF",
+      "status": 1,
+      "blockNumber": "16094640",
+      "chainTime": "1791690814",
+      "active": true,
+      "collateral": "35000000000000000",
+      "principal": "2001800000000000000000",
+      "interest": "35158580904771791",
+      "debt": "2001835158580904771791",
+      "rate": 100,
+      "minimumRatio": "1100000000000000000",
+      "gasReserve": "200000000000000000000",
+      "price": {
+        "value": "82770890000000000000000",
+        "updatedAt": "1791690814",
+        "ratio": "1447162688487128813"
+      }
+    },
+    {
+      "account": "0x99d7a7dcf20a0ac9fc3D03Cd90b0a1F4BC561b09",
+      "status": 0,
+      "blockNumber": "16094641",
+      "chainTime": "1791690818",
+      "active": false
+    }
+  ]
+}

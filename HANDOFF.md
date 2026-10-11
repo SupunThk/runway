@@ -8,7 +8,7 @@ Runway is a testnet payment protocol and web app on Mezo. A sender deposits the 
 
 There is no traditional backend server or database. The React frontend reads blockchain state through RPC; the Solidity contract holds the money and enforces payment rules. Vercel hosts the frontend. Wallets sign transactions.
 
-Mezo borrowing is separate. Runway does not currently borrow, lend, repay loans, earn yield, or automatically submit claims. Paying a contractor does not repay a Mezo borrowing position. The user's actual borrowing debt and collateral have not been verified.
+Mezo borrowing is separate. Runway does not currently borrow, lend, repay loans, earn yield, or automatically submit claims. Paying a contractor does not repay a Mezo borrowing position. Read-only founder/contractor position checks were verified October 11 (see section 8); saved values are historical snapshots.
 
 The user is learning these concepts. Explain steps plainly and use the existing testnet accounts and contract. [explanation.md](explanation.md) is the beginner's guide.
 
@@ -175,9 +175,9 @@ Implementation considerations:
 - Provide loading, empty and retry states; show event evidence rather than invented transaction records.
 - Add meaningful browser checks for funding/claims/cancellation history and reconcile against the saved real events.
 
-### CSV export and pending-transaction recovery (implemented locally October 11)
+### CSV export and pending-transaction recovery (deployed October 11)
 
-The user approved implementing both features after the history release. These new changes are local and have not yet been committed or deployed.
+The user approved implementation and deployment. Commit `6f3b9be` deployed successfully as `dpl_ArwrMycSWXSGEdmqYwfNxks9GyGe` at the existing public URL. Public checks verified full history and CSV/JSON downloads for both schedules through snapshot heads 16094553/16094556. The production recovery panel restored an already confirmed claim across reload, validated it and cleared tracking after acknowledgement; no new transaction was sent.
 
 - **Export loaded history (CSV)** downloads exact formatted MUSD and raw base-unit strings, event/account/transaction/block identifiers, explorer links, UTC timestamps and scan coverage. Partial filenames and per-row metadata identify incomplete scans. Load all blocks for a complete snapshot. Spreadsheet software can round numeric cells when importing, although the CSV file itself retains all digits.
 - Approval, funding, claim and cancellation hashes are saved immediately after wallet submission, before waiting for confirmation. Storage is scoped to chain/deployment; submitted address, target and calldata are retained for receipt checks. Storage availability is checked before signing.
@@ -189,9 +189,21 @@ The user approved implementing both features after the history release. These ne
 
 Implementation: `apps/web/src/pending.ts`, `apps/web/src/PendingTransactionPanel.tsx`, transaction integration in `App.tsx`, CSV helper in `history.ts`; recovery tests in `tests/recovery.spec.ts`.
 
-Next feature: verified read-only Mezo borrowing information (collateral, debt, interest and loan health). Borrowing and repayment should remain in Mezo until intentionally integrated. Do not estimate the user's borrowing position from their MUSD wallet balance.
+### Read-only Mezo borrowing (implemented locally October 11)
 
-Other unfinished work: publish CSV/recovery when requested, complete schedule pagination (current overview reads up to 100 sent and 100 received IDs), borrowing scenarios, explorer source verification, stronger security tests, demo/submission materials and any later release review.
+The user requested moving to the next feature after deploying CSV/recovery. A borrowing reader and dashboard are now implemented locally, not yet deployed. Details, pinned source links and addresses are in `docs/borrowing.md`.
+
+- `packages/mezo/src/borrowing.ts` reads verified testnet proxies, checks implementation slots and token/price/oracle bindings, pins all position/price reads to one block, and reconciles the protocol collateral ratio.
+- `apps/web/src/BorrowingPosition.tsx` shows collateral, total protocol debt including accrued interest, fixed annual interest, price and liquidation threshold. It reads the connected wallet or any manually entered public address. It never signs borrowing/repayment transactions.
+- Stale/invalid prices hide loan health while preserving verified debt. Failed refreshes explicitly label historical data and hide health. Proxy upgrades require reverification. Nonexistent and closed positions have distinct states.
+- Official `getEntireDebtAndColl` returns totals already including redistribution. Use collateral/principal/interest once; do not add the pending components again. The fixed annual rate is in basis points. The native oracle uses 18 decimals and reports answeredInRound=0.
+- Same-reader RPC evidence: `deployments/mezo-testnet.borrowing.check.json`. Founder at block 16094640: 0.035 BTC collateral, 2001.835158580904771791 MUSD total debt, 0.035158580904771791 MUSD accrued interest, 1% rate. Contractor at block 16094641: no position. These are historical observations. Debt includes a 200 MUSD protocol gas reserve and is not a repayment quote.
+- Live local browser check at block 16094671 showed the founder position and 144.7162% collateralization, then correctly switched to the contractor's no-position view at block 16094672. No page errors or horizontal mobile overflow; no new wallet transactions. Evidence and screenshot are ignored at `.tools/borrowing-browser.check.json` and `.tools/borrowing-mobile.png`.
+- Validation: 17 unit/accounting tests and 36 browser tests pass, along with TypeScript and the production build. Existing bundle-size warning remains.
+
+Next: publish borrowing reads when requested, then borrowing price-stress scenarios and complete schedule pagination. Borrowing and repayment should remain in Mezo until intentionally integrated. Do not estimate debt from wallet MUSD.
+
+Other unfinished work: publish borrowing reads when requested, complete schedule pagination (current overview reads up to 100 sent and 100 received IDs), borrowing scenarios, explorer source verification, stronger security tests, demo/submission materials and any later release review.
 
 ## 9. Files to read or edit next
 
@@ -252,8 +264,8 @@ In the previous agent environment, default shell sandbox setup repeatedly failed
 - `.env`, `.tools`, `.publish`, `.vercel`, dependencies, generated builds, Foundry outputs and browser traces are ignored.
 - Keep deployment evidence distinct from explorer source verification and an audit.
 - Implementation started October 10, before the brief's October 16 build start. Organizer approval for early implementation remains unconfirmed; recorded in `docs/buildathon.md`.
-- Do not mark all of Wave 1 complete: history/receipts are deployed, CSV/recovery are implemented locally; borrowing reads and other listed work remain.
+- Do not mark all of Wave 1 complete: history/receipts and CSV/recovery are deployed; borrowing reads are implemented locally; the other listed work remains.
 
 ## Suggested prompt for the next session
 
-> Read HANDOFF.md and inspect the current repository. Continue Runway by implementing per-schedule transaction history and receipts for funding, claims and cancellation, using the existing contract and schedule 1/2 evidence. Run appropriate checks and verify the public deployment if publishing changes.
+> Read HANDOFF.md and inspect the current repository. Continue Runway from the local read-only Mezo borrowing implementation. Verify or publish it if requested, then work on price-stress scenarios or schedule pagination. Keep borrowing/repayment in Mezo and verify any public deployment.
