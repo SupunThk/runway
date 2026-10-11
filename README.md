@@ -2,7 +2,7 @@
 
 Fully funded MUSD contractor payments on Mezo testnet. A sender deposits the entire amount, entitlement accrues linearly, and claims transfer earned MUSD to an immutable recipient. Cancellation refunds unvested funds and preserves earned entitlement.
 
-**Status:** Live Mezo testnet payments with verified full-payment and cancellation journeys, transaction history, JSON receipts, CSV export, pending-transaction recovery and verified read-only borrowing. A BTC price stress simulator is implemented and tested locally. Implementation began October 10, before the brief's October 16 build start; organizer approval remains unconfirmed.
+**Status:** Live Mezo testnet payments with verified full-payment and cancellation journeys, transaction history, JSON receipts, CSV export, pending-transaction recovery, verified read-only borrowing and hypothetical BTC price-stress scenarios. Complete schedule pagination is implemented and tested locally. Implementation began October 10, before the brief's October 16 build start; organizer approval remains unconfirmed.
 
 ## Run locally
 
@@ -47,8 +47,10 @@ See [Wave 1 checklist](wave1Steps.md), [integration evidence](docs/integration-v
 
 The borrowing view reads an existing testnet loan for a connected wallet or an entered public address. It shows protocol collateral, interest-inclusive debt, the fixed annual rate, and dated loan health only when price checks pass. Borrowing and repayments open in Mezo. See [borrowing integration](docs/borrowing.md); `node scripts/inspect-borrowing.mjs` records read-only evidence using the same reader.
 
-The local borrowing view now includes a hypothetical BTC price-drop slider, preset scenarios and the estimated price at the protocol collateral threshold. Scenarios hold snapshot debt and collateral fixed and are hidden when price checks fail or data is stale.
+The deployed borrowing view includes a hypothetical BTC price-drop slider, preset scenarios and the estimated price at the protocol collateral threshold. Scenarios hold snapshot debt and collateral fixed and are hidden when price checks fail or data is stale.
 
-Remaining release work includes publishing the simulator, complete schedule pagination and adversarial/stateful invariant coverage. The current source is a testnet prototype and has not received independent security review.
+The local dashboard loads sent and received schedules in pages of 20 IDs per direction, with no total discovery cap. All loaded pages share a source block; refresh obtains a new snapshot. Duplicate IDs appear once. Funded obligations count only the connected account's sent schedules and are labelled as a partial subtotal until discovery finishes. Failed pages preserve earlier results and can be retried. See [schedule pagination](docs/schedule-pagination.md).
+
+Remaining release work includes publishing pagination and adversarial/stateful invariant coverage. The current source is a testnet prototype and has not received independent security review.
 
 OpenZeppelin utilities are MIT-licensed; preserve their notices. No MUSD protocol implementation code has been copied. Other dependency licenses are supplied in their packages.

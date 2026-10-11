@@ -201,15 +201,25 @@ The user requested moving to the next feature after deploying CSV/recovery. The 
 - Live local browser check at block 16094671 showed the founder position and 144.7162% collateralization, then correctly switched to the contractor's no-position view at block 16094672. No page errors or horizontal mobile overflow; no new wallet transactions. Evidence and screenshot are ignored at `.tools/borrowing-browser.check.json` and `.tools/borrowing-mobile.png`.
 - Validation: 17 unit/accounting tests and 36 browser tests pass, along with TypeScript and the production build. Existing bundle-size warning remains.
 
-### BTC price stress simulator (implemented locally October 11)
+### BTC price stress simulator (deployed October 11)
 
 The user requested the next recommended feature. `BorrowingStress.tsx` now displays a 0–100% BTC price-drop slider, preset scenario table and estimated threshold BTC price using the verified active position. `packages/mezo/src/stress.ts` uses bigint arithmetic, upward threshold rounding and exact threshold classification. Snapshot collateral and total debt stay fixed; no future interest or system-wide liquidation modelling. The simulator hides with stale/invalid prices or failed reads, disappears for inactive positions and resets on account changes.
 
 Validation: 21 unit/accounting tests, all 10 borrowing browser cases, TypeScript and production build passed. The existing bundle warning remains. A live local browser check at block 16094855 showed the founder's 144.7665% baseline ratio, 115.8132% at a 20% drop and 72.3832% at a 50% drop. Estimated threshold price was 62914.85 USD, rounded upward to cents. These are historical scenarios, not live quotes. Switching to the contractor at block 16094856 removed the simulator. No page errors, mobile overflow or new wallet transactions. Mobile screenshot visually inspected. Ignored evidence: `.tools/borrowing-browser.check.json`, `.tools/stress-mobile.png`.
 
-Next: publish the simulator when requested, then complete schedule pagination. Borrowing and repayment should remain in Mezo until intentionally integrated. Do not estimate debt from wallet MUSD.
+The simulator was deployed at the user's request from commit `074ce53`, production deployment `dpl_Chmxg3oKCkU4Mr58qPDowAUEEMNq`, READY at the existing public URL. Public browser verification at block 16094913 confirmed the founder scenarios, a 50% drop below the threshold, and the contractor's no-position state with the simulator absent. No page errors, mobile overflow or new transactions.
 
-Other unfinished work: publish the simulator when requested, complete schedule pagination (current overview reads up to 100 sent and 100 received IDs), explorer source verification, stronger security tests, demo/submission materials and any later release review.
+### Complete schedule pagination (implemented locally October 11)
+
+After the simulator deployment, the user requested schedule pagination. `apps/web/src/schedules.ts` and the infinite query in `App.tsx` now load 20 IDs per direction per page with no total discovery cap. All pages share one source block. Sent and received offsets advance independently, exhausted directions stop, and merged rows are deduplicated and sorted by ID. Failed ID/detail pages preserve loaded rows and expose a retry button without skipping offsets. Refresh obtains a new head and refreshes loaded pages together; failed refreshes label retained snapshots. Direct schedule links remain available without a wallet.
+
+Funded obligations now count only the connected account's sent schedules, using cancellation entitlement and subtracting claims. Partial discovery is explicitly labelled as a subtotal. Coverage displays unique schedule count, source block/time and partial/complete state. See `docs/schedule-pagination.md`.
+
+Validation: all 42 browser tests, 21 unit/accounting tests, TypeScript and production build passed. Six new pagination cases include 121 sent + 22 received IDs (141 unique), cross-page overlaps, retries for ID/detail failures, exact page boundaries, empty accounts, refreshed snapshots, failed refreshes and account changes. Live local browser reads reconciled schedules 1/2 for the founder at block 16094995 and contractor at block 16094996. No page errors, mobile overflow, signing or transactions. Mobile screenshots visually inspected. Evidence: ignored `.tools/schedules-browser.check.json`, `.tools/schedules-mobile.png`, `.tools/schedules-live-mobile.png`. Existing bundle warning remains.
+
+Next: publish pagination when requested, then explorer source verification, stronger security tests and demo/submission materials. Borrowing and repayment should remain in Mezo until intentionally integrated. Do not estimate debt from wallet MUSD.
+
+Other unfinished work: publish pagination when requested, explorer source verification, stronger security tests, demo/submission materials and any later release review.
 
 ## 9. Files to read or edit next
 
@@ -270,8 +280,8 @@ In the previous agent environment, default shell sandbox setup repeatedly failed
 - `.env`, `.tools`, `.publish`, `.vercel`, dependencies, generated builds, Foundry outputs and browser traces are ignored.
 - Keep deployment evidence distinct from explorer source verification and an audit.
 - Implementation started October 10, before the brief's October 16 build start. Organizer approval for early implementation remains unconfirmed; recorded in `docs/buildathon.md`.
-- Do not mark all of Wave 1 complete: history/receipts, CSV/recovery and borrowing reads are deployed; price-stress scenarios are implemented locally; the other listed work remains.
+- Do not mark all of Wave 1 complete: history/receipts, CSV/recovery, borrowing reads and price-stress scenarios are deployed; schedule pagination is implemented locally; the other listed work remains.
 
 ## Suggested prompt for the next session
 
-> Read HANDOFF.md and inspect the current repository. Continue Runway from the local BTC price stress simulator. Verify or publish it if requested, then work on schedule pagination. Keep borrowing/repayment in Mezo and verify any public deployment.
+> Read HANDOFF.md and inspect the current repository. Continue Runway from the local schedule pagination implementation. Verify or publish it if requested, then work on explorer source verification or stronger security coverage. Keep borrowing/repayment in Mezo and verify any public deployment.

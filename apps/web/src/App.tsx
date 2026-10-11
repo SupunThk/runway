@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import {
   useAccount,
   usePublicClient,
@@ -24,6 +24,11 @@ import { TransactionHistory } from './TransactionHistory';
 import { usePendingTransaction, type PendingTransaction } from './pending';
 import { PendingTransactionPanel } from './PendingTransactionPanel';
 import { BorrowingPosition } from './BorrowingPosition';
+import {
+  readSchedulePage,
+  uniqueSchedules,
+  type ScheduleCursor,
+} from './schedules';
 import {
   chainConfigValid,
   explorer,
@@ -132,9 +137,11 @@ export function App() {
     },
     refetchInterval: 15000,
   });
-  const schedules = useQuery({
+  const schedules = useInfiniteQuery({
     queryKey: [
       'schedules',
+      TESTNET_CHAIN_ID,
+      client?.transport.url,
       address,
       chainId,
       paymentAddress,
@@ -143,53 +150,24 @@ export function App() {
     enabled: Boolean(
       client && readiness.data?.payments && (address || scheduleId),
     ),
-    queryFn: async () => {
-      const block = await client!.getBlock();
-      let ids: readonly bigint[];
-      if (scheduleId) ids = [scheduleId];
-      else {
-        const [sent, received] = await Promise.all([
-          client!.readContract({
-            address: paymentAddress!,
-            abi: paymentsAbi,
-            functionName: 'getSenderScheduleIds',
-            args: [address!, 0n, 100n],
-            blockNumber: block.number,
-          }),
-          client!.readContract({
-            address: paymentAddress!,
-            abi: paymentsAbi,
-            functionName: 'getRecipientScheduleIds',
-            args: [address!, 0n, 100n],
-            blockNumber: block.number,
-          }),
-        ]);
-        ids = [...new Set([...sent, ...received])];
-      }
-      return Promise.all(
-        ids.map(async (id) => {
-          const [schedule, claimable] = await Promise.all([
-            client!.readContract({
-              address: paymentAddress!,
-              abi: paymentsAbi,
-              functionName: 'getSchedule',
-              args: [id],
-              blockNumber: block.number,
-            }),
-            client!.readContract({
-              address: paymentAddress!,
-              abi: paymentsAbi,
-              functionName: 'claimable',
-              args: [id],
-              blockNumber: block.number,
-            }),
-          ]);
-          return { id, ...schedule, claimable, chainTime: block.timestamp };
-        }),
-      );
-    },
+    initialPageParam: undefined as ScheduleCursor | undefined,
+    queryFn: ({ pageParam }) =>
+      readSchedulePage(
+        client!,
+        paymentAddress!,
+        address,
+        scheduleId,
+        pageParam,
+      ),
+    getNextPageParam: (page) => page.next,
+    retry: false,
+    refetchOnWindowFocus: false,
     refetchInterval: 15000,
   });
+  const scheduleRows = schedules.data
+    ? uniqueSchedules(schedules.data.pages)
+    : undefined;
+  const scheduleSnapshot = schedules.data?.pages[0];
   const canTransact = Boolean(
     address &&
     chainId === TESTNET_CHAIN_ID &&
@@ -402,11 +380,15 @@ export function App() {
     });
   }
 
-  const outstanding = schedules.data?.reduce(
-    (sum, s) =>
-      sum + (s.cancelled ? s.vestedAtCancellation : s.total) - s.claimed,
-    0n,
-  );
+  const outstanding = address
+    ? scheduleRows
+        ?.filter((s) => s.sender.toLowerCase() === address.toLowerCase())
+        .reduce(
+          (sum, s) =>
+            sum + (s.cancelled ? s.vestedAtCancellation : s.total) - s.claimed,
+          0n,
+        )
+    : undefined;
   return (
     <div className="shell">
       <aside className="sidebar">
@@ -647,14 +629,26 @@ export function App() {
                   </p>
                 </div>
                 <div className="metric">
-                  <span>FUNDED OBLIGATIONS</span>
+                  <span>
+                    {schedules.hasNextPage && !scheduleId
+                      ? 'LOADED FUNDED OBLIGATIONS'
+                      : 'FUNDED OBLIGATIONS'}
+                  </span>
                   <strong>
                     {outstanding !== undefined
                       ? amount(outstanding, decimals)
                       : '—'}{' '}
                     <small>MUSD</small>
                   </strong>
-                  <p>Reserved for recipients · separate from cash</p>
+                  <p>
+                    {schedules.error
+                      ? 'Previous snapshot · refresh to verify'
+                      : schedules.hasNextPage && !scheduleId
+                        ? 'Partial subtotal · load all schedules for the total'
+                        : scheduleId
+                          ? 'This schedule only · sent by you'
+                          : 'Your sent schedules · separate from cash'}
+                  </p>
                 </div>
                 <div className="metric">
                   <span>GAS RESERVE</span>
@@ -665,7 +659,10 @@ export function App() {
                   <p>Used for approvals, funding and claims</p>
                 </div>
               </section>
-              <section className="panel schedules">
+              <section
+                className="panel schedules"
+                aria-label="Payment schedules"
+              >
                 <div className="section-heading">
                   <div>
                     <h2>
@@ -675,6 +672,7 @@ export function App() {
                   </div>
                   <button
                     className="text-button"
+                    disabled={schedules.isFetching}
                     onClick={() => {
                       void balances.refetch();
                       void schedules.refetch();
@@ -683,15 +681,19 @@ export function App() {
                     Refresh ↻
                   </button>
                 </div>
-                {schedules.error ? (
-                  <div className="callout warning">
+                {schedules.error && (
+                  <div className="callout warning" role="alert">
                     Could not load schedules: {errorText(schedules.error)}
+                    {schedules.data
+                      ? ' Previously loaded schedules remain visible.'
+                      : ''}
                   </div>
-                ) : schedules.isFetching && !schedules.data ? (
+                )}
+                {schedules.isFetching && !schedules.data ? (
                   <p>Loading schedule state…</p>
-                ) : schedules.data?.length ? (
+                ) : scheduleRows?.length ? (
                   <div className="schedule-list">
-                    {schedules.data.map((s) => (
+                    {scheduleRows.map((s) => (
                       <article className="schedule-card" key={String(s.id)}>
                         <div className="section-heading">
                           <a href={`/schedules/${s.id}`}>
@@ -807,7 +809,7 @@ export function App() {
                       </article>
                     ))}
                   </div>
-                ) : (
+                ) : !schedules.error ? (
                   <div className="empty">
                     <div className="empty-icon">↗</div>
                     <h3>
@@ -831,12 +833,40 @@ export function App() {
                       </button>
                     ) : null}
                   </div>
-                )}
-                {schedules.data?.length ? (
-                  <p className="hint">
-                    Initial view shows up to 100 sent and 100 received
-                    schedules. Open a direct schedule link for other IDs.
-                  </p>
+                ) : null}
+                {scheduleSnapshot ? (
+                  <div className="schedule-pagination">
+                    <p className="hint" role="status">
+                      {scheduleRows?.length} unique schedules loaded · Block{' '}
+                      {String(scheduleSnapshot.blockNumber)}
+                      {' · '}
+                      {new Date(Number(scheduleSnapshot.chainTime) * 1000)
+                        .toISOString()
+                        .replace('T', ' ')
+                        .replace('.000Z', ' UTC')}
+                      {scheduleId
+                        ? ' · Direct schedule view.'
+                        : schedules.hasNextPage
+                          ? ' · Partial list; more schedules may be available.'
+                          : ' · All sent and received schedules loaded at this snapshot.'}
+                      {schedules.error && !schedules.isFetchNextPageError
+                        ? ' Refresh failed; displayed values are from the previous snapshot.'
+                        : ''}
+                    </p>
+                    {schedules.hasNextPage && !scheduleId && (
+                      <button
+                        className="button secondary"
+                        disabled={schedules.isFetching}
+                        onClick={() => void schedules.fetchNextPage()}
+                      >
+                        {schedules.isFetchingNextPage
+                          ? 'Loading more schedules…'
+                          : schedules.isFetchNextPageError
+                            ? 'Retry loading more schedules'
+                            : 'Load more schedules'}
+                      </button>
+                    )}
+                  </div>
                 ) : null}
               </section>
               <section className="info-grid">

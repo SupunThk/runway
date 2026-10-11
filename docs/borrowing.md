@@ -36,7 +36,7 @@ Price failures retain verified collateral/debt/interest while marking loan healt
 
 ## Hypothetical BTC price stress
 
-The simulator is implemented locally and only appears for active positions with a verified, fresh protocol price. Its slider models whole-percentage drops from 0% to 100%; a table compares 0%, 10%, 20%, 30% and 50% drops. Changing accounts resets the slider. Invalid/stale prices and failed refreshes hide all scenarios.
+The simulator is deployed and only appears for active positions with a verified, fresh protocol price. Its slider models whole-percentage drops from 0% to 100%; a table compares 0%, 10%, 20%, 30% and 50% drops. Changing accounts resets the slider. Invalid/stale prices and failed refreshes hide all scenarios.
 
 Calculations use bigint throughout: scenario price = snapshot price × (100 − drop) / 100; ratio = collateral × scenario price / total debt. The estimated threshold price is debt × minimum ratio / collateral, rounded upward to the next 18-decimal unit. USD prices display rounded upward to cents and ratios truncate to four percentage decimals; threshold classification uses full precision before formatting and distinguishes equality.
 
