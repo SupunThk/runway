@@ -9,8 +9,8 @@ Implementation began October 10, 2026 at the user's request. Organizer permissio
 - Cancellation at or after the end is rejected as unnecessary.
 - No upgrades, administrative withdrawals, fees, arbitrary token selection, or recipient edits.
 - Rabby and MetaMask have explicit legacy connectors; EIP-6963 discovery lists other installed EVM browser wallets. The user selects the wallet explicitly. Passport and remote/QR connectors remain deferred.
-- Borrowing is read-only: verified position/interest/oracle reads are implemented locally, with loan management opening Mezo. See [borrowing integration](borrowing.md).
+- Borrowing is read-only: verified position/interest/oracle reads are deployed, with loan management opening Mezo. Hypothetical BTC price-stress scenarios are implemented locally. See [borrowing integration](borrowing.md).
 - Vercel hosts the public testnet frontend, with GitHub-driven source builds. History, JSON receipts, CSV exports and pending-transaction recovery are deployed.
 - Use deployed MUSD through standard interfaces. No MUSD implementation source was copied. OpenZeppelin 5.0.2 utilities are reused under MIT; preserve its license with published source.
 
-The overview discovers at most 100 sent and 100 received schedules. Direct links can read other schedule IDs. Full schedule pagination, publishing the local borrowing view and borrowing price-stress scenarios remain implementation tasks. History scans are paginated separately and disclose their covered range.
+The overview discovers at most 100 sent and 100 received schedules. Direct links can read other schedule IDs. Full schedule pagination and publishing the local price-stress simulator remain tasks. History scans are paginated separately and disclose their covered range.

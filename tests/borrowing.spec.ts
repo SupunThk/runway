@@ -139,6 +139,9 @@ for (const state of [
     });
     await page.goto('/');
     const panel = page.getByRole('region', { name: 'Mezo borrowing position' });
+    const simulator = panel.getByRole('region', {
+      name: 'BTC price stress simulator',
+    });
     await expect(
       panel.getByText('Connect your wallet or enter an address', {
         exact: false,
@@ -199,6 +202,47 @@ for (const state of [
               : /Above the protocol liquidation threshold/,
           ),
         ).toBeVisible();
+        await expect(simulator).toBeVisible();
+        await expect(simulator).toContainText('Hypothetical price changes');
+        await expect(simulator).toContainText('2211 USD');
+        if (state === 'active') {
+          const result = simulator.getByRole('status');
+          await expect(result).toContainText('3216 USD');
+          await expect(result).toContainText('160%');
+          const slider = simulator.getByRole('slider', {
+            name: 'BTC price drop',
+          });
+          await slider.fill('45');
+          await expect(result).toContainText('110%');
+          await expect(result).toContainText('At threshold');
+          await slider.press('ArrowRight');
+          await expect(result).toContainText('108%');
+          await expect(result).toContainText('Below threshold');
+          await slider.fill('100');
+          await expect(result).toContainText('0 USD');
+          await expect(result).toContainText('0%');
+          await slider.fill('0');
+          await expect(result).toContainText('200%');
+          await expect(result).toContainText('Above threshold');
+          await expect(
+            simulator.getByRole('row', {
+              name: '50% 2010 USD 100% Below threshold',
+            }),
+          ).toBeVisible();
+          await page.setViewportSize({ width: 390, height: 844 });
+          await simulator.scrollIntoViewIfNeeded();
+          await page.screenshot({
+            path: '.tools/stress-mobile.png',
+            fullPage: true,
+          });
+          // Selecting a different public account must not retain a scenario.
+          await slider.fill('50');
+          await panel
+            .getByLabel('Borrowing account')
+            .fill('0x99d7a7dcf20a0ac9fc3D03Cd90b0a1F4BC561b09');
+          await panel.getByRole('button', { name: 'Check borrowing' }).click();
+          await expect(simulator.getByRole('slider')).toHaveValue('20');
+        }
       }
       if (state === 'refresh-failed') {
         failedRefresh = true;
@@ -213,6 +257,20 @@ for (const state of [
           panel.getByText('Total protocol debt', { exact: true }).locator('..'),
         ).toContainText('2010 MUSD');
       }
+    }
+    if (
+      [
+        'rpc-error',
+        'changed-implementation',
+        'no-position',
+        'closed',
+        'stale-price',
+        'negative-price',
+        'stale-block',
+        'refresh-failed',
+      ].includes(state)
+    ) {
+      await expect(simulator).toHaveCount(0);
     }
     await expect(
       panel.getByRole('link', { name: 'Manage borrowing in Mezo' }),

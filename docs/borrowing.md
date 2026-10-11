@@ -34,6 +34,14 @@ The frontend reconciles its collateral/debt ratio with `getCurrentICR` before sh
 
 Price failures retain verified collateral/debt/interest while marking loan health unknown. An RPC refresh failure labels cached data as a previous snapshot and hides its health. The UI also withholds health when the displayed snapshot ages beyond its freshness window or the chain head is stale relative to the browser clock. Every successful view shows its source block, UTC chain time and oracle update time. Above-threshold collateralization is a dated observation, not a safety guarantee.
 
+## Hypothetical BTC price stress
+
+The simulator is implemented locally and only appears for active positions with a verified, fresh protocol price. Its slider models whole-percentage drops from 0% to 100%; a table compares 0%, 10%, 20%, 30% and 50% drops. Changing accounts resets the slider. Invalid/stale prices and failed refreshes hide all scenarios.
+
+Calculations use bigint throughout: scenario price = snapshot price × (100 − drop) / 100; ratio = collateral × scenario price / total debt. The estimated threshold price is debt × minimum ratio / collateral, rounded upward to the next 18-decimal unit. USD prices display rounded upward to cents and ratios truncate to four percentage decimals; threshold classification uses full precision before formatting and distinguishes equality.
+
+Debt and collateral are held fixed at the displayed source block, including already accrued interest, redistribution and the gas reserve. Future interest, repayments, redistribution and system-wide liquidation conditions are not modelled. Scenarios are hypothetical price-only estimates, not liquidation predictions or repayment quotes. No additional RPC requests or wallet actions are needed to move the slider.
+
 ## Verification and operation
 
 `node scripts/inspect-borrowing.mjs` uses the same reader as the UI, defaults to the existing founder and contractor accounts, and writes `deployments/mezo-testnet.borrowing.check.json`. Node 24+ is required to import the TypeScript reader. Optional public address arguments replace the defaults.

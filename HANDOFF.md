@@ -189,9 +189,9 @@ The user approved implementation and deployment. Commit `6f3b9be` deployed succe
 
 Implementation: `apps/web/src/pending.ts`, `apps/web/src/PendingTransactionPanel.tsx`, transaction integration in `App.tsx`, CSV helper in `history.ts`; recovery tests in `tests/recovery.spec.ts`.
 
-### Read-only Mezo borrowing (implemented locally October 11)
+### Read-only Mezo borrowing (deployed October 11)
 
-The user requested moving to the next feature after deploying CSV/recovery. A borrowing reader and dashboard are now implemented locally, not yet deployed. Details, pinned source links and addresses are in `docs/borrowing.md`.
+The user requested moving to the next feature after deploying CSV/recovery. The borrowing reader and dashboard were deployed from commit `15785c5`, production deployment `dpl_8Ysdu58dE9StFYG1V5RxSAuPKXpb`, READY at the existing public URL. Public browser checks verified both accounts, no page errors and no mobile overflow. Details, pinned source links and addresses are in `docs/borrowing.md`.
 
 - `packages/mezo/src/borrowing.ts` reads verified testnet proxies, checks implementation slots and token/price/oracle bindings, pins all position/price reads to one block, and reconciles the protocol collateral ratio.
 - `apps/web/src/BorrowingPosition.tsx` shows collateral, total protocol debt including accrued interest, fixed annual interest, price and liquidation threshold. It reads the connected wallet or any manually entered public address. It never signs borrowing/repayment transactions.
@@ -201,9 +201,15 @@ The user requested moving to the next feature after deploying CSV/recovery. A bo
 - Live local browser check at block 16094671 showed the founder position and 144.7162% collateralization, then correctly switched to the contractor's no-position view at block 16094672. No page errors or horizontal mobile overflow; no new wallet transactions. Evidence and screenshot are ignored at `.tools/borrowing-browser.check.json` and `.tools/borrowing-mobile.png`.
 - Validation: 17 unit/accounting tests and 36 browser tests pass, along with TypeScript and the production build. Existing bundle-size warning remains.
 
-Next: publish borrowing reads when requested, then borrowing price-stress scenarios and complete schedule pagination. Borrowing and repayment should remain in Mezo until intentionally integrated. Do not estimate debt from wallet MUSD.
+### BTC price stress simulator (implemented locally October 11)
 
-Other unfinished work: publish borrowing reads when requested, complete schedule pagination (current overview reads up to 100 sent and 100 received IDs), borrowing scenarios, explorer source verification, stronger security tests, demo/submission materials and any later release review.
+The user requested the next recommended feature. `BorrowingStress.tsx` now displays a 0–100% BTC price-drop slider, preset scenario table and estimated threshold BTC price using the verified active position. `packages/mezo/src/stress.ts` uses bigint arithmetic, upward threshold rounding and exact threshold classification. Snapshot collateral and total debt stay fixed; no future interest or system-wide liquidation modelling. The simulator hides with stale/invalid prices or failed reads, disappears for inactive positions and resets on account changes.
+
+Validation: 21 unit/accounting tests, all 10 borrowing browser cases, TypeScript and production build passed. The existing bundle warning remains. A live local browser check at block 16094855 showed the founder's 144.7665% baseline ratio, 115.8132% at a 20% drop and 72.3832% at a 50% drop. Estimated threshold price was 62914.85 USD, rounded upward to cents. These are historical scenarios, not live quotes. Switching to the contractor at block 16094856 removed the simulator. No page errors, mobile overflow or new wallet transactions. Mobile screenshot visually inspected. Ignored evidence: `.tools/borrowing-browser.check.json`, `.tools/stress-mobile.png`.
+
+Next: publish the simulator when requested, then complete schedule pagination. Borrowing and repayment should remain in Mezo until intentionally integrated. Do not estimate debt from wallet MUSD.
+
+Other unfinished work: publish the simulator when requested, complete schedule pagination (current overview reads up to 100 sent and 100 received IDs), explorer source verification, stronger security tests, demo/submission materials and any later release review.
 
 ## 9. Files to read or edit next
 
@@ -264,8 +270,8 @@ In the previous agent environment, default shell sandbox setup repeatedly failed
 - `.env`, `.tools`, `.publish`, `.vercel`, dependencies, generated builds, Foundry outputs and browser traces are ignored.
 - Keep deployment evidence distinct from explorer source verification and an audit.
 - Implementation started October 10, before the brief's October 16 build start. Organizer approval for early implementation remains unconfirmed; recorded in `docs/buildathon.md`.
-- Do not mark all of Wave 1 complete: history/receipts and CSV/recovery are deployed; borrowing reads are implemented locally; the other listed work remains.
+- Do not mark all of Wave 1 complete: history/receipts, CSV/recovery and borrowing reads are deployed; price-stress scenarios are implemented locally; the other listed work remains.
 
 ## Suggested prompt for the next session
 
-> Read HANDOFF.md and inspect the current repository. Continue Runway from the local read-only Mezo borrowing implementation. Verify or publish it if requested, then work on price-stress scenarios or schedule pagination. Keep borrowing/repayment in Mezo and verify any public deployment.
+> Read HANDOFF.md and inspect the current repository. Continue Runway from the local BTC price stress simulator. Verify or publish it if requested, then work on schedule pagination. Keep borrowing/repayment in Mezo and verify any public deployment.

@@ -461,6 +461,35 @@ dd {
 .borrowing-values dd {
   font-size: 13px;
 }
+.borrowing-stress {
+  border-top: 1px solid #d5d9d2;
+  margin-top: 24px;
+  padding-top: 16px;
+  min-width: 0;
+}
+.borrowing-stress input[type='range'] {
+  width: 100%;
+  padding: 0;
+  accent-color: #266044;
+}
+.stress-table-scroll {
+  overflow-x: auto;
+}
+.borrowing-stress table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.borrowing-stress caption {
+  text-align: left;
+  margin-bottom: 12px;
+}
+.borrowing-stress th,
+.borrowing-stress td {
+  padding: 10px 6px;
+  text-align: left;
+  border-bottom: 1px solid #d5d9d2;
+}
 .transaction-history {
   margin-top: 20px;
   padding-top: 16px;

@@ -1,5 +1,6 @@
 import { defineChain, getAddress, isAddress, parseAbi } from 'viem';
 export * from './borrowing';
+export * from './stress';
 
 export const TESTNET_CHAIN_ID = 31611;
 export const DEFAULT_RPC = 'https://rpc.test.mezo.org';

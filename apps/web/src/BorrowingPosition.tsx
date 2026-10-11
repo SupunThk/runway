@@ -8,6 +8,7 @@ import {
   TESTNET_CHAIN_ID,
 } from '@runway/mezo';
 import { explorer, musdAddress } from './config';
+import { BorrowingStress } from './BorrowingStress';
 
 const percent = (ratio: bigint) => `${formatUnits(ratio / 10n ** 12n, 4)}%`;
 export function BorrowingPosition() {
@@ -206,6 +207,13 @@ export function BorrowingPosition() {
                       .replace('.000Z', ' UTC')}
                     .
                   </p>
+                  <BorrowingStress
+                    key={account}
+                    collateral={data.collateral}
+                    debt={data.debt}
+                    minimumRatio={data.minimumRatio}
+                    price={price.value}
+                  />
                 </>
               ) : (
                 <p role="alert">
