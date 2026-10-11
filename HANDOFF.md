@@ -141,9 +141,9 @@ The original public-site report and screenshot are tracked in `deployments/front
 
 Remaining validation limits: real extension signing on the public HTTPS origin has not been verified by the agent; GitHub Actions results have not been inspected; stateful invariants and adversarial token/reentrancy coverage remain unfinished. The build still warns about a JavaScript bundle over 500 kB. There is no independent security audit.
 
-## 8. Transaction history and receipts (implemented locally October 11)
+## 8. Transaction history and receipts (deployed October 11)
 
-Implemented following the user's request to continue. Changes are local and have not been committed, pushed or deployed. Each schedule now has an expandable **Transaction history & receipts** section; opening it does not require a wallet.
+Implemented following the user's request to continue, then committed and deployed with their approval. Commit `5f57dd1c0a3910c2575918c5b7fb1a4a98f6b2a7`, production deployment `dpl_Ht7cNXdYBvUd76u8XtRyt2HqYGUL`, is READY at the existing public URL. The HTTPS browser check verified all four events and JSON receipts for each schedule, scanning through snapshot heads 16094353 and 16094354. Each schedule has an expandable **Transaction history & receipts** section; opening it does not require a wallet.
 
 - Shows funding, every claim and cancellation refunds in block/log order, with exact MUSD amounts, UTC block timestamps and explorer links.
 - Downloads individual JSON event receipts containing chain/contract/schedule identifiers, transaction and block hashes, log index, raw integer amounts and formatted MUSD. These are event evidence; the explorer provides the network transaction receipt.
@@ -175,9 +175,23 @@ Implementation considerations:
 - Provide loading, empty and retry states; show event evidence rather than invented transaction records.
 - Add meaningful browser checks for funding/claims/cancellation history and reconcile against the saved real events.
 
-After this: CSV export and pending-transaction recovery, followed by verified read-only Mezo borrowing information (collateral, debt, interest and loan health). Borrowing and repayment should remain in Mezo until intentionally integrated. Do not estimate the user's borrowing position from their MUSD wallet balance.
+### CSV export and pending-transaction recovery (implemented locally October 11)
 
-Other unfinished work: publish the local history feature when requested, complete schedule pagination (current overview reads up to 100 sent and 100 received IDs), borrowing scenarios, explorer source verification, stronger security tests, demo/submission materials and any later release review.
+The user approved implementing both features after the history release. These new changes are local and have not yet been committed or deployed.
+
+- **Export loaded history (CSV)** downloads exact formatted MUSD and raw base-unit strings, event/account/transaction/block identifiers, explorer links, UTC timestamps and scan coverage. Partial filenames and per-row metadata identify incomplete scans. Load all blocks for a complete snapshot. Spreadsheet software can round numeric cells when importing, although the CSV file itself retains all digits.
+- Approval, funding, claim and cancellation hashes are saved immediately after wallet submission, before waiting for confirmation. Storage is scoped to chain/deployment; submitted address, target and calldata are retained for receipt checks. Storage availability is checked before signing.
+- Reloading shows a saved-transaction panel without requiring wallet reconnection. It polls receipts, validates sender/target/calldata/value, distinguishes confirmed, reverted, unknown and differing replacement transactions, and offers the newly funded schedule link when available.
+- New submissions pause while a saved transaction is tracked. Acknowledging a checked result refreshes balances/schedules/history. Recovery never signs or resubmits. Recovered approvals require returning to the form and a fresh funding signature/start time.
+- Active waits persist replacement hashes through viem's replacement callback. Replacements occurring while the app is closed cannot always be discovered from the old hash; missing receipts remain explicitly unknown. Users can remove a stale tracking record after a confirmation explaining that this does not cancel the transaction and that resubmission may duplicate payment.
+- Storage is specific to the browser/origin: localhost and the production site have separate records. Closing before the wallet returns a submitted hash, clearing site storage or switching browsers cannot be recovered by this mechanism. No private keys are stored.
+- Validation: 26 browser tests, 4 accounting tests, TypeScript and production build passed. Tests include CSV precision/coverage, pending/success/revert/approval/funding/cancellation/RPC-error/mismatched receipt states, corrupt/foreign storage, and simulated claim/approval submissions surviving reload with zero repeated signing calls. No real wallet transactions were requested.
+
+Implementation: `apps/web/src/pending.ts`, `apps/web/src/PendingTransactionPanel.tsx`, transaction integration in `App.tsx`, CSV helper in `history.ts`; recovery tests in `tests/recovery.spec.ts`.
+
+Next feature: verified read-only Mezo borrowing information (collateral, debt, interest and loan health). Borrowing and repayment should remain in Mezo until intentionally integrated. Do not estimate the user's borrowing position from their MUSD wallet balance.
+
+Other unfinished work: publish CSV/recovery when requested, complete schedule pagination (current overview reads up to 100 sent and 100 received IDs), borrowing scenarios, explorer source verification, stronger security tests, demo/submission materials and any later release review.
 
 ## 9. Files to read or edit next
 
@@ -238,7 +252,7 @@ In the previous agent environment, default shell sandbox setup repeatedly failed
 - `.env`, `.tools`, `.publish`, `.vercel`, dependencies, generated builds, Foundry outputs and browser traces are ignored.
 - Keep deployment evidence distinct from explorer source verification and an audit.
 - Implementation started October 10, before the brief's October 16 build start. Organizer approval for early implementation remains unconfirmed; recorded in `docs/buildathon.md`.
-- Do not mark all of Wave 1 complete: history/receipts are implemented locally; borrowing reads and other listed work remain.
+- Do not mark all of Wave 1 complete: history/receipts are deployed, CSV/recovery are implemented locally; borrowing reads and other listed work remain.
 
 ## Suggested prompt for the next session
 

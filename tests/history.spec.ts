@@ -143,6 +143,20 @@ for (const id of [1, 2]) {
     await expect(history.getByText(/Partial history/)).toBeVisible();
     const rows = history.locator('li');
     await expect(rows).toHaveCount(fixture.events.length);
+    const csvDownload = page.waitForEvent('download');
+    await history
+      .getByRole('button', { name: 'Export loaded history (CSV)' })
+      .click();
+    const partialCsv = await csvDownload;
+    expect(partialCsv.suggestedFilename()).toContain('partial');
+    const partialText = await readFile((await partialCsv.path())!, 'utf8');
+    expect(partialText).toContain('"complete_through_snapshot"');
+    expect(partialText.trim().split('\r\n')).toHaveLength(
+      fixture.events.length + 1,
+    );
+    expect(partialText).toContain('"1000000000000000000"');
+    expect(partialText).toContain('"false"');
+    if (id === 2) expect(partialText).toContain('"0.371666666666666667"');
     for (const [index, event] of fixture.events.entries()) {
       await expect(
         rows.nth(index).getByRole('link', { name: 'View transaction' }),
@@ -175,6 +189,15 @@ for (const id of [1, 2]) {
     fail = false;
     await history.getByRole('button', { name: 'Retry history' }).click();
     await expect(history.getByText(/History scanned:/)).toBeVisible();
+    const completeCsvDownload = page.waitForEvent('download');
+    await history
+      .getByRole('button', { name: 'Export loaded history (CSV)' })
+      .click();
+    const completeCsv = await completeCsvDownload;
+    expect(completeCsv.suggestedFilename()).toContain('snapshot');
+    expect(await readFile((await completeCsv.path())!, 'utf8')).toContain(
+      '"true"',
+    );
     expect(ranges[0][0]).toBe(16083735n);
     for (const [from, to] of ranges)
       expect(to - from).toBeLessThanOrEqual(999n);

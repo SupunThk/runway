@@ -7,6 +7,7 @@ import { explorer, paymentAddress } from './config';
 import {
   deploymentBlock,
   eventReceipt,
+  historyCsv,
   orderedHistory,
   readHistoryPage,
   type HistoryCursor,
@@ -44,6 +45,20 @@ export function TransactionHistory({
     history.data?.pages.flatMap((p) => p.records) ?? [],
   );
   const last = history.data?.pages.at(-1);
+  function exportCsv() {
+    if (!last || !paymentAddress) return;
+    const url = URL.createObjectURL(
+      new Blob(
+        [historyCsv(records, paymentAddress, scheduleId, last, explorer)],
+        { type: 'text/csv;charset=utf-8' },
+      ),
+    );
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `runway-${scheduleId}-${last.next ? 'partial' : 'snapshot'}-${last.head}.csv`;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
   function download(record: HistoryRecord) {
     const url = URL.createObjectURL(
       new Blob([eventReceipt(record, paymentAddress!, scheduleId)], {
@@ -169,6 +184,13 @@ export function TransactionHistory({
             ))}
           </ol>
           <div className="actions">
+            <button
+              className="button secondary"
+              disabled={!records.length || history.isFetching}
+              onClick={exportCsv}
+            >
+              Export loaded history (CSV)
+            </button>
             {history.hasNextPage && (
               <button
                 className="button secondary"
@@ -187,9 +209,12 @@ export function TransactionHistory({
             </button>
           </div>
           <p className="hint">
-            Receipts contain public contract event evidence and exact amounts.
-            Open the transaction to inspect its network receipt. Recent blocks
-            may change during a chain reorganization.
+            CSV exports include only loaded records and their scanned range.
+            Load all blocks to export a complete snapshot. Amounts retain all 18
+            decimal places in the file; spreadsheet apps may round numeric cells
+            when importing. Receipts contain public contract event evidence and
+            exact amounts. Open the transaction to inspect its network receipt.
+            Recent blocks may change during a chain reorganization.
           </p>
         </div>
       )}

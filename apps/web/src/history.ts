@@ -130,3 +130,64 @@ export function eventReceipt(
     ) + '\n'
   );
 }
+
+export function historyCsv(
+  records: HistoryRecord[],
+  address: Address,
+  scheduleId: bigint,
+  coverage: { end: bigint; head: bigint },
+  explorer: string,
+) {
+  const rows: unknown[][] = [
+    [
+      'chain_id',
+      'contract',
+      'schedule_id',
+      'event',
+      'timestamp_utc',
+      'amount_musd',
+      'amount_base_units',
+      'account',
+      'vested_musd',
+      'transaction_hash',
+      'transaction_url',
+      'block_number',
+      'block_hash',
+      'log_index',
+      'scan_from_block',
+      'scan_through_block',
+      'snapshot_head',
+      'complete_through_snapshot',
+    ],
+  ];
+  for (const record of orderedHistory(records))
+    rows.push([
+      TESTNET_CHAIN_ID,
+      address,
+      scheduleId,
+      record.event,
+      new Date(Number(record.timestamp) * 1000).toISOString(),
+      formatUnits(record.amount, 18),
+      record.amount,
+      record.account,
+      record.vested === undefined ? '' : formatUnits(record.vested, 18),
+      record.transactionHash,
+      `${explorer}/tx/${record.transactionHash}`,
+      record.blockNumber,
+      record.blockHash,
+      record.logIndex,
+      deploymentBlock,
+      coverage.end,
+      coverage.head,
+      coverage.end === coverage.head,
+    ]);
+  return (
+    rows
+      .map((row) =>
+        row
+          .map((value) => `"${String(value).replaceAll('"', '""')}"`)
+          .join(','),
+      )
+      .join('\r\n') + '\r\n'
+  );
+}

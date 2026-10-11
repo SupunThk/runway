@@ -8,6 +8,7 @@ import {
 } from 'wagmi';
 import {
   erc20Abi,
+  encodeFunctionData,
   formatUnits,
   getAddress,
   isAddress,
@@ -15,10 +16,13 @@ import {
   parseUnits,
   zeroHash,
   type Hash,
+  type Address,
 } from 'viem';
 import { paymentsAbi, TESTNET_CHAIN_ID } from '@runway/mezo';
 import { WalletConnection } from './WalletConnection';
 import { TransactionHistory } from './TransactionHistory';
+import { usePendingTransaction, type PendingTransaction } from './pending';
+import { PendingTransactionPanel } from './PendingTransactionPanel';
 import {
   chainConfigValid,
   explorer,
@@ -45,6 +49,7 @@ export function App() {
   const [hash, setHash] = useState<Hash>();
   const [busy, setBusy] = useState(false);
   const [historyRevision, setHistoryRevision] = useState(0);
+  const recovery = usePendingTransaction(paymentAddress);
   const [view, setView] = useState<'overview' | 'create'>(
     new URLSearchParams(window.location.search).get('create') === '1'
       ? 'create'
@@ -190,6 +195,8 @@ export function App() {
     wallet &&
     readiness.isSuccess &&
     readiness.data?.payments &&
+    !recovery.pending &&
+    !recovery.error &&
     !busy,
   );
 
@@ -202,6 +209,7 @@ export function App() {
         throw new Error(
           'Connect to Mezo testnet and verify the payment deployment first.',
         );
+      recovery.checkStorage();
       await action();
       setHistoryRevision((value) => value + 1);
       await Promise.all([balances.refetch(), schedules.refetch()]);
@@ -210,6 +218,45 @@ export function App() {
     } finally {
       setBusy(false);
     }
+  }
+  async function waitTracked(
+    tx: Hash,
+    action: PendingTransaction['action'],
+    target: Address,
+    data: `0x${string}`,
+    id?: bigint,
+  ) {
+    let tracked: PendingTransaction = {
+      version: 1,
+      chainId: TESTNET_CHAIN_ID,
+      contract: paymentAddress!,
+      sender: address!,
+      target,
+      hash: tx,
+      data,
+      action,
+      scheduleId: id?.toString(),
+      submittedAt: new Date().toISOString(),
+    };
+    recovery.save(tracked);
+    setHash(tx);
+    let changedAction = false;
+    const receipt = await client!.waitForTransactionReceipt({
+      hash: tx,
+      timeout: 120000,
+      onReplaced: (replacement) => {
+        changedAction = replacement.reason !== 'repriced';
+        tracked = { ...tracked, hash: replacement.transaction.hash };
+        recovery.save(tracked);
+        setHash(tracked.hash);
+      },
+    });
+    if (changedAction)
+      throw new Error(
+        'Transaction was replaced. Check the saved transaction before continuing.',
+      );
+    recovery.clear(tracked.hash);
+    return receipt;
   }
   async function settle(id: bigint, cancel: boolean) {
     await transaction(async () => {
@@ -223,7 +270,17 @@ export function App() {
       const tx = await wallet!.writeContract(request);
       setHash(tx);
       setNotice('Transaction submitted. Waiting for confirmation…');
-      const receipt = await client!.waitForTransactionReceipt({ hash: tx });
+      const receipt = await waitTracked(
+        tx,
+        cancel ? 'Cancellation' : 'Claim',
+        paymentAddress!,
+        encodeFunctionData({
+          abi: paymentsAbi,
+          functionName: cancel ? 'cancel' : 'claim',
+          args: [id],
+        }),
+        id,
+      );
       if (receipt.status !== 'success')
         throw new Error('Transaction reverted. Refresh state before retrying.');
       setNotice(
@@ -283,9 +340,16 @@ export function App() {
         });
         const approval = await wallet!.writeContract(request);
         setHash(approval);
-        const receipt = await client!.waitForTransactionReceipt({
-          hash: approval,
-        });
+        const receipt = await waitTracked(
+          approval,
+          'Approval',
+          musdAddress!,
+          encodeFunctionData({
+            abi: erc20Abi,
+            functionName: 'approve',
+            args: [paymentAddress!, total],
+          }),
+        );
         if (receipt.status !== 'success')
           throw new Error('Approval reverted; no schedule was funded.');
       }
@@ -303,10 +367,20 @@ export function App() {
         functionName: 'createSchedule',
         args: [getAddress(recipient), total, start, end, zeroHash],
       });
+      recovery.checkStorage();
       const tx = await wallet!.writeContract(request);
       setHash(tx);
       setNotice('Schedule submitted. Waiting for confirmation…');
-      const receipt = await client!.waitForTransactionReceipt({ hash: tx });
+      const receipt = await waitTracked(
+        tx,
+        'Funding',
+        paymentAddress!,
+        encodeFunctionData({
+          abi: paymentsAbi,
+          functionName: 'createSchedule',
+          args: [getAddress(recipient), total, start, end, zeroHash],
+        }),
+      );
       if (receipt.status !== 'success')
         throw new Error(
           'Creation reverted; no schedule was funded. Approval may remain. Retry with a fresh start time.',
@@ -443,6 +517,38 @@ export function App() {
               ) : null}
             </div>
           ) : null}
+          {recovery.error && (
+            <div className="callout warning" role="alert">
+              {recovery.error}
+              {!recovery.pending && (
+                <button
+                  onClick={() => {
+                    if (
+                      window.confirm(
+                        'Remove the unreadable tracking record? This does not cancel any transaction. Check your wallet and explorer before submitting again.',
+                      )
+                    )
+                      recovery.resetDamagedRecord();
+                  }}
+                >
+                  Remove unreadable tracking
+                </button>
+              )}
+            </div>
+          )}
+          {recovery.pending && (
+            <PendingTransactionPanel
+              pending={recovery.pending}
+              busy={busy}
+              ready={Boolean(readiness.data?.payments)}
+              onResolved={() => {
+                recovery.clear(recovery.pending!.hash);
+                setHistoryRevision((value) => value + 1);
+                if (address) void balances.refetch();
+                void schedules.refetch();
+              }}
+            />
+          )}
           {invalidRoute ? (
             <div className="panel">
               <h2>Schedule link not found</h2>
