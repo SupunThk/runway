@@ -2,7 +2,7 @@
 
 Selected October 13, 2026: Vercel frontend → same-origin `/api` reverse proxy → Render Node.js API → MongoDB Atlas.
 
-The root `render.yaml` defines a free Node web service in Singapore. No service has been created by this configuration alone. MongoDB remains hosted in Atlas. Render provides PORT; the API binds to 0.0.0.0 when PORT is set. Local development continues using 127.0.0.1:3001.
+The root `render.yaml` defines a free Node web service in Singapore. The service was created directly through Render MCP on October 13, 2026: `srv-db75jus9v7es73ai4g00`, https://runway-api-rw61.onrender.com. The Blueprint itself has not been applied. MongoDB remains hosted in Atlas. Render provides PORT; the API binds to 0.0.0.0 when PORT is set. Local development continues using 127.0.0.1:3001.
 
 ## Deploy
 
@@ -39,3 +39,9 @@ Do not switch the browser to direct cross-site calls to onrender.com without red
 Render free web services can sleep after inactivity, causing slow first requests. Keep the UI's unavailable/retry states and verify cold-start behavior before demonstrations. The health endpoint checks MongoDB, so an unavailable database can prevent the deployment from passing its health check.
 
 References: [Render web services](https://render.com/docs/web-services), [Blueprint fields](https://render.com/docs/blueprint-spec), [Node version](https://render.com/docs/node-version), [Vercel external rewrites](https://vercel.com/docs/routing/rewrites).
+
+## Current hosted service
+
+The free Singapore service runs backend commit `023087f` from `deploy/render-backend-2026-10-13`, with commit-triggered auto-deploy. Backend updates must reach this branch until the service is deliberately switched to main. Direct HTTPS health returned ready/database connected. The MCP creation tool cannot set healthCheckPath or checksPass; the live service currently uses default TCP health checks. Set `/api/health` in Dashboard settings when browser access is available. The Blueprint retains the recommended HTTP health and checksPass settings for future Blueprint-managed deployment.
+
+Vercel external API rewrite targets this actual Render origin. APP_ORIGIN stays https://mezo-runway-testnet.vercel.app and MongoDB credentials stay only in Render server environment settings.
