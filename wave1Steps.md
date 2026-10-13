@@ -4,7 +4,26 @@
 **Related documents:** `plan.md`, `issues.md`  
 **Network:** Mezo testnet only  
 **Primary track:** Access and Distribution  
-**Goal:** Ship a working, publicly accessible testnet app with real MUSD payment schedules, recipient claims, transaction receipts, and read-only Mezo borrowing information.
+**Goal:** Ship the expanded testnet treasury workflow: funded MUSD payments, MongoDB workspaces/contractors/invoices, and verified borrowing/repayment, planning and onboarding integrations.
+
+## Scope revision — October 13, 2026
+
+The user approved the MongoDB backend and moved the original Wave 2 integrations into Wave 1. [Current workflow](docs/development-workflow.md) and [backend setup](docs/backend.md) govern new work. Earlier numbered steps and deferrals below are the historical payment-release checklist, not the complete expanded scope.
+
+- [x] Implement a local TypeScript API and MongoDB persistence layer.
+- [x] Add wallet-message login and owner-private workspaces.
+- [x] Add contractor directory and owner-created draft invoices, with prefilled funding links.
+- [ ] Configure the user's MongoDB connection and verify actual persistence.
+- [ ] Verify the same-origin backend on the hosted deployment.
+- [ ] Investigate historical failing GitHub browser run 38117460629 and complete release regression checks.
+- [ ] Add event indexing, retry/checkpoint/reorg handling and confirmed schedule/invoice links.
+- [ ] Implement and test wallet-signed borrowing and repayment using verified protocol contracts.
+- [ ] Add repayment reserves and dated cash planning.
+- [ ] Integrate and validate Mezo Passport and its authentication requirements.
+- [ ] Publish typed payment helpers and a minimal example.
+- [ ] Collect three target-user walkthroughs and update demo/submission materials.
+
+Wave 2 now covers payroll runs, recurring plans, contractor submissions, approvals, forecasting, team roles/multisig, reminders and reporting. No expanded-scope release date is assumed. Existing payment contract behavior and testnet-only boundaries remain.
 
 ## 1. What we are building
 
@@ -39,13 +58,15 @@ We will build:
 - A funded payment-schedule contract.
 - Founder and contractor interfaces.
 - Read-only borrowing-position information.
+- Wallet-signed borrowing and repayment (expanded scope; not yet implemented).
+- MongoDB workspaces, contractor directory and draft invoices.
+- Mezo Passport, reusable payment helpers and user pilots (planned).
 - Hypothetical BTC stress scenarios.
 - Transaction history and CSV export.
 - Tests, documentation, deployment, and submission materials.
 
 We will defer:
 
-- Borrowing and repayment inside our app.
 - Automatic borrowing.
 - Background payment automation.
 - Fiat conversion and bank payouts.
@@ -54,7 +75,6 @@ We will defer:
 - Multisignature team administration.
 - Production payroll processing.
 - Mainnet deployment.
-- Mezo Passport integration and additional wallet connectors.
 - Optional MEZO balance display; MUSD remains the settlement asset.
 
 **Important:** Payments accrue over time, but transferring accrued funds requires a claim transaction. This is not an automatic background payroll service.
@@ -122,7 +142,7 @@ Verify current installation instructions and compatible dependency versions befo
 - Compatible OpenZeppelin contract utilities.
 - Vitest for calculations and utility functions.
 - Playwright for browser verification.
-- Mezo Passport deferred to Wave 2; it is not a Wave 1 dependency.
+- Mezo Passport is an expanded Wave 1 target; it is not a dependency of the established payment release.
 
 ### Official references
 
@@ -181,11 +201,11 @@ Use these defaults:
 | Contract administration | No fund-seizure or recipient-editing privileges |
 | App fees | None |
 | Borrowing integration | Read-only |
-| Backend | None initially |
+| Backend | TypeScript/Hono API and MongoDB; owner workspaces, contractors and draft invoices |
 | Browser wallets | Rabby, MetaMask, and other detected EIP-6963 EVM providers; real-extension/testnet verification pending |
 | Solidity toolchain | Native Foundry 1.7.1 npm binary validated on Windows; WSL currently inaccessible |
 | Frontend hosting | Netlify, subject to the hosting smoke test |
-| Passport | Deferred to Wave 2 |
+| Passport | Expanded Wave 1 target; compatibility verification pending |
 | MEZO balance display | Deferred; no extra token integration required for Wave 1 |
 | Protocol integration source | Call deployed contracts through verified ABIs; do not copy MUSD implementation source |
 

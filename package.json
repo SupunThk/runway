@@ -8,10 +8,12 @@
     "node": ">=22.12.0"
   },
   "scripts": {
-    "dev": "pnpm --filter @runway/web dev",
-    "build": "pnpm --filter @runway/web build",
+    "dev": "node scripts/dev.mjs",
+    "dev:web": "pnpm --filter @runway/web dev",
+    "dev:api": "pnpm --filter @runway/api dev",
+    "build": "pnpm --filter @runway/api build && pnpm --filter @runway/web build",
     "prepare:hosting": "pnpm build && node scripts/prepare-frontend-deploy.mjs",
-    "typecheck": "pnpm --filter @runway/web typecheck",
+    "typecheck": "pnpm --filter @runway/api typecheck && pnpm --filter @runway/web typecheck",
     "test": "vitest run",
     "format": "prettier --write .",
     "docs:generate": "node --experimental-strip-types scripts/export-user-guide.mjs",

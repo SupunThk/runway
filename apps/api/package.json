@@ -1,0 +1,21 @@
+{
+  "name": "@runway/api",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.ts",
+    "dev": "node --env-file-if-exists=../../.env --watch src/server.ts",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hono/node-server": "2.1.5",
+    "hono": "4.13.13",
+    "mongodb": "7.7.0",
+    "viem": "2.57.4"
+  },
+  "devDependencies": {
+    "mongodb-memory-server": "11.3.0"
+  }
+}

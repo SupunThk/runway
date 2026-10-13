@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { config } from './config';
 import { App } from './App';
 import { Documentation } from './Documentation';
+import { Workspace } from './Workspace';
 import './style.css';
 
 const queryClient = new QueryClient({
@@ -16,6 +17,8 @@ createRoot(document.getElementById('root')!).render(
       <QueryClientProvider client={queryClient}>
         {/^\/docs\/?$/.test(window.location.pathname) ? (
           <Documentation />
+        ) : /^\/workspace\/?$/.test(window.location.pathname) ? (
+          <Workspace />
         ) : (
           <App />
         )}

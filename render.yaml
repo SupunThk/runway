@@ -1,0 +1,22 @@
+# MongoDB stays in Atlas. Set its URI in Render's secret environment settings.
+services:
+  - type: web
+    name: runway-api
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: npm exec --yes --package=pnpm@10.34.6 -- pnpm install --frozen-lockfile --prod=false && npm exec --yes --package=pnpm@10.34.6 -- pnpm --filter @runway/api build
+    startCommand: node apps/api/src/server.ts
+    healthCheckPath: /api/health
+    autoDeployTrigger: checksPass
+    envVars:
+      - key: NODE_VERSION
+        value: 24.16.0
+      - key: NODE_ENV
+        value: production
+      - key: APP_ORIGIN
+        value: https://mezo-runway-testnet.vercel.app
+      - key: MONGODB_DATABASE
+        value: runway
+      - key: MONGODB_URI
+        sync: false

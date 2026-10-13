@@ -13,6 +13,11 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Cache isolated MongoDB test binary
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/mongodb-binaries
+          key: mongodb-${{ runner.os }}-8.0.17
       - name: Configure public testnet values
         run: cp .env.example .env
       - run: pnpm typecheck

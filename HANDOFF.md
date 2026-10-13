@@ -1,6 +1,31 @@
 # Runway project handoff
 
+## Active scope update — October 13, 2026
+
+Hosting decision updated after the backend increment: the user chose Render for the Node API, keeping the frontend on Vercel and database in Atlas. Cloud MongoDB ping and index initialization succeeded with the user's `.env` after DNS troubleshooting; credentials were never printed. `render.yaml`, PORT/0.0.0.0 listener support and a frontend proxy-configuration script are prepared. The previous Vercel API adapter is removed. No Render service or hosted backend has yet been created or verified. Read `docs/render-hosting.md`; actual Render access and service URL are required for deployment and proxy activation.
+
+The user approved MongoDB and expanding Wave 1. Local work adds a TypeScript/Hono API, pooled MongoDB access/indexes, EOA wallet-message authentication, owner-private workspaces, contractor directory, draft invoices and `/workspace`, with prefilled links into the existing funding form. User database credentials will be added by the user to root `.env` after this increment. No live-database verification, commit, push or deployment is implied.
+
+Read `docs/backend.md` for configuration and `docs/development-workflow.md` for the current roadmap. Former Wave 2 borrowing/repayment, planning, Passport, reusable helpers and pilots are now Wave 1 targets, still unimplemented where not explicitly recorded. Indexing and confirmed invoice/payment reconciliation remain upcoming. Wave 2 expands into payroll operations, contractor submissions, approvals, forecasting, team roles/multisig and notifications. Original backend-free scope and deferrals below are historical and superseded by this revision.
+
+Local verification passed: 30 unit/API tests (including nine against temporary MongoDB), all 44 browser cases, TypeScript, backend/frontend build, formatting and whitespace checks. The browser flow covers login, persisted workspace/contractor/invoice creation, reload recovery and exact payment prefilling; rejected signing remains recoverable. The 390px workspace screenshot was visually reviewed without horizontal overflow. Tests use temporary databases and simulated wallets, not the user's MongoDB account or real signing. The existing bundle-size warning remains. CI caches the isolated MongoDB test binary. No contract changes, transactions or deployment occurred.
+
+Preserve the pre-existing local handoff content. The historical browser CI failure remains unresolved; current local check results will be recorded in `docs/test-results.md`. Existing payment contract and production release remain unchanged until an authorized release is ready. After the user configures MongoDB, verify local persistence, then hosted routing/cookies/database access before deployment. Keep backend values server-only, without VITE_ prefixes.
+
 Updated October 11, 2026. Read this first when continuing in a new session. This records completed work and verified results; balances and deployment checks are historical snapshots.
+
+## End-of-day status — October 11
+
+- User finished for the day and requested this handoff update. Do not continue feature work or redeploy as part of this update.
+- Latest committed and pushed application release: `b309e7b08f4f62909460f7f15751ed96a964c8c9` (`Add Runway user documentation and downloadable guide`), on `main`.
+- Production deployment `dpl_EMyR7AMmss43ipT1xsAwPDqd4ijS` is READY and assigned to https://mezo-runway-testnet.vercel.app. Deployment URL: https://mezo-runway-testnet-4uvg5s1l9-supunthks-projects.vercel.app.
+- User documentation is live at https://mezo-runway-testnet.vercel.app/docs. Unauthenticated public browser checks passed for `/docs` and `/docs/`, section links, the identical Markdown download, navigation to/from New schedule, 390px/320px mobile layouts without overflow, and no page errors. Reading the guide required neither a wallet nor Mezo RPC requests.
+- **First next-session task: investigate the failed GitHub browser-test step.** [CI run 38117460629](https://github.com/SupunThk/runway/actions/runs/38117460629) completed with failure in `Run pnpm test:browser`. Earlier typecheck, unit-test, build and contract-test steps passed. The exact failing browser case/cause has not been investigated. Do not describe this release as having all CI checks passing. Vercel deployment is not gated on CI, so production is live despite this failure.
+- Previous release `797c910` passed all CI checks, including browser tests. Use it as the comparison baseline; do not assume the new failure's cause.
+- Core Wave 1 implementation is complete: funded schedules, claims/cancellation, history/receipts, CSV/recovery, read-only borrowing, BTC scenarios, schedule pagination, explorer source verification, adversarial/invariant tests, and user documentation.
+- Full Wave 1 release work remains: demo video/submission materials, final release review/tag, final hosted two-wallet extension validation, and external confirmations (registration/Discord, deadline timezone, and early-work eligibility). Earlier real on-chain payment tests are already complete; do not repeat them just to recover context.
+- A separate backend is not required for Wave 1. Prioritize a clear complete payment demonstration before adding scope. Borrowing and repayment remain in Mezo.
+- This handoff-only update is saved locally after the deployed commit; it has not been committed or pushed. Inspect `git status` before the next change.
 
 ## 1. What this project is
 
@@ -28,7 +53,7 @@ The user is learning these concepts. Explain steps plainly and use the existing 
 | Vercel project ID | `prj_xVu0NEGFRc47pJFYnZI87erHvqoX` |
 | Vercel team ID | `team_0003YMxdv6pi0w9vMdCToeSG` |
 
-Before this handoff was created, the latest commit was `a27e0e6` (GitHub-linked Vercel deployment documentation). The initial implementation commit was `8a58ef1`. Run `git status` and `git log` at the start of the next session; this handoff may not yet have been committed or pushed.
+Latest deployed application commit: `b309e7b` (user documentation). The initial implementation commit was `8a58ef1`. Run `git status` and `git log` at the start of the next session; handoff updates can remain local after an application release.
 
 ## 3. Network, assets, and accounts
 
@@ -51,7 +76,7 @@ The contract was deployed by the founder in transaction:
 
 `0xdb151ec249a704f17390ba6b35ef5458924deff142a796995c60773c3a80f45f`
 
-Deployment block: `16083735`. Successful receipt, founder, exact local creation bytecode, constructor MUSD argument, deployed code and immutable token getter were verified. Explorer source verification and an independent audit have not been performed. Reuse this contract for the current app; another deployment is unnecessary for ordinary frontend work.
+Deployment block: `16083735`. Successful receipt, founder, exact local creation bytecode, constructor MUSD argument, deployed code and immutable token getter were verified. Explorer exact-match source verification is complete; see `docs/explorer-verification.md`. An independent audit has not been performed. Reuse this contract for the current app; another deployment is unnecessary for ordinary frontend work.
 
 ## 4. Completed implementation
 
@@ -101,11 +126,11 @@ Both tests are finished. Do not ask the user to repeat them just to establish pr
 
 The app was first published as a local static build. It was then changed to GitHub-driven source builds using the **same Vercel project and public URL**.
 
-Confirmed GitHub deployment:
+Latest confirmed GitHub deployment:
 
-- ID: `dpl_VhctE7eZaxParBep8o9qKU3NcbKc`
+- ID: `dpl_EMyR7AMmss43ipT1xsAwPDqd4ijS`
 - Source: GitHub, `SupunThk/runway`, branch `main`
-- Commit: `a27e0e6cac7666aa9eef9eb795f5044de7794db4`
+- Commit: `b309e7b08f4f62909460f7f15751ed96a964c8c9`
 - Result: production READY, aliased to https://mezo-runway-testnet.vercel.app
 - Build: cloned the repository, installed the locked dependencies, passed TypeScript and built Vite successfully.
 
@@ -139,7 +164,7 @@ Important evidence distinction: `deployments/mezo-testnet.frontend.json` describ
 
 The original public-site report and screenshot are tracked in `deployments/frontend.check.json` and `deployments/frontend-mobile.png`. The later GitHub-build verification report was retained locally at `.tools/vercel-config/github-frontend.check.json` (ignored; may not exist in a fresh clone).
 
-Remaining validation limits: real extension signing on the public HTTPS origin has not been verified by the agent; GitHub Actions results have not been inspected; stateful invariants and adversarial token/reentrancy coverage remain unfinished. The build still warns about a JavaScript bundle over 500 kB. There is no independent security audit.
+The counts above describe the initial release. The Solidity suite now passes 24 tests with adversarial token/reentrancy coverage and two stateful invariant campaigns; the previous release passed 42 browser tests and 21 unit/accounting tests in CI. For the latest documentation release, the GitHub browser-test step failed and requires investigation (see end-of-day status); its earlier checks passed. Real extension signing on the final public HTTPS origin remains unverified by the agent. The build still warns about a JavaScript bundle over 500 kB. There is no independent security audit.
 
 ## 8. Transaction history and receipts (deployed October 11)
 
@@ -245,6 +270,8 @@ Next: demo/submission materials and release review. Borrowing and repayment shou
 | `apps/web/src/WalletConnection.tsx` | Wallet discovery and selection |
 | `apps/web/src/config.ts` | Public configuration and wagmi setup |
 | `apps/web/src/style.css` | Responsive styling |
+| `apps/web/src/Documentation.tsx`, `apps/web/src/guide.ts` | Public documentation page and shared guide content |
+| `docs/user-guide.md`, `scripts/export-user-guide.mjs` | Generated repository guide; regenerate with `pnpm docs:generate` |
 | `packages/mezo/src/index.ts` | Chain definition, payment ABI and calculation helpers |
 | `contracts/src/RunwayPayments.sol` | Deployed payment rules |
 | `contracts/test/RunwayPayments.t.sol` | Contract tests |
@@ -298,14 +325,14 @@ In the previous agent environment, default shell sandbox setup repeatedly failed
 - Implementation started October 10, before the brief's October 16 build start. Organizer approval for early implementation remains unconfirmed; recorded in `docs/buildathon.md`.
 - Do not mark all of Wave 1 complete: history/receipts, CSV/recovery, borrowing reads, price-stress scenarios and pagination are deployed; explorer verification and local adversarial/stateful tests are complete; submission materials, release review and external confirmations remain.
 
-## User documentation prepared (October 11)
+## User documentation deployed (October 11)
 
 Added a wallet-free `/docs` page linked from the app sidebar, covering setup, founder funding, contractor claims, cancellation with a worked example, paginated overview, history/JSON receipts/CSV, read-only borrowing/scenarios, pending recovery and release limits. Shared content in `apps/web/src/guide.ts` powers both the page and Markdown download; `pnpm docs:generate` writes `docs/user-guide.md` through `scripts/export-user-guide.mjs`. README links to the user guide. Vercel rewrites now include `/docs` and `/docs/` for direct visits.
 
 Validation: production TypeScript/Vite build passed. Local production-preview browser checks passed for both documentation routes, anchor links, identical Markdown download, navigation to/from New schedule, 390px/320px layouts without overflow, and no page errors. Documentation made no Mezo RPC requests and required no wallet. Desktop/mobile screenshots were visually inspected. Ignored checker/screenshots: `.tools/verify-user-guide.mjs`, `.tools/user-guide-desktop.png`, `.tools/user-guide-mobile.png`.
 
-The user authorized deploying these documentation changes. Publish through the normal GitHub `main` workflow and verify the public `/docs` page, Markdown download and navigation; inspect git/deployment status for the publication result. The fallback static-hosting preparation also includes both docs routes. Payment contract and transaction behavior were not changed.
+Committed and pushed as `b309e7b`, then deployed through the normal GitHub `main` workflow as `dpl_EMyR7AMmss43ipT1xsAwPDqd4ijS`. The public `/docs` and `/docs/` page checks, Markdown download and navigation passed, including mobile layouts and no page errors. The fallback static-hosting preparation also includes both docs routes. Payment contract and transaction behavior were not changed. The full GitHub browser-test step subsequently failed; investigate it next session before further release work.
 
 ## Suggested prompt for the next session
 
-> Read HANDOFF.md and inspect the current repository. Pagination is deployed, explorer verification is complete, and local contract security tests pass all 24 cases. Continue with demo/submission materials and release review. Preserve the verified production contract, keep borrowing/repayment in Mezo and verify any public deployment.
+> Read HANDOFF.md and inspect the current repository. User documentation is deployed as b309e7b and its public smoke checks pass, but GitHub CI run 38117460629 failed at the browser-test step. Investigate the failing case first, then continue with demo/submission materials and release review. Preserve the verified production contract, keep borrowing/repayment in Mezo and verify any public deployment. The latest handoff update may be uncommitted locally.

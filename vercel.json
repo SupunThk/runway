@@ -5,6 +5,8 @@
   "buildCommand": "corepack pnpm build",
   "outputDirectory": "apps/web/dist",
   "rewrites": [
+    { "source": "/workspace", "destination": "/index.html" },
+    { "source": "/workspace/", "destination": "/index.html" },
     { "source": "/schedules/:id", "destination": "/index.html" },
     { "source": "/docs", "destination": "/index.html" },
     { "source": "/docs/", "destination": "/index.html" }

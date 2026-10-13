@@ -429,6 +429,9 @@ export function App() {
           <a href="/docs" className="nav">
             <span aria-hidden="true">?</span> <span>Documentation</span>
           </a>
+          <a href="/workspace" className="nav">
+            <span>Workspace</span>
+          </a>
         </nav>
         <div className="sidebar-bottom">
           <span className="network-dot" /> Mezo testnet
@@ -558,6 +561,11 @@ export function App() {
                   Recipient wallet
                   <input
                     name="recipient"
+                    defaultValue={
+                      new URLSearchParams(window.location.search).get(
+                        'recipient',
+                      ) ?? ''
+                    }
                     required
                     placeholder="0x…"
                     autoComplete="off"
@@ -568,6 +576,11 @@ export function App() {
                     Total funding · MUSD
                     <input
                       name="total"
+                      defaultValue={
+                        new URLSearchParams(window.location.search).get(
+                          'amount',
+                        ) ?? ''
+                      }
                       required
                       inputMode="decimal"
                       placeholder="0.00"

@@ -19,6 +19,8 @@ await writeFile(
         { source: '/schedules/:id', destination: '/index.html' },
         { source: '/docs', destination: '/index.html' },
         { source: '/docs/', destination: '/index.html' },
+        { source: '/workspace', destination: '/index.html' },
+        { source: '/workspace/', destination: '/index.html' },
       ],
     },
     null,

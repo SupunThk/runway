@@ -33,6 +33,9 @@ export function Documentation() {
           <a href="/docs" className="nav active" aria-current="page">
             Documentation
           </a>
+          <a href="/workspace" className="nav">
+            Workspace
+          </a>
         </nav>
         <div className="sidebar-bottom">
           <span className="network-dot" /> Mezo testnet

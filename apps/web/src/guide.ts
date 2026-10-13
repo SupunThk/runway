@@ -126,6 +126,16 @@ export const guideSections: GuideSection[] = [
       'The deployed payment contract’s source is exact-match verified on the Mezo testnet explorer, and automated contract tests include adversarial and stateful invariant checks. Source verification and testing are not an independent security audit.',
     ],
   },
+  {
+    id: 'workspace',
+    title: 'Workspaces, contractors and draft invoices',
+    paragraphs: [
+      'Workspace is an additional service that must be configured by the operator. Connect a personal EVM wallet on Mezo testnet, open Workspace and sign the login message. Signing in costs no gas and does not authorize a payment.',
+      'Create a workspace, save a contractor name and wallet, then prepare a draft invoice with a MUSD amount and due date. Workspaces are private to their owner wallet; shared team access and contractor invoice submission are upcoming.',
+      'Create payment or Prepare payment opens the existing funding form with the recipient and, for invoices, amount filled in. Review them before signing. A draft invoice is not proof of payment and is not automatically linked to a confirmed schedule. Repeated funding can create duplicate payments.',
+      'Sign out of workspace to revoke your login session. Disconnecting the wallet hides workspace access but does not revoke the server session. Public recipient pages and onchain payment rights do not depend on workspace login.',
+    ],
+  },
 ];
 
 export const guideMarkdown =

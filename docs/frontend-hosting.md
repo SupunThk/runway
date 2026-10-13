@@ -12,6 +12,8 @@ The connector initially rejected project creation with HTTP 403. The mapped CLI 
 
 ## Normal workflow: deploy through GitHub
 
+The October 13 increment also includes a MongoDB API, now selected for Render hosting. Configure server-only MONGODB_URI, MONGODB_DATABASE and exact frontend HTTPS APP_ORIGIN in Render. After Render assigns its actual URL, use `scripts/configure-api-proxy.mjs` to add Vercel's external `/api` rewrite. See [Render hosting](render-hosting.md). Verify `/api/health`, login/cookies and workspace persistence through the hosted frontend before production. The static fallback below cannot run the API itself.
+
 Commit and push changes to `main`:
 
 ```powershell

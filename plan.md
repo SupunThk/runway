@@ -3,7 +3,9 @@
 **Pitch:** Turn Bitcoin-backed MUSD into dependable contractor payments, with a clear view of your team's cash runway and borrowing risk.
 
 **Prepared:** October 10, 2026  
-**Recommended submission:** Track 2 (Access and Distribution); add Track 1 in Wave 2 if the borrowing and repayment integration is delivered.  
+**Scope revised:** October 13, 2026. MongoDB backend approved; former Wave 2 integrations moved into expanded Wave 1. See [current workflow](docs/development-workflow.md).
+
+**Recommended submission:** Track 2 (Access and Distribution); consider Track 1 when borrowing and repayment are implemented and verified.
 **Deployment:** Mezo testnet first.  
 **Planning assumption:** One experienced full-stack developer, with optional design help. Prioritize a complete, narrow product over feature count.
 
@@ -19,7 +21,7 @@ The dashboard answers three practical questions:
 
 **Core product loop:** BTC-backed borrowing → MUSD operating budget → funded contractor payments → business revenue → optional MUSD debt repayment.
 
-Wave 1 implements the payment loop and reads an existing borrowing position. Wave 2 brings borrowing and repayment into the app through wallet-signed calls to the existing Mezo protocol.
+Expanded Wave 1 combines the existing payment product with a MongoDB-backed workspace, contractors, draft invoices, and planned wallet-signed borrowing/repayment, cash planning, Passport, reusable helpers and pilot evidence. Wave 2 expands into payroll operations, contractor-submitted invoices, approvals and forecasting. Planned scope is not a claim of delivered functionality.
 
 Borrowing preserves BTC exposure but introduces debt, fees, liquidation, and redemption risk. The product must show these alongside the funding flow; it must never describe borrowed funds as income or guaranteed safe spending.
 
@@ -64,7 +66,7 @@ The docs also describe MUSD x402 payments. Treat that as a possible later distri
 - Record official testnet addresses and deployed ABI versions for MUSD, BorrowerOperations, TroveManager, price feeds, and hint helpers; confirm bytecode exists at each address.
 - Read token decimals and protocol parameters. Confirm minimum debt, reserves, fees, interest accounting, recovery-mode restrictions, and the exact collateral representation.
 - Prove an MUSD transfer and a real position read before developing the dashboard.
-- Prove a borrowing/repayment transaction with the deployed ABI before promising the Wave 2 flow.
+- Prove borrowing/repayment transactions with the deployed ABI before releasing the expanded Wave 1 flow.
 - Get test BTC through the [faucet](https://faucet.test.mezo.org/) and test MUSD through the [testnet app](https://testnet.mezo.org). Account for minimum borrowing requirements and faucet limits.
 - Store verified chain configuration and source references in a deployment manifest. Never guess addresses or copy a mainnet address into testnet configuration.
 
@@ -108,7 +110,13 @@ This is funded accrual with on-demand settlement. Funds do not automatically arr
 
 With two independent wallets on Mezo testnet, a founder can fund a schedule with the official MUSD token, and a contractor can claim accrued MUSD. Cancellation preserves vested entitlement. Balances reconcile to contract state, receipts open in the explorer, and a browser refresh recovers the workflow.
 
-## 5. Wave 2 scope: deepen the Mezo integration
+## 5. Expanded Wave 1 and Wave 2
+
+### Expanded Wave 1: backend and complete treasury workflow
+
+The October 13 local implementation adds a TypeScript/Hono API, MongoDB connection pooling and indexes, wallet-message login, owner-private workspaces, contractors, draft invoices and prefilled payment forms. The user's live MongoDB connection and deployment verification remain pending. Draft invoices are planning records; opening a funding form does not mark them paid or associate a confirmed schedule.
+
+Additional Wave 1 delivery priorities:
 
 Deliver these in priority order:
 
@@ -117,6 +125,18 @@ Deliver these in priority order:
 3. **Better risk and cash planning:** Include current debt accounting, repayment reserves, dated obligations, and stress scenarios. Surface protocol mode changes and stale prices.
 4. **Reusable integration package:** Publish typed schedule creation, claim, and reading helpers, plus a minimal example so other Mezo apps can reuse the payment primitive.
 5. **Pilot evidence:** Ask three target users to complete a funding or claim workflow and document friction, completion, and intended recurring use.
+
+6. **Mezo Passport:** Verify compatibility and integrate the additional wallet path within Wave 1. Initial backend authentication supports EOA personal wallets; smart-contract wallet verification needs separate implementation.
+7. **Indexed payment reconciliation:** Persist verified chain events with block/log identifiers, replay and reorg handling, then associate confirmed schedules with contractors/invoices. Keep direct RPC access for public recipient claims and clear indexer-lag disclosure.
+
+### Wave 2: team treasury operations
+
+1. **Payroll runs:** Prepare multiple contractor payments, review total funding and track each confirmed result.
+2. **Recurring payment plans:** Manage cadence, upcoming funding and missed-payment states; reminders do not imply automatic execution.
+3. **Contractor invoice submission:** Add recipient access, review, approval and confirmed settlement reconciliation beyond owner-created drafts.
+4. **Treasury forecasting:** Combine upcoming obligations, expected revenue and repayment reserves, with assumptions and BTC scenarios clearly identified.
+5. **Team administration:** Wallet invitations, roles, approval policies, audit records and verified multisig support.
+6. **Notifications and reporting:** Opt-in reminders, risk alerts and consolidated operational reports.
 
 An opt-in reminder service or batch claims can follow if the core flow is stable. Any automated claimant must pay gas and can only trigger transfers to the stored recipient; its reliability and operating cost must be explicit.
 
@@ -132,7 +152,9 @@ flowchart TD
     Reader --> Mezo[Existing Mezo borrowing and price contracts]
     UI -->|Wallet-signed funding and claims| Schedules[MUSD payment schedules]
     Schedules --> Token[Official MUSD token]
-    UI -->|Wave 2: direct wallet-signed calls| Mezo
+    UI -->|Expanded Wave 1: planned wallet-signed calls| Mezo
+    UI --> API[TypeScript API and wallet sessions]
+    API --> DB[MongoDB workspaces, contractors, draft invoices]
     Events[Confirmed contract events] --> Index[Small indexer and database]
     Index --> UI
 ```
@@ -145,7 +167,7 @@ flowchart TD
 | UI | Tailwind CSS, accessible components, responsive treasury screens |
 | Chain access | viem, wagmi, TanStack Query; Passport after a compatibility spike |
 | Contracts | Solidity, Foundry, compatible OpenZeppelin utilities |
-| Optional backend | Small TypeScript event worker and PostgreSQL for metadata and receipt search |
+| Backend | TypeScript/Hono API and MongoDB for wallet sessions, workspaces, contractors and draft invoices; event indexing planned |
 | Verification | Foundry unit/fuzz/invariant tests; Playwright for critical browser flows |
 | Delivery | Static frontend hosting, reproducible contract scripts, deployment manifest, CI |
 
@@ -158,8 +180,10 @@ apps/web/                 dashboard, schedule form, recipient page
 contracts/src/            MUSD payment schedule contract
 contracts/test/           accounting, authorization, and invariant tests
 packages/mezo/            verified chain config, ABIs, reads, risk math
-packages/payments/        reusable client helpers (Wave 2)
-services/indexer/         optional event synchronization
+packages/payments/        planned reusable client helpers (expanded Wave 1)
+apps/api/                 TypeScript API, MongoDB, wallet sessions, workspace records
+render.yaml               Render Node API deployment; Vercel proxies /api after URL setup
+services/indexer/         planned verified event synchronization
 deployments/              addresses, chain IDs, ABI versions, transaction hashes
 docs/                     architecture, demo, threat model, submission notes
 ```

@@ -105,3 +105,25 @@ All 24 Solidity tests pass: 9 existing tests (including 256 accounting fuzz case
 Adversarial coverage includes all nine write-entry reentrancy combinations, short/fee funding, false ERC-20 returns, reverting payout/refund calls, transaction rollback and retry, permissionless recipient-only claims, claim/cancel ordering, donations, no-return tokens, full-precision arithmetic with an overflowing intermediate product, invalid calls and 105-ID discovery. Detailed scope: `docs/security-testing.md`; machine-readable results: `deployments/security-tests.check.json`.
 
 Production source SHA-256 and creation-bytecode hash remain identical to the deployed artifact. Production source/frontend files were unchanged, so browser/build checks were not repeated for these test-only additions. CI already runs the full Solidity suite. No new transactions or deployment. This coverage is not an independent audit.
+
+## MongoDB backend and expanded Wave 1 — October 13, 2026
+
+Local implementation adds a TypeScript/Hono API, MongoDB connection pooling and indexes, wallet-message authentication, owner-private workspaces, contractor directory and draft invoices. The `/workspace` page prepares existing wallet-funded payment forms with exact recipient/amount values. See `docs/backend.md` and `docs/development-workflow.md`.
+
+Verification passed:
+
+- TypeScript checks for the backend, serverless adapter, temporary browser fixture and frontend.
+- All 30 unit/API tests: existing 21 accounting tests plus nine API integration cases against temporary MongoDB 8.0.17. Coverage includes domain-bound signatures, hashed session tokens/logout, incorrect signatures, concurrent nonce replay, explicit challenge/session expiry independent of TTL cleanup, cross-origin/unauthenticated/oversized requests, owner isolation, foreign contractor references, exact 18-decimal amounts, duplicate contractor wallets, invalid amounts/dates, cursor pagination, shared auth throttles and sanitized unavailable-database responses.
+- All 44 Playwright cases in the final full run. Two new cases cover a simulated wallet signature followed by real API/MongoDB persistence, workspace/contractor/invoice creation, browser reload, payment-form prefilling, no transaction submission and rejection recovery. Existing 42 payment/borrowing/history/recovery/pagination/wallet cases also pass.
+- Backend type build and Vite production build, Prettier check and `git diff --check`. Existing frontend bundle-size warning remains (about 680 kB minified).
+- 390px workspace layout fits horizontally; screenshot visually reviewed at ignored `.tools/workspace-mobile.png`.
+
+The first integration run timed out while downloading the isolated MongoDB binary; after extending setup time the tests passed. Browser verification found an invoice select accessible-name issue and a simulated-provider rejection missing EIP-1193 code 4001; both were corrected before the successful final run. CI now caches the test binary. The historical GitHub run 38117460629 failure has not been diagnosed or replaced by a new CI run.
+
+The user's MongoDB connection has not been configured or tested. Production API routing, database network access, HTTPS cookies and real wallet signing remain unverified. No credentials were added, no blockchain transaction was sent, no Solidity source changed, and no commit/push/deployment was performed. Borrowing/repayment, Passport, indexing, confirmed invoice reconciliation and other expanded Wave 1 integrations remain planned.
+
+## Cloud connection and Render preparation — October 13, 2026
+
+After the user configured Atlas and resolved connection/DNS settings, cloud MongoDB ping and required index initialization passed without printing credentials. The user then selected Render for the Node API and Vercel for the frontend. Added `render.yaml`, Render PORT/0.0.0.0 binding, production start command and a URL-validating frontend proxy setup script; removed the superseded Vercel function adapter. Production origin configuration no longer silently defaults to localhost.
+
+Type checks, all 30 unit/API tests, formatting and whitespace checks pass after these changes. A short-lived production-mode API process bound using PORT, connected to the user's cloud database and returned HTTP 200/ready from `/api/health`; it was stopped after the check. No user records or financial transactions were created. Actual Render service creation and hosted proxy/cookie verification remain pending Render account access and service URL. No commit, push or deployment occurred.

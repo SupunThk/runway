@@ -12,6 +12,10 @@ Guide content lives in `apps/web/src/guide.ts`. Run `pnpm docs:generate` after e
 
 ## Run locally
 
+**October 13 scope update:** A local MongoDB-backed workspace increment adds wallet login, contractors and draft invoices at `/workspace`. Add your server-only connection settings to the existing `.env` using [backend setup](docs/backend.md). `pnpm dev` now runs both the API and frontend. The live database and hosted backend still need verification. See [revised Wave 1/Wave 2 workflow](docs/development-workflow.md) for delivered versus planned features.
+
+Cloud MongoDB connection and index initialization have now passed. The selected backend host is Render; the frontend stays on Vercel. See [Render deployment](docs/render-hosting.md) for the prepared Blueprint and same-origin API proxy. Hosted service creation and cookie/routing verification remain pending.
+
 Use Node 24 and pnpm 10.34.6:
 
 ```powershell
