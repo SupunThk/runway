@@ -237,8 +237,13 @@ input:focus-visible {
   background: #2b4237;
   color: #d3e9b7;
 }
-.sidebar-bottom {
+.sidebar-footer {
   margin-top: auto;
+}
+.sidebar-footer > nav {
+  margin-bottom: 20px;
+}
+.sidebar-bottom {
   font-size: 13px;
 }
 .sidebar-bottom > div {
@@ -741,6 +746,15 @@ dd {
   }
   .sidebar nav {
     display: flex;
+  }
+  .sidebar-footer {
+    width: 100%;
+    margin-top: 0;
+    border-top: 1px solid #2b4237;
+    padding-top: 8px;
+  }
+  .sidebar-footer > nav {
+    margin-bottom: 0;
   }
   .nav {
     font-size: 12px;

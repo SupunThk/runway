@@ -1,3 +1,4 @@
+import { Sidebar } from './Sidebar';
 import { useState } from 'react';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import {
@@ -391,53 +392,7 @@ export function App() {
     : undefined;
   return (
     <div className="shell">
-      <aside className="sidebar">
-        <a href="/" className="brand">
-          <span className="brand-mark">r</span>runway
-          <span className="brand-dot">.</span>
-        </a>
-        <div className="workspace-label">YOUR WORKSPACE</div>
-        <nav aria-label="Main navigation">
-          <a
-            href="/"
-            className={view === 'overview' ? 'nav active' : 'nav'}
-            onClick={
-              scheduleId
-                ? undefined
-                : (e) => {
-                    e.preventDefault();
-                    setView('overview');
-                  }
-            }
-          >
-            ↗ <span>Overview</span>
-          </a>
-          <a
-            href="/?create=1"
-            className={view === 'create' ? 'nav active' : 'nav'}
-            onClick={
-              scheduleId
-                ? undefined
-                : (e) => {
-                    e.preventDefault();
-                    setView('create');
-                  }
-            }
-          >
-            ＋ <span>New schedule</span>
-          </a>
-          <a href="/docs" className="nav">
-            <span aria-hidden="true">?</span> <span>Documentation</span>
-          </a>
-          <a href="/workspace" className="nav">
-            <span>Workspace</span>
-          </a>
-        </nav>
-        <div className="sidebar-bottom">
-          <span className="network-dot" /> Mezo testnet
-          <div>Built for teams that build.</div>
-        </div>
-      </aside>
+      <Sidebar active={invalidRoute || scheduleId ? undefined : view} />
       <main>
         <header className="topbar">
           <span>MUSD PAYMENT WORKSPACE</span>

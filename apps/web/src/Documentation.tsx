@@ -1,3 +1,4 @@
+import { Sidebar } from './Sidebar';
 import { guideMarkdown, guideSections } from './guide';
 
 function downloadGuide() {
@@ -17,31 +18,7 @@ export function Documentation() {
       <a className="skip-link" href="#guide">
         Skip to guide
       </a>
-      <aside className="sidebar">
-        <a href="/" className="brand">
-          <span className="brand-mark">r</span>runway
-          <span className="brand-dot">.</span>
-        </a>
-        <div className="workspace-label">YOUR WORKSPACE</div>
-        <nav aria-label="Main navigation">
-          <a href="/" className="nav">
-            Overview
-          </a>
-          <a href="/?create=1" className="nav">
-            New schedule
-          </a>
-          <a href="/docs" className="nav active" aria-current="page">
-            Documentation
-          </a>
-          <a href="/workspace" className="nav">
-            Workspace
-          </a>
-        </nav>
-        <div className="sidebar-bottom">
-          <span className="network-dot" /> Mezo testnet
-          <div>Built for teams that build.</div>
-        </div>
-      </aside>
+      <Sidebar active="docs" />
       <main id="guide" tabIndex={-1}>
         <header className="topbar">
           <span>THE RUNWAY GUIDE</span>

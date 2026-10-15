@@ -1,3 +1,4 @@
+import { Sidebar } from './Sidebar';
 import { useState, type FormEvent } from 'react';
 import {
   useInfiniteQuery,
@@ -176,27 +177,7 @@ function WorkspaceContent({ address }: { address?: string }) {
   }
   return (
     <div className="shell">
-      <aside className="sidebar">
-        <a href="/" className="brand">
-          <span className="brand-mark">r</span>runway
-          <span className="brand-dot">.</span>
-        </a>
-        <div className="workspace-label">YOUR WORKSPACE</div>
-        <nav aria-label="Main navigation">
-          <a href="/" className="nav">
-            Overview
-          </a>
-          <a href="/?create=1" className="nav">
-            New schedule
-          </a>
-          <a href="/workspace" className="nav active" aria-current="page">
-            Workspace
-          </a>
-          <a href="/docs" className="nav">
-            Documentation
-          </a>
-        </nav>
-      </aside>
+      <Sidebar active="workspace" />
       <main>
         <header className="topbar">
           <span>TEAM WORKSPACE</span>
