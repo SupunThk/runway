@@ -660,7 +660,11 @@ export function App() {
                   </div>
                 )}
                 {schedules.isFetching && !schedules.data ? (
-                  <p>Loading schedule state…</p>
+                  <div className="schedule-loading" role="status">
+                    <p>Loading schedule state…</p>
+                    <span className="skeleton-line" aria-hidden="true" />
+                    <span className="skeleton-line short" aria-hidden="true" />
+                  </div>
                 ) : scheduleRows?.length ? (
                   <div className="schedule-list">
                     {scheduleRows.map((s) => (
