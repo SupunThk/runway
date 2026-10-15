@@ -6,6 +6,14 @@
   "outputDirectory": "apps/web/dist",
   "rewrites": [
     {
+      "source": "/borrowing",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/borrowing/",
+      "destination": "/index.html"
+    },
+    {
       "source": "/api/:path*",
       "destination": "https://runway-api-rw61.onrender.com/api/:path*"
     },

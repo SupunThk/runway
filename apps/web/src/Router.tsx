@@ -2,6 +2,7 @@ import { useEffect, useState, type MouseEvent } from 'react';
 import { App } from './App';
 import { Documentation } from './Documentation';
 import { Workspace } from './Workspace';
+import { Borrowing } from './Borrowing';
 
 const currentRoute = () => window.location.pathname + window.location.search;
 
@@ -35,7 +36,9 @@ export function Router() {
     if (
       url.origin !== window.location.origin ||
       url.hash ||
-      !/^\/(?:docs\/?|workspace\/?|schedules\/[^/]+\/?)?$/.test(url.pathname)
+      !/^\/(?:docs\/?|workspace\/?|borrowing\/?|schedules\/[^/]+\/?)?$/.test(
+        url.pathname,
+      )
     )
       return;
     event.preventDefault();
@@ -53,6 +56,8 @@ export function Router() {
         <Documentation />
       ) : /^\/workspace\/?$/.test(pathname) ? (
         <Workspace />
+      ) : /^\/borrowing\/?$/.test(pathname) ? (
+        <Borrowing />
       ) : (
         <App key={`${route}:${revision}`} />
       )}

@@ -17,6 +17,7 @@ for (const width of [1280, 390, 320]) {
         '↗ Overview',
         '＋ New schedule',
         '▦ Workspace',
+        '₿ Borrowing',
         '? Documentation',
       ]);
       await expect(sidebar.locator('[aria-current="page"]')).toHaveText(active);
@@ -49,6 +50,12 @@ for (const width of [1280, 390, 320]) {
       page.getByRole('heading', { name: 'Your team, in one place.' }),
     ).toBeVisible();
     await assertSidebar('▦ Workspace');
+    await sidebar.getByRole('link', { name: 'Borrowing', exact: true }).click();
+    await expect(
+      page.getByRole('heading', { name: 'Mezo borrowing', exact: true }),
+    ).toBeVisible();
+    await assertSidebar('₿ Borrowing');
+    await sidebar.getByRole('link', { name: 'Workspace', exact: true }).click();
     await sidebar.getByRole('link', { name: 'Documentation' }).click();
     await expect(
       page.getByRole('heading', { name: 'Understand your Runway.' }),
@@ -74,3 +81,47 @@ for (const width of [1280, 390, 320]) {
     });
   });
 }
+
+test('borrowing direct links and refresh keep the dedicated page', async ({
+  page,
+}) => {
+  for (const path of ['/borrowing', '/borrowing/']) {
+    await page.goto(path);
+    await expect(
+      page.getByRole('heading', { name: 'Mezo borrowing', exact: true }),
+    ).toBeVisible();
+    await page.reload();
+    await expect(
+      page.getByRole('heading', { name: 'Mezo borrowing', exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('region', { name: 'Mezo borrowing position' }),
+    ).toBeVisible();
+  }
+  await page
+    .locator('.sidebar')
+    .getByRole('link', { name: 'Overview' })
+    .click();
+  await expect(
+    page.getByRole('region', { name: 'Mezo borrowing position' }),
+  ).toHaveCount(0);
+  await page.getByRole('link', { name: 'View borrowing' }).click();
+  await expect(page).toHaveURL('/borrowing');
+  await expect(
+    page.getByRole('heading', { name: 'Mezo borrowing', exact: true }),
+  ).toBeVisible();
+  await page.screenshot({
+    path: '.tools/borrowing-page-desktop.png',
+    fullPage: true,
+  });
+  await page.setViewportSize({ width: 320, height: 844 });
+  await page.screenshot({
+    path: '.tools/borrowing-page-mobile.png',
+    fullPage: true,
+  });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+});

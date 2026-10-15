@@ -1,4 +1,4 @@
-type Section = 'overview' | 'create' | 'workspace' | 'docs';
+type Section = 'overview' | 'create' | 'workspace' | 'borrowing' | 'docs';
 
 export function Sidebar({ active }: { active?: Section }) {
   const link = (
@@ -26,6 +26,7 @@ export function Sidebar({ active }: { active?: Section }) {
         {link('overview', '/', 'Overview', '↗')}
         {link('create', '/?create=1', 'New schedule', '＋')}
         {link('workspace', '/workspace', 'Workspace', '▦')}
+        {link('borrowing', '/borrowing', 'Borrowing', '₿')}
       </nav>
       <div className="sidebar-footer">
         <nav aria-label="Help navigation">

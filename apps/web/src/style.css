@@ -584,6 +584,15 @@ dd {
 .wallet-picker {
   position: relative;
 }
+.borrowing-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 23px;
+  align-items: start;
+}
+.borrowing-explainer {
+  min-width: 0;
+}
 .borrowing {
   overflow-wrap: anywhere;
   min-width: 0;
@@ -809,7 +818,8 @@ dd {
     margin: 8px 0;
     font-size: 29px;
   }
-  .info-grid {
+  .info-grid,
+  .borrowing-layout {
     grid-template-columns: 1fr;
   }
   .panel {

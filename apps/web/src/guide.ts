@@ -97,7 +97,7 @@ export const guideSections: GuideSection[] = [
     id: 'borrowing',
     title: 'Borrowing overview and BTC scenarios',
     paragraphs: [
-      'The borrowing panel reads an existing Mezo testnet position for your connected wallet or an entered public address. It shows collateral, interest-inclusive debt, the position’s annual rate, and dated loan health when the price and freshness checks pass. A wallet’s MUSD balance is not its loan debt.',
+      'Open Borrowing in the sidebar to read an existing Mezo testnet position for your connected wallet or an entered public address. The dedicated /borrowing page shows collateral, interest-inclusive debt, the position’s annual rate, and dated loan health when the price and freshness checks pass. A wallet’s MUSD balance is not its loan debt.',
       'Loan management opens in Mezo. Runway currently does not originate loans, add collateral, or repay debt. Funding or claiming a contractor payment does not repay a Mezo loan.',
       'BTC price-drop scenarios are hypothetical. The slider holds snapshot debt and collateral fixed while changing the BTC price to estimate the collateral ratio and threshold price. It does not predict future prices or include future interest, and moving it submits no transaction.',
       'Health and scenarios may be unavailable when data is stale or price checks fail. Refresh and check the position in Mezo before making a borrowing decision.',

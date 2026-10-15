@@ -137,7 +137,7 @@ for (const state of [
         json: Array.isArray(input) ? input.map(respond) : respond(input),
       });
     });
-    await page.goto('/');
+    await page.goto('/borrowing');
     const panel = page.getByRole('region', { name: 'Mezo borrowing position' });
     const simulator = panel.getByRole('region', {
       name: 'BTC price stress simulator',
