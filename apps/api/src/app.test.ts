@@ -4,6 +4,12 @@ import { MongoMemoryServer } from 'mongodb-memory-server';
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
 import { createApp } from './app.ts';
 import { initializeDatabase } from './db.ts';
+import {
+  indexKey,
+  type IndexedSchedule,
+  type IndexState,
+} from './reconciliation.ts';
+import { zeroHash } from 'viem';
 
 const origin = 'http://127.0.0.1:5173';
 const owner = privateKeyToAccount(generatePrivateKey());
@@ -67,6 +73,9 @@ beforeEach(async () => {
     'workspaces',
     'contractors',
     'invoices',
+    'paymentIndex',
+    'paymentSchedules',
+    'paymentEvents',
   ])
     await db.collection(name).deleteMany({});
   instant = new Date('2026-10-13T12:00:00Z');
@@ -78,6 +87,116 @@ afterAll(async () => {
 });
 
 describe('MongoDB API integration', () => {
+  it('links only confirmed matching payments, isolates owners and prevents schedule reuse', async () => {
+    const cookie = await login();
+    const other = await login(outsider);
+    const workspaceId = await workspace(cookie);
+    const path = `/workspaces/${workspaceId}`;
+    const contractor = await (
+      await call(
+        `${path}/contractors`,
+        { name: 'Alex', address: outsider.address },
+        cookie,
+      )
+    ).json();
+    const body = {
+      contractorId: contractor._id,
+      description: 'Work',
+      amount: '1.000000000000000001',
+      dueDate: '2026-11-01',
+    };
+    const invoice = await (await call(`${path}/invoices`, body, cookie)).json();
+    const second = await (await call(`${path}/invoices`, body, cookie)).json();
+    expect(invoice.paymentReference).toMatch(/^0x[0-9a-f]{64}$/);
+    expect(second.paymentReference).not.toBe(invoice.paymentReference);
+    const endpoint = `${path}/invoices/${invoice._id}/payment`;
+    expect((await call(endpoint, { scheduleId: '1' }, other)).status).toBe(404);
+    expect((await call(endpoint, { scheduleId: '1' }, cookie)).status).toBe(
+      503,
+    );
+    await db.collection<IndexState>('paymentIndex').insertOne({
+      _id: indexKey,
+      generation: 'test',
+      ready: true,
+      checkedAt: instant,
+      block: '100',
+    });
+    const row: IndexedSchedule = {
+      _id: 'test:1',
+      generation: 'test',
+      scheduleId: '1',
+      sender: owner.address.toLowerCase(),
+      recipient: outsider.address.toLowerCase(),
+      total: '1000000000000000001',
+      claimed: '0',
+      cancelled: false,
+      vestedAtCancellation: '0',
+      referenceHash: zeroHash,
+    };
+    await db
+      .collection<IndexedSchedule>('paymentSchedules')
+      .insertOne({ ...row, total: '1000000000000000000' });
+    expect((await call(endpoint, { scheduleId: '1' }, cookie)).status).toBe(
+      409,
+    );
+    await db
+      .collection<IndexedSchedule>('paymentSchedules')
+      .replaceOne(
+        { _id: row._id },
+        { ...row, sender: outsider.address.toLowerCase() },
+      );
+    expect((await call(endpoint, { scheduleId: '1' }, cookie)).status).toBe(
+      409,
+    );
+    await db
+      .collection<IndexedSchedule>('paymentSchedules')
+      .replaceOne(
+        { _id: row._id },
+        { ...row, referenceHash: second.paymentReference },
+      );
+    expect((await call(endpoint, { scheduleId: '1' }, cookie)).status).toBe(
+      409,
+    );
+    await db
+      .collection<IndexedSchedule>('paymentSchedules')
+      .replaceOne({ _id: row._id }, row);
+    expect((await call(endpoint, { scheduleId: '1' }, cookie)).status).toBe(
+      200,
+    );
+    expect((await call(endpoint, { scheduleId: '1' }, cookie)).status).toBe(
+      200,
+    );
+    expect((await call(endpoint, { scheduleId: '2' }, cookie)).status).toBe(
+      409,
+    );
+    expect(
+      (
+        await call(
+          `${path}/invoices/${second._id}/payment`,
+          { scheduleId: '1' },
+          cookie,
+        )
+      ).status,
+    ).toBe(409);
+    const list = await (
+      await call(`${path}/invoices`, undefined, cookie)
+    ).json();
+    expect(
+      list.items.find((item: { _id: string }) => item._id === invoice._id)
+        .payment,
+    ).toMatchObject({
+      status: 'funded',
+      claimedBaseUnits: '0',
+      scheduleId: '1',
+    });
+    const noOrigin = await call(
+      endpoint,
+      { scheduleId: '1' },
+      cookie,
+      'https://outsider.invalid',
+    );
+    expect(noOrigin.status).toBe(403);
+  });
   it('signs in with a domain-bound message, stores only a token hash and revokes logout', async () => {
     const proof = await challenge();
     expect(proof.message).toContain('127.0.0.1:5173 wants you to sign in');

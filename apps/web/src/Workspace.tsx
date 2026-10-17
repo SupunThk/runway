@@ -7,6 +7,7 @@ import {
 } from '@tanstack/react-query';
 import { useAccount, useSignMessage } from 'wagmi';
 import { WalletConnection } from './WalletConnection';
+import { formatUnits } from 'viem';
 
 type WorkspaceRecord = { _id: string; name: string };
 type Contractor = { _id: string; name: string; address: string };
@@ -17,6 +18,15 @@ type Invoice = {
   recipient: string;
   dueDate: string;
   status: 'draft';
+  paymentReference?: string;
+  payment?: {
+    status: string;
+    scheduleId?: string;
+    fundedBaseUnits?: string;
+    claimedBaseUnits?: string;
+    refundedBaseUnits?: string;
+    outstandingBaseUnits?: string;
+  };
 };
 type Page<T> = { items: T[]; nextCursor: string | null };
 async function request<T>(path: string, body?: unknown): Promise<T> {
@@ -53,10 +63,11 @@ function useRecords<T>(path: string, wallet: string, enabled: boolean) {
       ),
     getNextPageParam: (last) => last.nextCursor ?? undefined,
     retry: false,
+    refetchInterval: path.endsWith('/invoices') ? 15000 : false,
   });
 }
-const paymentLink = (recipient: string, amount?: string) =>
-  `/?${new URLSearchParams({ create: '1', recipient, ...(amount ? { amount } : {}) })}`;
+const paymentLink = (recipient: string, amount?: string, reference?: string) =>
+  `/?${new URLSearchParams({ create: '1', recipient, ...(amount ? { amount } : {}), ...(reference ? { reference } : {}) })}`;
 
 export function Workspace() {
   const { address } = useAccount();
@@ -118,7 +129,10 @@ function WorkspaceContent({ address }: { address?: string }) {
     signedIn && Boolean(workspaceId),
   );
   const contractorRows = contractors.data?.pages.flatMap((p) => p.items) ?? [];
-  const invoiceRows = invoices.data?.pages.flatMap((p) => p.items) ?? [];
+  const invoiceRows = (invoices.data?.pages.flatMap((p) => p.items) ?? []).map(
+    (row) =>
+      invoices.error ? { ...row, payment: { status: 'unavailable' } } : row,
+  );
 
   async function action(run: () => Promise<void>) {
     setBusy(true);
@@ -371,13 +385,21 @@ function WorkspaceContent({ address }: { address?: string }) {
                     </form>
                   </section>
                   <section className="panel">
-                    <h2>Draft invoices</h2>
+                    <h2>Invoices</h2>
                     <p>
-                      These are planning records created by you. Opening a
-                      funding form does not mark an invoice paid or link a
-                      confirmed schedule. Review the recipient and amount before
-                      signing.
+                      Invoice payments match confirmed schedules by their
+                      payment reference. Funded means MUSD is committed; paid
+                      means the recipient has claimed the full amount. Indexing
+                      waits for 12 blocks of confirmation. Opening a form does
+                      not move funds.
                     </p>
+                    <button
+                      className="text-button"
+                      disabled={invoices.isFetching || busy}
+                      onClick={() => void invoices.refetch()}
+                    >
+                      Refresh payment status
+                    </button>
                     {invoices.isPending && <p>Loading invoices…</p>}
                     {invoices.error && (
                       <p role="alert">
@@ -393,15 +415,112 @@ function WorkspaceContent({ address }: { address?: string }) {
                     <div className="schedule-list">
                       {invoiceRows.map((row) => (
                         <article className="schedule-card" key={row._id}>
-                          <span className="badge">DRAFT</span>
+                          <span className="badge">
+                            {(row.payment?.status ?? 'unavailable')
+                              .replaceAll('_', ' ')
+                              .toUpperCase()}
+                          </span>
                           <h3>{row.description}</h3>
                           <p>
                             {row.amount} MUSD · Due {row.dueDate}
                           </p>
                           <p>Recipient: {row.recipient}</p>
-                          <a href={paymentLink(row.recipient, row.amount)}>
-                            Prepare payment
-                          </a>
+                          {row.payment?.status === 'unavailable' && (
+                            <p>
+                              Payment reconciliation is unavailable or catching
+                              up. Check existing schedules before funding again.
+                            </p>
+                          )}
+                          {row.payment?.status === 'conflict' && (
+                            <p role="alert">
+                              Multiple schedules use this reference. Link the
+                              intended schedule below after reviewing them.
+                            </p>
+                          )}
+                          {row.payment?.scheduleId && (
+                            <>
+                              <a href={`/schedules/${row.payment.scheduleId}`}>
+                                View schedule #{row.payment.scheduleId}
+                              </a>
+                              <p>
+                                Committed:{' '}
+                                {formatUnits(
+                                  BigInt(row.payment.fundedBaseUnits ?? '0'),
+                                  18,
+                                )}{' '}
+                                MUSD · Claimed:{' '}
+                                {formatUnits(
+                                  BigInt(row.payment.claimedBaseUnits ?? '0'),
+                                  18,
+                                )}{' '}
+                                MUSD
+                              </p>
+                              <p>
+                                Remaining entitlement:{' '}
+                                {formatUnits(
+                                  BigInt(
+                                    row.payment.outstandingBaseUnits ?? '0',
+                                  ),
+                                  18,
+                                )}{' '}
+                                MUSD · Refunded:{' '}
+                                {formatUnits(
+                                  BigInt(row.payment.refundedBaseUnits ?? '0'),
+                                  18,
+                                )}{' '}
+                                MUSD
+                              </p>
+                            </>
+                          )}
+                          {!row.payment?.scheduleId && (
+                            <a
+                              href={paymentLink(
+                                row.recipient,
+                                row.amount,
+                                row.paymentReference,
+                              )}
+                            >
+                              Prepare payment
+                            </a>
+                          )}
+                          {!row.payment?.scheduleId && (
+                            <form
+                              className="workspace-form"
+                              onSubmit={(event) => {
+                                event.preventDefault();
+                                const scheduleId = String(
+                                  new FormData(event.currentTarget).get(
+                                    'scheduleId',
+                                  ) ?? '',
+                                );
+                                void action(async () => {
+                                  await request(
+                                    `${prefix}/invoices/${row._id}/payment`,
+                                    { scheduleId },
+                                  );
+                                  await invoices.refetch();
+                                  setNotice('Confirmed schedule linked.');
+                                });
+                              }}
+                            >
+                              <label>
+                                Existing schedule ID for {row.description}
+                                <input
+                                  name="scheduleId"
+                                  inputMode="numeric"
+                                  pattern="[1-9][0-9]*"
+                                  maxLength={78}
+                                  required
+                                />
+                              </label>
+                              <button
+                                className="button secondary"
+                                disabled={busy}
+                              >
+                                Link existing schedule
+                              </button>
+                            </form>
+                          )}
                         </article>
                       ))}
                     </div>

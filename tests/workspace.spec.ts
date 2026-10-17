@@ -1,7 +1,12 @@
 import { expect, test, type Page } from '@playwright/test';
-import { hexToString } from 'viem';
+import { hexToString, zeroHash } from 'viem';
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
 import { startTestBackend } from '../apps/api/test-fixture';
+import {
+  indexKey,
+  type IndexedSchedule,
+  type IndexState,
+} from '../apps/api/src/reconciliation';
 
 const account = privateKeyToAccount(generatePrivateKey());
 let backend: Awaited<ReturnType<typeof startTestBackend>>;
@@ -156,6 +161,111 @@ test('wallet login → MongoDB workspace/contractor/invoice → reload → prefi
   await expect(page.locator('input[name="total"]')).toHaveValue(
     '1000.123456789012345678',
   );
+  expect(new URL(page.url()).searchParams.get('reference')).toMatch(
+    /^0x[0-9a-f]{64}$/,
+  );
+  const invoice = await backend.db
+    .collection('invoices')
+    .findOne({ description: 'October design' });
+  expect(invoice).toBeTruthy();
+  await backend.db.collection<IndexState>('paymentIndex').updateOne(
+    { _id: indexKey },
+    {
+      $set: {
+        generation: 'browser',
+        ready: true,
+        checkedAt: new Date(),
+        block: '16084000',
+      },
+    },
+    { upsert: true },
+  );
+  const indexed: IndexedSchedule = {
+    _id: 'browser:1',
+    generation: 'browser',
+    scheduleId: '1',
+    sender: account.address.toLowerCase(),
+    recipient: invoice!.recipient,
+    total: invoice!.amountBaseUnits,
+    claimed: '0',
+    cancelled: false,
+    vestedAtCancellation: '0',
+    referenceHash: invoice!.paymentReference,
+  };
+  await backend.db
+    .collection<IndexedSchedule>('paymentSchedules')
+    .insertOne(indexed);
+  await page.getByRole('link', { name: 'Workspace', exact: true }).click();
+  await expect(page.getByText('FUNDED', { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole('link', { name: 'View schedule #1' }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('link', { name: 'Prepare payment', exact: true }),
+  ).toHaveCount(0);
+  await backend.db
+    .collection<IndexedSchedule>('paymentSchedules')
+    .updateOne(
+      { _id: indexed._id },
+      { $set: { claimed: '500000000000000000000' } },
+    );
+  await page.getByRole('button', { name: 'Refresh payment status' }).click();
+  await expect(
+    page.getByText('PARTIALLY CLAIMED', { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText(
+      /Committed: 1000.123456789012345678 MUSD · Claimed: 500 MUSD/,
+    ),
+  ).toBeVisible();
+  await backend.db.collection<IndexedSchedule>('paymentSchedules').updateOne(
+    { _id: indexed._id },
+    {
+      $set: {
+        cancelled: true,
+        vestedAtCancellation: '600000000000000000000',
+      },
+    },
+  );
+  await page.getByRole('button', { name: 'Refresh payment status' }).click();
+  await expect(page.getByText('CANCELLED', { exact: true })).toBeVisible();
+  await expect(
+    page.getByText(
+      /Remaining entitlement: 100 MUSD · Refunded: 400.123456789012345678 MUSD/,
+    ),
+  ).toBeVisible();
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  await page.screenshot({
+    path: '.tools/reconciliation-mobile.png',
+    fullPage: true,
+  });
+  await backend.db
+    .collection<IndexState>('paymentIndex')
+    .updateOne({ _id: indexKey }, { $set: { error: 'Rebuilding' } });
+  await page.getByRole('button', { name: 'Refresh payment status' }).click();
+  await expect(page.getByText('UNAVAILABLE', { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole('link', { name: 'View schedule #1' }),
+  ).toHaveCount(0);
+  await backend.db
+    .collection<IndexState>('paymentIndex')
+    .updateOne({ _id: indexKey }, { $unset: { error: '' } });
+  await backend.db
+    .collection('invoices')
+    .updateOne({ _id: invoice!._id }, { $unset: { paymentReference: '' } });
+  await backend.db
+    .collection<IndexedSchedule>('paymentSchedules')
+    .updateOne({ _id: indexed._id }, { $set: { referenceHash: zeroHash } });
+  await page.getByRole('button', { name: 'Refresh payment status' }).click();
+  await expect(page.getByText('DRAFT', { exact: true })).toBeVisible();
+  await page.getByLabel('Existing schedule ID for October design').fill('1');
+  await page.getByRole('button', { name: 'Link existing schedule' }).click();
+  await expect(page.getByText('Confirmed schedule linked.')).toBeVisible();
+  await expect(page.getByText('CANCELLED', { exact: true })).toBeVisible();
   expect(errors).toEqual([]);
 });
 

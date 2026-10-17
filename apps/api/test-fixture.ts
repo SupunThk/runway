@@ -25,6 +25,7 @@ export async function startTestBackend() {
     if (!address || typeof address === 'string')
       throw new Error('Test backend did not bind a port.');
     return {
+      db,
       url: `http://127.0.0.1:${address.port}`,
       close: async () => {
         await new Promise<void>((resolve, reject) =>

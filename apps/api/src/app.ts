@@ -14,6 +14,13 @@ import {
 } from 'viem';
 import { createSiweMessage } from 'viem/siwe';
 import { database } from './db.ts';
+import {
+  indexKey,
+  paymentDeployment,
+  reconcileInvoices,
+  reconciliationState,
+  type IndexedSchedule,
+} from './reconciliation.ts';
 
 type RecordBase = { _id: string };
 type Challenge = RecordBase & {
@@ -42,6 +49,9 @@ type Invoice = RecordBase & {
   amountBaseUnits: string;
   dueDate: string;
   status: 'draft';
+  paymentReference?: string;
+  paymentKey?: string;
+  scheduleId?: string;
   createdAt: string;
 };
 type RateLimit = RecordBase & { count: number; expiresAt: Date };
@@ -368,15 +378,94 @@ export function createApp(
     await c.get('db').collection<Contractor>('contractors').insertOne(row);
     return c.json(row, 201);
   });
-  app.get('/api/workspaces/:workspaceId/invoices', async (c) =>
-    c.json(
-      await page<Invoice>(
+  app.get('/api/workspaces/:workspaceId/invoices', async (c) => {
+    const rows = await page<Invoice>(
+      c.get('db'),
+      'invoices',
+      { workspaceId: c.req.param('workspaceId') },
+      c.req.query('after'),
+    );
+    return c.json({
+      ...rows,
+      ...(await reconcileInvoices(
         c.get('db'),
-        'invoices',
-        { workspaceId: c.req.param('workspaceId') },
-        c.req.query('after'),
-      ),
-    ),
+        rows.items,
+        c.get('address'),
+        now(),
+      )),
+    });
+  });
+  app.post(
+    '/api/workspaces/:workspaceId/invoices/:invoiceId/payment',
+    async (c) => {
+      const db = c.get('db');
+      const invoice = await db.collection<Invoice>('invoices').findOne({
+        _id: id(c.req.param('invoiceId')),
+        workspaceId: c.req.param('workspaceId'),
+      });
+      if (!invoice) return fail(404, 'Invoice not found.');
+      const body = await json(c.req.raw);
+      if (
+        typeof body.scheduleId !== 'string' ||
+        !/^[1-9]\d{0,77}$/.test(body.scheduleId) ||
+        BigInt(body.scheduleId) > (1n << 256n) - 1n
+      )
+        return fail(400, 'Enter a valid schedule ID.');
+      if (invoice.scheduleId && invoice.scheduleId !== body.scheduleId)
+        return fail(409, 'This invoice already has a linked schedule.');
+      const { state, available } = await reconciliationState(db, now());
+      if (!available)
+        return fail(
+          503,
+          'Payment indexing is not current. Retry after synchronization.',
+        );
+      const schedule = await db
+        .collection<IndexedSchedule>('paymentSchedules')
+        .findOne({
+          generation: state!.generation,
+          scheduleId: body.scheduleId,
+        });
+      if (!schedule)
+        return fail(409, 'Schedule has not been confirmed by the indexer.');
+      if (
+        schedule.sender !== c.get('address') ||
+        schedule.recipient !== invoice.recipient ||
+        schedule.total !== invoice.amountBaseUnits
+      )
+        return fail(
+          409,
+          'Schedule sender, recipient and total must match this invoice exactly.',
+        );
+      if (
+        schedule.referenceHash !== `0x${'0'.repeat(64)}` &&
+        schedule.referenceHash !== invoice.paymentReference
+      )
+        return fail(409, 'Schedule references another payment.');
+      try {
+        const result = await db.collection<Invoice>('invoices').updateOne(
+          {
+            _id: invoice._id,
+            $or: [
+              { scheduleId: { $exists: false } },
+              { scheduleId: body.scheduleId },
+            ],
+          },
+          {
+            $set: {
+              scheduleId: body.scheduleId,
+              paymentKey: `${indexKey}:${body.scheduleId}`,
+            },
+          },
+        );
+        if (!result.matchedCount)
+          return fail(409, 'This invoice already has a linked schedule.');
+      } catch (error) {
+        if (error instanceof MongoServerError && error.code === 11000)
+          return fail(409, 'Schedule is already linked to another invoice.');
+        throw error;
+      }
+      return c.json({ ok: true, chainId: paymentDeployment.chainId });
+    },
   );
   app.post('/api/workspaces/:workspaceId/invoices', async (c) => {
     const body = await json(c.req.raw);
@@ -405,6 +494,7 @@ export function createApp(
       amountBaseUnits,
       dueDate,
       status: 'draft',
+      paymentReference: `0x${randomBytes(32).toString('hex')}`,
       createdAt: now().toISOString(),
     };
     await c.get('db').collection<Invoice>('invoices').insertOne(row);

@@ -126,6 +126,10 @@ Workspace is an additional service that must be configured by the operator. Conn
 
 Create a workspace, save a contractor name and wallet, then prepare a draft invoice with a MUSD amount and due date. Workspaces are private to their owner wallet; shared team access and contractor invoice submission are upcoming.
 
-Create payment or Prepare payment opens the existing funding form with the recipient and, for invoices, amount filled in. Review them before signing. A draft invoice is not proof of payment and is not automatically linked to a confirmed schedule. Repeated funding can create duplicate payments.
+Create payment or Prepare payment opens the funding form with the recipient and, for invoices, amount and an opaque payment reference filled in. Review the recipient and amount before signing. Invoice matches require the original sender, recipient, amount and reference. Repeated funding can create duplicate payments.
+
+When payment indexing is enabled and current, invoices show committed, claimed, refunded and remaining entitlement amounts after a 12-block confirmation buffer. Funded means MUSD is committed; paid means the recipient claimed the full invoice amount. Cancelled invoices show refunds separately. Remaining entitlement includes future accrual and is not necessarily claimable now.
+
+Use Link existing schedule for older payments. Only a confirmed schedule with the same sender, recipient and exact amount can be linked, and a legacy schedule can belong to one invoice. Refresh payment status to check updates. Unavailable means indexing is behind, stale or recovering; check the public schedule before funding again.
 
 Sign out of workspace to revoke your login session. Disconnecting the wallet hides workspace access but does not revoke the server session. Public recipient pages and onchain payment rights do not depend on workspace login.

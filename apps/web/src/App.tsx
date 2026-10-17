@@ -287,6 +287,14 @@ export function App() {
         throw new Error(`Use at most ${decimals} decimal places.`);
       const total = parseUnits(text, decimals);
       if (total <= 0n) throw new Error('Funding must be greater than zero.');
+      const reference = new URLSearchParams(window.location.search).get(
+        'reference',
+      );
+      if (reference && !/^0x[a-fA-F0-9]{64}$/.test(reference))
+        throw new Error(
+          'Invalid invoice payment reference. Open the payment from your workspace again.',
+        );
+      const referenceHash = (reference || zeroHash) as Hash;
       const durationMinutes = Number(data.get('duration'));
       if (
         !Number.isSafeInteger(durationMinutes) ||
@@ -344,7 +352,7 @@ export function App() {
         address: paymentAddress!,
         abi: paymentsAbi,
         functionName: 'createSchedule',
-        args: [getAddress(recipient), total, start, end, zeroHash],
+        args: [getAddress(recipient), total, start, end, referenceHash],
       });
       recovery.checkStorage();
       const tx = await wallet!.writeContract(request);
@@ -357,7 +365,7 @@ export function App() {
         encodeFunctionData({
           abi: paymentsAbi,
           functionName: 'createSchedule',
-          args: [getAddress(recipient), total, start, end, zeroHash],
+          args: [getAddress(recipient), total, start, end, referenceHash],
         }),
       );
       if (receipt.status !== 'success')

@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "index:payments": "node --env-file-if-exists=../../.env src/index-payments.ts",
     "start": "node src/server.ts",
     "dev": "node --env-file-if-exists=../../.env --watch src/server.ts",
     "typecheck": "tsc --noEmit",

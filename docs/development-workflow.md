@@ -13,13 +13,13 @@ The established public release remains the payment app described in HANDOFF.md. 
 - A `/workspace` page and prefilled payment forms from contractors/invoices.
 - Bounded cursor pagination, input/body validation, origin checks and database-backed write/auth throttling.
 
-This is a backend foundation. It does not implement contractor-submitted invoices, shared team access, invoice settlement, an indexer, reminders or protocol writes. The deployed Solidity payment rules remain the authority for funds. Names and invoice descriptions stay offchain.
+The local payment-reconciliation increment adds confirmed event indexing, invoice reference matching, verified legacy schedule linking and derived claim/refund accounting. See [payment reconciliation](payment-reconciliation.md). It remains undeployed. Contractor-submitted invoices, shared team access, reminders and new protocol writes remain future work. The deployed Solidity payment rules remain the authority for funds. Names and invoice descriptions stay offchain.
 
 ## Expanded Wave 1 backlog
 
 1. Configure the user's MongoDB database and verify persistence with the new UI.
 2. Investigate historical GitHub browser-test failure 38117460629; run current regression checks before publishing.
-3. Add verified event indexing and contractor/invoice-to-schedule reconciliation, with checkpointing, retries and reorg recovery.
+3. Release and verify the locally implemented event indexing and invoice-to-schedule reconciliation, with checkpointing, retries and reorg recovery.
 4. Integrate direct wallet-signed borrowing and repayment after verifying official ABI, minimum debt, reserves, fees, position ownership, transaction simulation and actual debt changes. Keep funding separate.
 5. Add repayment reserves, dated cash planning and protocol-mode/stale-price handling.
 6. Integrate and test Mezo Passport, including authentication compatibility.

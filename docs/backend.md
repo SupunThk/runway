@@ -35,12 +35,15 @@ All routes are under `/api`. POST bodies are JSON, capped at 16 KiB. Mutations r
 | GET/POST `/workspaces` | List own workspaces / create with `{name}` |
 | GET/POST `/workspaces/:id/contractors` | List / create with `{name, address}` |
 | GET/POST `/workspaces/:id/invoices` | List / create draft with `{contractorId, description, amount, dueDate}` |
+| POST `/workspaces/:id/invoices/:invoiceId/payment` | Link a confirmed matching schedule with `{scheduleId}` |
 
 Lists return `{items, nextCursor}` with at most 25 items. Pass `?after=<nextCursor>` for the next page. IDs are UUIDs, dates are ISO strings, and MUSD base units are decimal strings. Invoice `amount` is a positive decimal string with at most 18 fractional digits; `dueDate` uses YYYY-MM-DD. The server fixes status to `draft` and recipient to the saved contractor.
 
-Workspaces are owner-only. Nested reads and writes verify ownership before accessing records; contractor references must belong to the same workspace. There are no invitations, contractor logins, edits, deletions or payment-status updates yet. A draft is not proof of payment; repeatedly funding its prefilled form can create multiple schedules.
+Workspaces are owner-only. Nested reads and writes verify ownership before accessing records; contractor references must belong to the same workspace. There are no invitations, contractor logins, edits or deletions yet. Invoice lists now derive payment evidence from confirmed indexed schedules, and owners can link existing matching schedules. See [payment reconciliation](payment-reconciliation.md) for states, indexer operation, reorg recovery and hosting. A draft is not proof of payment; repeatedly funding its prefilled form can create multiple schedules.
 
 ## Persistence and authentication
+
+Reconciliation additionally uses `paymentIndex`, `paymentEvents` and `paymentSchedules`. Unique sparse indexes on invoice references and schedule links prevent duplicate associations. See the reconciliation guide for snapshot retention and worker leases.
 
 Collections: `challenges`, `sessions`, `rateLimits`, `workspaces`, `contractors`, `invoices`. Indexes are initialized on first connection. Challenges/sessions/counters have cleanup TTL indexes; requests separately check expiration, so delayed TTL deletion cannot extend access. Contractor wallet uniqueness is enforced by a compound database index. Login challenges are consumed atomically after signature verification.
 
@@ -52,6 +55,6 @@ Initial authentication supports EOA personal wallets, not smart-contract wallet 
 
 The user selected Render for the Node API, retaining Vercel for the frontend and Atlas for MongoDB. See [Render deployment](render-hosting.md) for the root Blueprint, commands, secret configuration and frontend API proxy setup. The earlier Vercel function adapter has been removed. The actual Render service URL must be configured before publishing the frontend proxy.
 
-Configure MONGODB_URI, MONGODB_DATABASE and APP_ORIGIN in Render; local `.env` is not uploaded. APP_ORIGIN is the exact frontend HTTPS origin, such as `https://mezo-runway-testnet.vercel.app`. Render's PORT controls the listener; local API_PORT remains supported. Preview origins require their own scoped backend/database configuration. Hosted routing and Secure-cookie behavior remain unverified. Do not describe `pnpm build` as a backend deployment check.
+Configure MONGODB_URI, MONGODB_DATABASE and APP_ORIGIN in Render; local `.env` is not uploaded. APP_ORIGIN is the exact frontend HTTPS origin, such as `https://mezo-runway-testnet.vercel.app`. Render's PORT controls the listener; local API_PORT remains supported. Preview origins require their own scoped backend/database configuration. Hosted routing, Secure/HttpOnly/SameSite=Strict cookies, wallet challenge signatures, Atlas persistence, account isolation, replay rejection and logout were verified October 13, 2026 using generated test wallets. See `deployments/render-backend.check.json`. Installed wallet-extension signing still needs user validation. Do not describe `pnpm build` as a backend deployment check.
 
 Implementation references: [MongoDB connection pools](https://www.mongodb.com/docs/drivers/node/current/connect/connection-options/connection-pools/), [SIWE messages](https://viem.sh/docs/siwe/utilities/createSiweMessage), [Hono](https://hono.dev/docs/).

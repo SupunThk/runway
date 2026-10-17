@@ -19,6 +19,21 @@ export async function initializeDatabase(db: Db) {
       .collection('contractors')
       .createIndex({ workspaceId: 1, address: 1 }, { unique: true }),
     db.collection('invoices').createIndex({ workspaceId: 1, _id: 1 }),
+    db
+      .collection('invoices')
+      .createIndex({ paymentKey: 1 }, { unique: true, sparse: true }),
+    db
+      .collection('invoices')
+      .createIndex({ paymentReference: 1 }, { unique: true, sparse: true }),
+    db
+      .collection('paymentSchedules')
+      .createIndex({ generation: 1, referenceHash: 1 }),
+    db
+      .collection('paymentSchedules')
+      .createIndex({ generation: 1, scheduleId: 1 }, { unique: true }),
+    db
+      .collection('paymentSchedules')
+      .createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
   ]);
 }
 

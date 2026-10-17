@@ -1,20 +1,74 @@
 # Runway project handoff
 
-## Active scope update — October 13, 2026
+## Latest local work — payment reconciliation, October 15, 2026
 
-Hosting decision updated after the backend increment: the user chose Render for the Node API, keeping the frontend on Vercel and database in Atlas. Cloud MongoDB ping and index initialization succeeded with the user's `.env` after DNS troubleshooting; credentials were never printed. `render.yaml`, PORT/0.0.0.0 listener support and a frontend proxy-configuration script are prepared. The previous Vercel API adapter is removed. No Render service or hosted backend has yet been created or verified. Read `docs/render-hosting.md`; actual Render access and service URL are required for deployment and proxy activation.
+Payment reconciliation is implemented locally, **uncommitted and undeployed**. Production frontend remains `c03a337`; Render backend remains `023087f`. Preserve the existing deployment-record changes and untracked evidence file below.
 
-The user approved MongoDB and expanding Wave 1. Local work adds a TypeScript/Hono API, pooled MongoDB access/indexes, EOA wallet-message authentication, owner-private workspaces, contractor directory, draft invoices and `/workspace`, with prefilled links into the existing funding form. User database credentials will be added by the user to root `.env` after this increment. No live-database verification, commit, push or deployment is implied.
+New invoices receive a random opaque reference carried into funding calldata. Invoice lists derive confirmed payment evidence from the verified deployment, requiring exact owner, recipient and base-unit amount. Workspace shows committed, claimed, remaining entitlement and refunded amounts, refreshes payment status and supports verified legacy schedule linking. Legacy links are unique across invoices. Duplicate references are flagged for review. Stored invoice `status` remains draft; `payment.status` is separate derived evidence. Stale or unavailable evidence is hidden.
+
+The indexer verifies chain, deployed bytecode and token, processes 500-block batches with a 12-block confirmation buffer, stores checkpoints/events, and publishes immutable snapshots through fenced leases. It retries failures and rebuilds after reorgs or expired retention. Enable explicitly with `PAYMENT_INDEXER_ENABLED=true` in the API, or run `pnpm --filter @runway/api index:payments` separately. It is disabled by default. No production database writes or hosting configuration changes were made. Free Render sleep pauses embedded indexing. See `docs/payment-reconciliation.md` for operation, API semantics, retention and scale limits.
+
+Validation passed: 38 unit/API tests, all 48 browser cases, TypeScript, production build, formatting and whitespace. Browser coverage includes automatic matching, partial claims, cancellation/refunds, unavailable indexing and manually linking legacy schedules. Live read-only RPC checks confirmed deployment bytecode/token identity, historical logs and schedule reads. Mobile screenshot reviewed without overflow. No financial transactions occurred. Browser tests now launch only the frontend and use the isolated fixture API/database, avoiding an enabled local API indexer. Existing bundle-size warning remains.
+
+Next release must coordinate backend deployment to Render's tracked `deploy/render-backend-2026-10-13` branch and enable indexing before releasing the frontend. Wait for catch-up and verify hosted reconciliation. A main-branch push alone does not deploy the backend. Real installed-wallet login remains pending. This local implementation supersedes the old indexer backlog below; it has not been committed, pushed or deployed.
+
+Implementation map: `apps/api/src/reconciliation.ts` contains the RPC adapter, checkpointing and invoice projections; `payment-worker.ts` runs the retry loop; `index-payments.ts` is the standalone entry point. `server.ts` starts embedded indexing only when enabled. API routes and indexes are in `app.ts`/`db.ts`. Funding references are passed by `apps/web/src/App.tsx`; invoice display, polling and linking are in `Workspace.tsx`. Tests are in `reconciliation.test.ts`, `app.test.ts` and `tests/workspace.spec.ts`. User guidance is generated from `apps/web/src/guide.ts` into `docs/user-guide.md`.
+
+All reconciliation changes remain in the working tree, including untracked source files and `docs/payment-reconciliation.md`; a later commit must include those new files explicitly. `.env.example` documents opt-in settings; the actual `.env` was preserved. Ignored evidence includes `.tools/reconciliation-rpc.mjs` (read-only RPC probe), `.tools/reconciliation-mobile.png` and `.tools/workspace-mobile.png`. The results above were recorded during implementation, not rerun for this handoff-only request. No new commit, push, deployment or transaction is part of this update.
+
+## Latest release — UI refresh deployed, October 15, 2026
+
+User authorized deployment. The visual UI refresh is committed and pushed to `main` as `c03a337f7db06c0a20ab4dbf44112bf7ccceecbc` (`Refresh Runway dashboard design and responsive layouts`). Vercel production deployment `dpl_CMHDXEFn8TYK9RE9EtobZtTzr843` is READY and aliased to https://mezo-runway-testnet.vercel.app; build duration 15 seconds. Deployment URL: https://mezo-runway-testnet-k5hhzndie-supunthks-projects.vercel.app. This supersedes the frontend release references below. Render backend remains `023087f`.
+
+Changes in `apps/web/src/style.css` and `apps/web/src/App.tsx` introduce Geist/Geist Mono typography, zinc surfaces, charcoal navigation, forest green accents, an asymmetric balance ledger, responsive layouts, larger controls, reduced-motion support and an accessible schedule-loading skeleton. Design rules are in `DESIGN.md`; implementation and validation notes are in `docs/ui-refresh.md`.
+
+Release checks rerun successfully: TypeScript, 30 unit/API tests, all 48 browser cases, production build, formatting and whitespace. Local and hosted responsive checks passed for five pages at 320/390/768/1024/1440/2560px (30 checks each), keyboard focus and reduced motion. Four hosted navigation tests passed. Live mobile screenshot visually reviewed; no page errors or horizontal overflow. Production CSS exactly matches the checked local build. Hosted `/api/health` returned ready/database connected. Vercel error-log scan for the last hour returned no logs; monitoring/drains were not assessed. Existing bundle-size warning remains. No financial transactions occurred. GitHub CI run 38743612268 completed successfully, including typecheck, unit/API tests, build, contracts and browser tests.
+
+Current working tree retains deployment records in this file, `docs/backend.md`, `docs/test-results.md` and untracked `deployments/render-backend.check.json`. Preserve them. The UI files, `DESIGN.md` and `docs/ui-refresh.md` are committed. This handoff entry remains local/uncommitted. Ignored verification tools include `.tools/verify-ui.mjs`, `.tools/verify-ui-asset.mjs`, `.tools/ui-verification.json`, `.tools/ui-*.png` and `.tools/playwright-navigation-live.config.ts`. Real installed-wallet login remains pending; the next major feature is event indexing and invoice/payment reconciliation. Older “local saved state” and “suggested prompt” sections below predate this release and are superseded by this entry. Do not redeploy merely to recover context.
+
+## Borrowing tab deployed and verified — October 15, 2026
+
+Latest frontend release is now `db79a53be0b10bfe488cf8400fd6fa5ab3c8fb4b` (`Move Mezo borrowing into a dedicated dashboard`), committed and pushed to main with user authorization. Vercel production deployment `dpl_GqPKPBWtn2x5pKWiTigvjj2gEV2c` is READY, built in 15 seconds and aliased to https://mezo-runway-testnet.vercel.app. Deployment URL: https://mezo-runway-testnet-cbqe48583-supunthks-projects.vercel.app.
+
+Borrowing has its own sidebar tab and `/borrowing` page (also `/borrowing/`), with existing read-only position data and BTC stress scenarios plus an explanation. Overview has a link to the page. Loan management still opens Mezo; no new protocol writes were implemented. Documentation remains at the bottom. User guide and both normal/static-fallback hosting routes were updated.
+
+All 48 local browser tests, TypeScript, production build, formatting and whitespace passed before release. GitHub CI job for run 38721315922 completed successfully, including typecheck, unit/API tests, build, contracts and browser tests. Four public production navigation checks passed at 1280px/390px/320px, including both borrowing routes and refresh, correct active tab, Back/Forward, no document reload, no page errors or horizontal overflow. Hosted `/api/health` returned ready/database connected; live 320px screenshot visually reviewed. Deployment error-log scan for the last hour returned no logs; monitoring/drains were not assessed. No blockchain transactions occurred. Ignored `.tools/playwright-navigation-live.config.ts` can rerun the public navigation checks. Older release references below are historical.
+
+Preserve existing local handoff/backend/test-record changes and untracked backend evidence. This release entry remains local/uncommitted. Installed-wallet hosted login remains pending; next major feature is event indexing and invoice/payment reconciliation.
+
+## Navigation fix deployed and verified — October 15, 2026
+
+User authorized committing and deploying the shared-sidebar/navigation fix. `main` and `origin/main` now contain `bf80faf6bd6f7164a8d104d12acf76b4de487616` (`Keep sidebar navigation consistent without page reloads`). Vercel production deployment `dpl_CvbwaYwDSQeF5GaBwtSyUvr4CcJd` is READY and aliased to https://mezo-runway-testnet.vercel.app; deployment URL https://mezo-runway-testnet-6odjwigpe-supunthks-projects.vercel.app. Git-triggered build took 14 seconds. Backend remains on the existing Render deployment/branch described below.
+
+All pages share one sidebar: Overview, New schedule and Workspace retain their order, and Documentation sits in the sidebar footer. Internal route changes use browser history without full document reloads; query-prefilled payment links and normal modified/external/download/anchor links retain their behavior. Local verification: 44 existing browser cases passed, then all three new navigation cases passed after correcting a test-only logo-text expectation; TypeScript, production build, formatting and whitespace checks passed. Existing bundle-size warning remains.
+
+Public production navigation checks passed at 1280px, 390px and 320px, covering link order, Documentation placement, active states, no document reload, Back/Forward, navigation to the funding form and no horizontal overflow or page errors. Hosted `/api/health` returned ready/database connected. Live mobile screenshot visually reviewed. GitHub CI 38719713517 completed successfully for this exact commit. Vercel deployment error-log query for the last hour returned no logs; monitoring/drains were not assessed. Ignored hosted checker config/screenshots: `.tools/playwright-navigation-live.config.ts`, `.tools/navigation-*.png`.
+
+Next: user should open the hosted `/workspace` page in their wallet browser, connect their wallet and sign the login message, then check workspace loading. No connected computer-use browser was available in this session; installed-wallet validation remains pending. No blockchain transactions were submitted. Existing local deployment-record changes and untracked `deployments/render-backend.check.json` were preserved; this new handoff entry is also local/uncommitted. Next major feature after validation is event indexing and invoice/payment reconciliation. Older frontend commit/status references below are historical.
+
+## Backend deployed and verified — October 13, 2026
+
+User authorized deployment and confirmed Render My Workspace. Backend is live at https://runway-api-rw61.onrender.com (free, Singapore, `srv-db75jus9v7es73ai4g00`, deployment `dep-db75jvs9v7es73ai4ibg`, backend source `023087f`). Frontend remains at https://mezo-runway-testnet.vercel.app with same-origin `/api` proxy, released from `727dd13` as Vercel production deployment `dpl_H1xLxyPjCYSirAVs1etFuL7Zd8G2` (READY and aliased). MongoDB stays in Atlas; its URI was transferred from ignored local `.env` to Render and never displayed or committed.
+
+Hosted browser/API/Atlas verification passed at 2026-10-13T16:24:52Z: direct and proxied health; Origin rejection; actual login challenge signatures using generated test wallets; Secure/HttpOnly/SameSite=Strict cookie on frontend domain; workspace/contractor/draft invoice persistence across reload with exact Atlas base units; owner isolation; nonce replay rejection; exact recipient/amount prefilling; logout cookie clearing and stored-session revocation. The 390px screenshot was visually reviewed without overflow or page errors. Verification-only records were removed. No blockchain transactions occurred. Installed real-wallet extension signing is still a separate validation. Evidence: `deployments/render-backend.check.json`; ignored checker `.tools/verify-render-release.mjs`.
+
+Release checks passed: 30 unit/API and 44 browser tests, TypeScript, formatting, build and whitespace. Backend source GitHub CI 38427943026 and production release CI 38430041672 both passed. Render logs show 0.0.0.0:10000 startup and no error logs in the checked window. Current Render service tracks `deploy/render-backend-2026-10-13` with commit-triggered auto-deploy and default TCP health checks; the Blueprint is not applied. Future backend changes must reach that branch until deliberately switching the service to main. The MCP tool cannot set HTTP healthCheckPath; Dashboard access was unavailable. Explicit HTTP health/database verification passed. See docs/render-hosting.md for actual configuration.
+
+## Scope update — October 13, 2026 (deployment status superseded above)
+
+Hosting decision updated after the backend increment: the user chose Render for the Node API, keeping the frontend on Vercel and database in Atlas. Cloud MongoDB ping and index initialization succeeded with the user's `.env` after DNS troubleshooting; credentials were never printed. `render.yaml`, PORT/0.0.0.0 listener support and a frontend proxy-configuration script are prepared. The previous Vercel API adapter is removed. Render deployment and Vercel proxy activation are now complete and verified; see the current status above and `docs/render-hosting.md`.
+
+The user approved MongoDB and expanding Wave 1. Local work adds a TypeScript/Hono API, pooled MongoDB access/indexes, EOA wallet-message authentication, owner-private workspaces, contractor directory, draft invoices and `/workspace`, with prefilled links into the existing funding form. Database credentials are configured in ignored root `.env` and Render server settings. This increment was committed, pushed, deployed and verified with the user’s authorization.
 
 Read `docs/backend.md` for configuration and `docs/development-workflow.md` for the current roadmap. Former Wave 2 borrowing/repayment, planning, Passport, reusable helpers and pilots are now Wave 1 targets, still unimplemented where not explicitly recorded. Indexing and confirmed invoice/payment reconciliation remain upcoming. Wave 2 expands into payroll operations, contractor submissions, approvals, forecasting, team roles/multisig and notifications. Original backend-free scope and deferrals below are historical and superseded by this revision.
 
-Local verification passed: 30 unit/API tests (including nine against temporary MongoDB), all 44 browser cases, TypeScript, backend/frontend build, formatting and whitespace checks. The browser flow covers login, persisted workspace/contractor/invoice creation, reload recovery and exact payment prefilling; rejected signing remains recoverable. The 390px workspace screenshot was visually reviewed without horizontal overflow. Tests use temporary databases and simulated wallets, not the user's MongoDB account or real signing. The existing bundle-size warning remains. CI caches the isolated MongoDB test binary. No contract changes, transactions or deployment occurred.
+Local verification passed: 30 unit/API tests (including nine against temporary MongoDB), all 44 browser cases, TypeScript, backend/frontend build, formatting and whitespace checks. The browser flow covers login, persisted workspace/contractor/invoice creation, reload recovery and exact payment prefilling; rejected signing remains recoverable. The 390px workspace screenshot was visually reviewed without horizontal overflow. Tests use temporary databases and simulated wallets, not the user's MongoDB account or real signing. The existing bundle-size warning remains. CI caches the isolated MongoDB test binary. No contract changes or blockchain transactions occurred; the backend and frontend were subsequently deployed and verified as recorded above.
 
-Preserve the pre-existing local handoff content. The historical browser CI failure remains unresolved; current local check results will be recorded in `docs/test-results.md`. Existing payment contract and production release remain unchanged until an authorized release is ready. After the user configures MongoDB, verify local persistence, then hosted routing/cookies/database access before deployment. Keep backend values server-only, without VITE_ prefixes.
+Preserve the pre-existing historical handoff content. The cause of historical browser CI failure 38117460629 remains uninvestigated; both current release CI runs passed. Hosted persistence, routing, cookies and database access are verified. The existing payment contract remains unchanged. Keep backend values server-only, without VITE_ prefixes.
 
-Updated October 11, 2026. Read this first when continuing in a new session. This records completed work and verified results; balances and deployment checks are historical snapshots.
+Updated October 15, 2026. Read the latest deployment entries at the top first when continuing in a new session. This records completed work and verified results; balances and deployment checks are historical snapshots. This handoff-only update does not authorize further feature work, commits, pushes or deployments.
 
-## End-of-day status — October 11
+## Historical end-of-day status — October 11 (superseded by October 13 status)
 
 - User finished for the day and requested this handoff update. Do not continue feature work or redeploy as part of this update.
 - Latest committed and pushed application release: `b309e7b08f4f62909460f7f15751ed96a964c8c9` (`Add Runway user documentation and downloadable guide`), on `main`.
@@ -31,7 +85,7 @@ Updated October 11, 2026. Read this first when continuing in a new session. This
 
 Runway is a testnet payment protocol and web app on Mezo. A sender deposits the full MUSD payment upfront, the recipient earns it linearly over a chosen duration, and claims transfer earned funds to the fixed recipient.
 
-There is no traditional backend server or database. The React frontend reads blockchain state through RPC; the Solidity contract holds the money and enforces payment rules. Vercel hosts the frontend. Wallets sign transactions.
+A TypeScript/Hono backend on Render stores owner-private workspaces, contractors, draft invoices and wallet-login sessions in MongoDB Atlas. The React frontend stays on Vercel and calls relative `/api` paths through a same-origin proxy. It also reads blockchain state through RPC; the Solidity contract holds the money and enforces payment rules. Wallets sign login messages and authorize financial transactions separately.
 
 Mezo borrowing is separate. Runway does not currently borrow, lend, repay loans, earn yield, or automatically submit claims. Paying a contractor does not repay a Mezo borrowing position. Read-only founder/contractor position checks were verified October 11 (see section 8); saved values are historical snapshots.
 
@@ -47,13 +101,20 @@ The user is learning these concepts. Explain steps plainly and use the existing 
 | SSH remote | `git@github.com:SupunThk/runway.git` |
 | Branch | `main`, tracking `origin/main` |
 | Public frontend | https://mezo-runway-testnet.vercel.app |
+| Workspace page | https://mezo-runway-testnet.vercel.app/workspace |
+| Borrowing page | https://mezo-runway-testnet.vercel.app/borrowing |
+| Public backend health | https://runway-api-rw61.onrender.com/api/health |
+| Render workspace | My Workspace (`tea-d7p2hoa8qa3s73et5nl0`) |
+| Render service | `runway-api` (`srv-db75jus9v7es73ai4g00`), free, Singapore |
+| Render source branch | `deploy/render-backend-2026-10-13`, deployed backend `023087f` |
+| Database | MongoDB Atlas; `runway`; server-only URI |
 | Local frontend | `http://127.0.0.1:5173` when the dev server is running |
 | Vercel team | `supunthks-projects` |
 | Vercel project | `mezo-runway-testnet` |
 | Vercel project ID | `prj_xVu0NEGFRc47pJFYnZI87erHvqoX` |
 | Vercel team ID | `team_0003YMxdv6pi0w9vMdCToeSG` |
 
-Latest deployed application commit: `b309e7b` (user documentation). The initial implementation commit was `8a58ef1`. Run `git status` and `git log` at the start of the next session; handoff updates can remain local after an application release.
+Latest deployed frontend/application commit: `db79a53be0b10bfe488cf8400fd6fa5ab3c8fb4b` (dedicated Borrowing dashboard), on `main` and `origin/main`. Previous release `bf80faf` fixed sidebar order and full-page navigation reloads. Render currently runs backend source `023087fc68715d16bb6d24dd8a289608230c9cbc` from the deployment branch. The initial implementation commit was `8a58ef1`. Run `git status` and `git log` at the start of the next session; handoff updates can remain local after an application release.
 
 ## 3. Network, assets, and accounts
 
@@ -128,11 +189,13 @@ The app was first published as a local static build. It was then changed to GitH
 
 Latest confirmed GitHub deployment:
 
-- ID: `dpl_EMyR7AMmss43ipT1xsAwPDqd4ijS`
+- ID: `dpl_GqPKPBWtn2x5pKWiTigvjj2gEV2c`
 - Source: GitHub, `SupunThk/runway`, branch `main`
-- Commit: `b309e7b08f4f62909460f7f15751ed96a964c8c9`
+- Commit: `db79a53be0b10bfe488cf8400fd6fa5ab3c8fb4b`
 - Result: production READY, aliased to https://mezo-runway-testnet.vercel.app
-- Build: cloned the repository, installed the locked dependencies, passed TypeScript and built Vite successfully.
+- Deployment URL: https://mezo-runway-testnet-cbqe48583-supunthks-projects.vercel.app
+- API: Vercel `/api/:path*` forwards to https://runway-api-rw61.onrender.com/api/:path*.
+- Current frontend CI run 38721315922 passed, including all 48 browser cases. Backend source CI also passed. Public post-release navigation/route checks passed at desktop and mobile sizes; hosted API/database health passed.
 
 Pushes to `main` trigger production builds. Other branches can receive preview deployments. GitHub Actions also runs checks, but those checks are **not currently a gate** on Vercel production deployment.
 
@@ -164,7 +227,7 @@ Important evidence distinction: `deployments/mezo-testnet.frontend.json` describ
 
 The original public-site report and screenshot are tracked in `deployments/frontend.check.json` and `deployments/frontend-mobile.png`. The later GitHub-build verification report was retained locally at `.tools/vercel-config/github-frontend.check.json` (ignored; may not exist in a fresh clone).
 
-The counts above describe the initial release. The Solidity suite now passes 24 tests with adversarial token/reentrancy coverage and two stateful invariant campaigns; the previous release passed 42 browser tests and 21 unit/accounting tests in CI. For the latest documentation release, the GitHub browser-test step failed and requires investigation (see end-of-day status); its earlier checks passed. Real extension signing on the final public HTTPS origin remains unverified by the agent. The build still warns about a JavaScript bundle over 500 kB. There is no independent security audit.
+The counts above describe the initial release. The Solidity suite now passes 24 tests with adversarial token/reentrancy coverage and two stateful invariant campaigns; the previous release passed 42 browser tests and 21 unit/accounting tests in CI. The October 11 documentation release had a browser-test CI failure whose cause remains uninvestigated. October 13 backend source and production release CI both passed, including browser tests; current local counts are 30 unit/API and 44 browser cases. Real extension signing on the final public HTTPS origin remains unverified by the agent. The build still warns about a JavaScript bundle over 500 kB. There is no independent security audit.
 
 ## 8. Transaction history and receipts (deployed October 11)
 
@@ -267,6 +330,15 @@ Next: demo/submission materials and release review. Borrowing and repayment shou
 | File | Purpose |
 | --- | --- |
 | `apps/web/src/App.tsx` | Current dashboard, funding form, schedule reads, claims and cancellation UI |
+| `apps/web/src/Sidebar.tsx`, `apps/web/src/Router.tsx` | Shared navigation order, Documentation footer and client-side route/history handling |
+| `apps/web/src/Borrowing.tsx`, `apps/web/src/BorrowingPosition.tsx`, `apps/web/src/BorrowingStress.tsx` | Dedicated read-only borrowing page, position reads and BTC price scenarios |
+| `tests/navigation.spec.ts`, `tests/borrowing.spec.ts` | Sidebar/no-reload navigation, direct borrowing routes/refresh and borrowing-state regression cases |
+| `apps/web/src/Workspace.tsx` | Wallet login, private workspaces, contractors and draft invoices |
+| `apps/api/src/app.ts`, `apps/api/src/db.ts`, `apps/api/src/server.ts` | Hono API, pooled MongoDB/indexes and Render listener |
+| `docs/backend.md`, `docs/render-hosting.md` | Backend configuration and actual hosted service settings |
+| `docs/development-workflow.md` | Expanded Wave 1 and Wave 2 roadmap |
+| `deployments/render-backend.check.json` | Latest hosted browser/API/Atlas verification evidence |
+| `tests/workspace.spec.ts`, `apps/api/src/app.test.ts` | Workspace browser and API regression coverage |
 | `apps/web/src/WalletConnection.tsx` | Wallet discovery and selection |
 | `apps/web/src/config.ts` | Public configuration and wagmi setup |
 | `apps/web/src/style.css` | Responsive styling |
@@ -280,7 +352,7 @@ Next: demo/submission materials and release review. Borrowing and repayment shou
 | `tests/settlement.spec.ts` | Deterministic RPC fixtures for settlement displays |
 | `tests/browser.spec.ts`, `tests/wallets.spec.ts` | Other browser tests |
 | `.github/workflows/checks.yml` | GitHub CI; copies public `.env.example` before checks |
-| `vercel.json` | Source-build commands, output and recipient-route rewrite |
+| `vercel.json`, `render.yaml`, `scripts/configure-api-proxy.mjs` | Vercel build/routes/API proxy, intended Render Blueprint and proxy configuration helper |
 | `README.md`, `docs/frontend-hosting.md` | Setup and current deployment workflow |
 | `docs/test-results.md` | Test history; later sections/updates supersede earlier pending statements |
 | `wave1Steps.md`, `plan.md`, `issues.md` | Broader project plan and prior review |
@@ -333,16 +405,28 @@ Validation: production TypeScript/Vite build passed. Local production-preview br
 
 Committed and pushed as `b309e7b`, then deployed through the normal GitHub `main` workflow as `dpl_EMyR7AMmss43ipT1xsAwPDqd4ijS`. The public `/docs` and `/docs/` page checks, Markdown download and navigation passed, including mobile layouts and no page errors. The fallback static-hosting preparation also includes both docs routes. Payment contract and transaction behavior were not changed. The full GitHub browser-test step subsequently failed; investigate it next session before further release work.
 
+## Next-session priorities
+
+1. Inspect `git status` and read the latest local reconciliation entry, `docs/payment-reconciliation.md` and `docs/development-workflow.md`. Production frontend is `c03a337`; live Render backend is `023087f`. The visual refresh is deployed; reconciliation is local, verified, uncommitted and undeployed. Preserve all source files and prior deployment records. Do not redeploy just to recover context.
+2. Complete real installed-wallet login on the hosted `/workspace` page when the user is available. Generated-wallet hosted signing is verified; existing two-wallet financial tests are already complete and need not be repeated.
+3. When Dashboard access is available, set Render HTTP health check to `/api/health` and deliberately decide whether to move its source branch to `main` and gate auto-deploy on passing checks. The current service uses TCP checks and commit-triggered deploys on the deployment branch. Free Render can sleep; account for a slow first request during demos.
+4. When a reconciliation release is requested, review the diff and include the new untracked implementation files. Deploy the backend to Render's tracked branch first, enable the indexer, wait for catch-up and verify hosted invoice matching/linking/accounting before releasing the frontend. Main pushes trigger Vercel immediately and do not update the Render backend. After hosted validation, continue the remaining scoped Wave 1 items when requested. Demo/submission materials and external confirmations remain.
+5. Historical CI failure 38117460629 can be investigated if useful; current release CI is green. Keep historical evidence separate from current results.
+
+## Local saved state after deployment
+
+The user requested this handoff-only update after implementing reconciliation. `main` remains at released frontend commit `c03a337`. The UI refresh, navigation and Borrowing changes are committed and pushed. Reconciliation source, tests, settings examples and documentation are local changes, including the new untracked indexer/worker/test files and `docs/payment-reconciliation.md`; see the implementation map at the top. `HANDOFF.md`, `docs/backend.md` and `docs/test-results.md` also retain deployment-record updates, and `deployments/render-backend.check.json` is local untracked evidence. Preserve these files before a later commit. Ignored `.tools/` scripts and screenshots contain local verification artifacts. No commit or deployment is part of this handoff update. Never commit `.env`.
+
 ## Suggested prompt for the next session
 
-> Read HANDOFF.md and inspect the current repository. User documentation is deployed as b309e7b and its public smoke checks pass, but GitHub CI run 38117460629 failed at the browser-test step. Investigate the failing case first, then continue with demo/submission materials and release review. Preserve the verified production contract, keep borrowing/repayment in Mezo and verify any public deployment. The latest handoff update may be uncommitted locally.
+> Read HANDOFF.md and inspect git status. Production frontend is the deployed UI refresh at c03a337; live Render backend remains 023087f on deploy/render-backend-2026-10-13. Payment reconciliation is implemented locally, uncommitted and undeployed. It includes verified event indexing, checkpoints/retries/reorg recovery, invoice reference matching, legacy schedule linking and claim/refund accounting. All 38 unit/API tests, 48 browser tests, TypeScript, build, formatting and whitespace passed; read-only live RPC verification passed. Read docs/payment-reconciliation.md for operation and release ordering. Preserve all local source changes, new untracked files, prior deployment records and the existing payment contract. Indexing is disabled by default. Real installed-wallet login remains pending. Continue the next user-selected task; do not commit, deploy or repeat financial transactions merely to recover context.
 
-## Render deployment session — October 13, 2026 (hosted verification pending)
+## Render deployment session — October 13, 2026 (completed; see current status above)
 
-User authorized deploying the prepared backend to Render while retaining the Vercel frontend. Release checks passed again: 30 unit/API tests, 44 browser tests, TypeScript, formatting, build and git diff whitespace. Prepared source committed and pushed to `deploy/render-backend-2026-10-13` as `023087f`; main remains `b309e7b`. Local MongoDB URI is present; no URI appears in frontend build assets. Never print the URI.
+User authorized deploying the prepared backend to Render while retaining the Vercel frontend. Release checks passed again: 30 unit/API tests, 44 browser tests, TypeScript, formatting, build and git diff whitespace. Prepared source committed and pushed to `deploy/render-backend-2026-10-13` as `023087f`; the frontend/proxy release subsequently advanced main to `727dd13`. Local MongoDB URI is present; no URI appears in frontend build assets. Never print the URI.
 
 User confirmed My Workspace (`tea-d7p2hoa8qa3s73et5nl0`). Created free Singapore Node service `runway-api`, ID `srv-db75jus9v7es73ai4g00`, URL https://runway-api-rw61.onrender.com. Deployment `dep-db75jvs9v7es73ai4ibg` is live from backend commit `023087f` on `deploy/render-backend-2026-10-13`. MongoDB values transferred directly from ignored local `.env`; APP_ORIGIN is the existing Vercel production origin. Direct HTTPS `/api/health` returned 200 ready/database connected; logs confirm 0.0.0.0:10000 startup. Created with the MCP tool, so it uses commit-triggered auto-deploy on the deployment branch and default TCP health checks (MCP cannot set an HTTP health path); `render.yaml` describes the intended Blueprint settings, not an applied Blueprint. Browser UI was unavailable to adjust this. HTTP health is verified explicitly.
 
-Vercel MCP still returns 404 for the known project. Authenticated CLI 54.9.1 successfully inspected `supunthks-projects/mezo-runway-testnet` and confirmed project `prj_xVu0NEGFRc47pJFYnZI87erHvqoX`, Node 24.x and existing build settings. Use CLI fallback or the Git main workflow after Render is healthy and `scripts/configure-api-proxy.mjs` has the real Render URL.
+Vercel MCP still returns 404 for the known project. Authenticated CLI 54.9.1 successfully inspected `supunthks-projects/mezo-runway-testnet` and confirmed project `prj_xVu0NEGFRc47pJFYnZI87erHvqoX`, Node 24.x and existing build settings. The real Render proxy URL is configured and production deployed. Use the CLI fallback or Git main workflow for future authorized frontend releases.
 
-Ignored `.tools/verify-render-release.mjs` is prepared and syntax checked. It exercises the real HTTPS frontend/API/Atlas with newly generated test-wallet message signatures, checks Secure/HttpOnly/SameSite=Strict cookies, persistence, owner isolation, replay rejection, exact payment prefilling and logout. It removes only its own generated wallet records. It has NOT run yet. Real installed-wallet extension signing remains a separate user validation. Historical CI failure 38117460629 is still uninvestigated (`gh` is unavailable); do not claim all CI is green.
+Ignored `.tools/verify-render-release.mjs` is prepared and syntax checked. It exercises the real HTTPS frontend/API/Atlas with newly generated test-wallet message signatures, checks Secure/HttpOnly/SameSite=Strict cookies, persistence, owner isolation, replay rejection, exact payment prefilling and logout. It removes only its own generated wallet records. It ran successfully against the deployed frontend/API/Atlas; see the deployment evidence above. Real installed-wallet extension signing remains a separate user validation. Historical CI failure 38117460629 is still uninvestigated (`gh` is unavailable); both current source/release CI runs passed, verified through the public GitHub API.
