@@ -51,7 +51,19 @@ One MongoClient pool is reused per process, with bounded connection timeouts and
 
 Initial authentication supports EOA personal wallets, not smart-contract wallet signatures. Disconnecting a wallet does not revoke a server session; the page hides workspace access when the connected account does not match, and **Sign out of workspace** revokes the session. Sessions can also be revoked by removing their hashed records; expired sessions never authenticate.
 
-## Hosting
+## Assistant configuration (local implementation)
+
+`POST /api/assistant/chat` accepts `{ "question": "…", "history": ["previous user question"] }`. It needs an exact allowed Origin, but no wallet login. Questions are limited to 1,200 characters and six previous user questions; extra fields and forged roles are rejected. The service never reads workspace records for assistant requests. MongoDB is required for durable anonymous usage counters.
+
+Set server-only `GEMINI_API_KEY` in the existing root `.env` for development. `GEMINI_MODEL` defaults to `gemini-3.8-flash`, verified against the key's available model list during implementation. Set `ASSISTANT_ENABLED=false` to disable inference. `ASSISTANT_DAILY_REQUEST_LIMIT` defaults to 200 requests per UTC day and must be 1–10,000. This is a request cap, not a dollar-denominated provider budget; each accepted request uses at most two model calls, each capped at 2,200 output tokens, with no SDK retries. Failed calls still consume the request budget. Configure any additional billing controls in the provider account.
+
+The service also limits requests to six/client hint/minute, thirty globally/minute, and two concurrent requests per process, with a 45-second inference deadline. Client IP headers are only an abuse hint; the global counters enforce the shared budget even if those hints are spoofed. Origins and IP hints do not authenticate private data. Counters use the existing `rateLimits` TTL collection. No raw prompts, answers or provider errors are logged; request IDs, outcomes, source IDs and duration are logged. The app does not persist chat transcripts; Google's separate processing/retention policies still apply.
+
+Every inference starts with fresh system instructions. The scope router sees only bounded user questions and public source titles. The answer call sees only selected sections from [assistant knowledge](assistant-knowledge.md). It receives neither workspace sessions nor `.env` values, previous assistant replies or other users' conversations. It has no browsing, RPC, database or transaction tools. Model-generated source IDs are checked against retrieved sections; links come from an allowlist. Unsupported/out-of-scope/live-data requests receive fixed server replies. Complete structured responses are validated before display, rather than streaming unvalidated text. Scope classification remains model-based; automated and live evaluations are regression evidence, not a guarantee against every possible adversarial phrasing.
+
+To release later, configure the Gemini key directly in Render's server environment without printing or committing it. Local `.env` is not uploaded. Deploy the backend branch and verify the real frontend Origin/proxy → model → cited-answer path before the frontend; `/assistant` and `/assistant/` rewrites are prepared. No production assistant release has been performed as part of local implementation. See [assistant scope](ai-assistant.md).
+
+## Hosting configuration
 
 The user selected Render for the Node API, retaining Vercel for the frontend and Atlas for MongoDB. See [Render deployment](render-hosting.md) for the root Blueprint, commands, secret configuration and frontend API proxy setup. The earlier Vercel function adapter has been removed. The actual Render service URL must be configured before publishing the frontend proxy.
 

@@ -118,6 +118,15 @@ export const guideSections: GuideSection[] = [
     ],
   },
   {
+    id: 'assistant',
+    title: 'Ask Runway: app and Mezo questions',
+    paragraphs: [
+      'Open Assistant to ask about Runway, MUSD and Mezo without connecting a wallet. Try a suggested question or type your own, then ask follow-ups. Answers include links to the reviewed documentation and useful app pages. If the reviewed sources do not support an answer, the assistant will say so.',
+      'The assistant explains information; it cannot inspect live wallets or transactions, read private invoices, or carry out actions. Use the relevant app page to check current data. Unrelated topics are outside its scope.',
+      'Questions are sent to Google Gemini. Do not paste private keys, seed phrases or other secrets. This release keeps the conversation in page memory, not account chat history. New chat clears its context, and reloading clears the conversation. Use Stop to stop waiting for an answer, Retry after a failure, or open the guide when the assistant is unavailable.',
+    ],
+  },
+  {
     id: 'trust-and-limits',
     title: 'What to know about this release',
     paragraphs: [

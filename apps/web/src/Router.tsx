@@ -3,6 +3,7 @@ import { App } from './App';
 import { Documentation } from './Documentation';
 import { Workspace } from './Workspace';
 import { Borrowing } from './Borrowing';
+import { Assistant } from './Assistant';
 
 const currentRoute = () => window.location.pathname + window.location.search;
 
@@ -36,7 +37,7 @@ export function Router() {
     if (
       url.origin !== window.location.origin ||
       url.hash ||
-      !/^\/(?:docs\/?|workspace\/?|borrowing\/?|schedules\/[^/]+\/?)?$/.test(
+      !/^\/(?:docs\/?|workspace\/?|borrowing\/?|assistant\/?|schedules\/[^/]+\/?)?$/.test(
         url.pathname,
       )
     )
@@ -52,7 +53,9 @@ export function Router() {
   const pathname = route.split('?')[0];
   return (
     <div className="router" onClick={navigate}>
-      {/^\/docs\/?$/.test(pathname) ? (
+      {/^\/assistant\/?$/.test(pathname) ? (
+        <Assistant />
+      ) : /^\/docs\/?$/.test(pathname) ? (
         <Documentation />
       ) : /^\/workspace\/?$/.test(pathname) ? (
         <Workspace />

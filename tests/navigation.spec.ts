@@ -18,6 +18,7 @@ for (const width of [1280, 390, 320]) {
         '＋ New schedule',
         '▦ Workspace',
         '₿ Borrowing',
+        '✦ Assistant',
         '? Documentation',
       ]);
       await expect(sidebar.locator('[aria-current="page"]')).toHaveText(active);

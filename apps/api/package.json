@@ -11,10 +11,13 @@
     "build": "tsc --noEmit"
   },
   "dependencies": {
+    "@ai-sdk/google": "4.0.99",
     "@hono/node-server": "2.1.5",
+    "ai": "7.0.143",
     "hono": "4.13.13",
     "mongodb": "7.7.0",
-    "viem": "2.57.4"
+    "viem": "2.57.4",
+    "zod": "4.6.5"
   },
   "devDependencies": {
     "mongodb-memory-server": "11.3.0"

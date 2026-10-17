@@ -3,7 +3,7 @@
 **Pitch:** Turn Bitcoin-backed MUSD into dependable contractor payments, with a clear view of your team's cash runway and borrowing risk.
 
 **Prepared:** October 10, 2026  
-**Scope revised:** October 13, 2026. MongoDB backend approved; former Wave 2 integrations moved into expanded Wave 1. See [current workflow](docs/development-workflow.md).
+**Scope revised:** October 17, 2026. Adds a phased AI assistant, starting with sourced Runway/Mezo questions and answers. The October 13 MongoDB and expanded Wave 1 decisions remain. See [current workflow](docs/development-workflow.md) and [AI assistant scope](docs/ai-assistant.md).
 
 **Recommended submission:** Track 2 (Access and Distribution); consider Track 1 when borrowing and repayment are implemented and verified.
 **Deployment:** Mezo testnet first.  
@@ -129,6 +129,8 @@ Deliver these in priority order:
 6. **Mezo Passport:** Verify compatibility and integrate the additional wallet path within Wave 1. Initial backend authentication supports EOA personal wallets; smart-contract wallet verification needs separate implementation.
 7. **Indexed payment reconciliation:** Persist verified chain events with block/log identifiers, replay and reorg handling, then associate confirmed schedules with contractors/invoices. Keep direct RPC access for public recipient claims and clear indexer-lag disclosure.
 
+8. **AI assistant, Phase 1:** A wallet-free chat page answers questions about Runway and Mezo using reviewed documentation, supporting source links and relevant app navigation. Implemented locally, uncommitted and undeployed, using server-side Gemini calls and isolated bounded retrieval in the existing React/Hono stack. Follow-on Phase 2 adds read-only wallet/transaction tools; Phase 3 prepares supported app actions for explicit user review and wallet confirmation. See [phased scope and acceptance criteria](docs/ai-assistant.md).
+
 ### Wave 2: team treasury operations
 
 1. **Payroll runs:** Prepare multiple contractor payments, review total funding and track each confirmed result.
@@ -140,7 +142,7 @@ Deliver these in priority order:
 
 An opt-in reminder service or batch claims can follow if the core flow is stable. Any automated claimant must pay gas and can only trigger transfers to the stored recipient; its reliability and operating cost must be explicit.
 
-**Excluded from both Waves:** Leverage loops, pooled lending, automatic collateral trading, cross-chain bridges, yield on committed payroll, fiat offramps, custom tokens, and AI-controlled transactions. MUSD alone meets the brief's asset requirement; there is no need to force MEZO staking into the product.
+**Excluded from both Waves:** Leverage loops, pooled lending, automatic collateral trading, cross-chain bridges, yield on committed payroll, fiat offramps, custom tokens, and autonomous AI-controlled transactions. The planned assistant may explain information, later perform authorized reads, and eventually prepare supported actions for explicit user confirmation; it cannot independently sign or move funds. MUSD alone meets the brief's asset requirement; there is no need to force MEZO staking into the product.
 
 ## 6. Architecture
 

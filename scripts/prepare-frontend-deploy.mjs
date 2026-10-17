@@ -16,6 +16,8 @@ await writeFile(
       buildCommand: '',
       installCommand: '',
       rewrites: [
+        { source: '/assistant', destination: '/index.html' },
+        { source: '/assistant/', destination: '/index.html' },
         { source: '/borrowing', destination: '/index.html' },
         { source: '/borrowing/', destination: '/index.html' },
         { source: '/schedules/:id', destination: '/index.html' },

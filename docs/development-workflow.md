@@ -13,13 +13,15 @@ The established public release remains the payment app described in HANDOFF.md. 
 - A `/workspace` page and prefilled payment forms from contractors/invoices.
 - Bounded cursor pagination, input/body validation, origin checks and database-backed write/auth throttling.
 
-The local payment-reconciliation increment adds confirmed event indexing, invoice reference matching, verified legacy schedule linking and derived claim/refund accounting. See [payment reconciliation](payment-reconciliation.md). It remains undeployed. Contractor-submitted invoices, shared team access, reminders and new protocol writes remain future work. The deployed Solidity payment rules remain the authority for funds. Names and invoice descriptions stay offchain.
+The payment-reconciliation increment adds confirmed event indexing, invoice reference matching, verified legacy schedule linking and derived claim/refund accounting. It was released October 17, 2026 as `a95c4a9`; embedded indexing is enabled and caught up. See [payment reconciliation](payment-reconciliation.md). Contractor-submitted invoices, shared team access, reminders and new protocol writes remain future work. The deployed Solidity payment rules remain the authority for funds. Names and invoice descriptions stay offchain.
 
 ## Expanded Wave 1 backlog
 
+Scope addition, October 17: **Assistant Phase 1** is implemented locally, uncommitted and undeployed, using the user's Gemini key for sourced Runway/Mezo questions and answers. Phase 2 adds read-only wallet/transaction queries; Phase 3 prepares supported app actions for explicit user confirmation. See [AI assistant scope](ai-assistant.md) for architecture, knowledge sources, boundaries and acceptance criteria. No hosting changes or later-phase tools are part of this increment.
+
 1. Configure the user's MongoDB database and verify persistence with the new UI.
 2. Investigate historical GitHub browser-test failure 38117460629; run current regression checks before publishing.
-3. Release and verify the locally implemented event indexing and invoice-to-schedule reconciliation, with checkpointing, retries and reorg recovery.
+3. Completed October 17: release and hosted verification of event indexing and invoice-to-schedule reconciliation, with checkpointing, retries and reorg recovery.
 4. Integrate direct wallet-signed borrowing and repayment after verifying official ABI, minimum debt, reserves, fees, position ownership, transaction simulation and actual debt changes. Keep funding separate.
 5. Add repayment reserves, dated cash planning and protocol-mode/stale-price handling.
 6. Integrate and test Mezo Passport, including authentication compatibility.

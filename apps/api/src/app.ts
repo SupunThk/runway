@@ -15,6 +15,12 @@ import {
 import { createSiweMessage } from 'viem/siwe';
 import { database } from './db.ts';
 import {
+  answerQuestion,
+  createGeminiModel,
+  questionSchema,
+  type AssistantModel,
+} from './assistant.ts';
+import {
   indexKey,
   paymentDeployment,
   reconcileInvoices,
@@ -133,15 +139,22 @@ async function page<T extends RecordBase>(
     nextCursor: rows.length > 25 ? rows[24]._id : null,
   };
 }
-async function rateLimit(db: Db, key: string, max: number, now: Date) {
-  const bucket = Math.floor(now.getTime() / 60000);
+async function rateLimit(
+  db: Db,
+  key: string,
+  max: number,
+  now: Date,
+  windowMs = 60000,
+  message = 'Too many requests. Try again in a minute.',
+) {
+  const bucket = Math.floor(now.getTime() / windowMs);
   let row;
   try {
     row = await db.collection<RateLimit>('rateLimits').findOneAndUpdate(
       { _id: `${key}:${bucket}` },
       {
         $inc: { count: 1 },
-        $setOnInsert: { expiresAt: new Date(now.getTime() + 120000) },
+        $setOnInsert: { expiresAt: new Date(now.getTime() + windowMs * 2) },
       },
       { upsert: true, returnDocument: 'after' },
     );
@@ -157,8 +170,7 @@ async function rateLimit(db: Db, key: string, max: number, now: Date) {
         { returnDocument: 'after' },
       );
   }
-  if (!row || row.count > max)
-    fail(429, 'Too many requests. Try again in a minute.');
+  if (!row || row.count > max) fail(429, message);
 }
 
 export function createApp(
@@ -166,11 +178,15 @@ export function createApp(
     getDb?: () => Promise<Db>;
     origin?: string;
     now?: () => Date;
+    assistantModel?: AssistantModel;
+    assistantEnabled?: boolean;
+    assistantDailyLimit?: number;
   } = {},
 ) {
   const app = new Hono<{ Variables: Variables }>();
   const getDb = options.getDb ?? database;
   const now = options.now ?? (() => new Date());
+  let activeAssistantRequests = 0;
   const configuredOrigin =
     options.origin ??
     process.env.APP_ORIGIN ??
@@ -224,6 +240,101 @@ export function createApp(
       return c.json({ error: 'MongoDB is not configured or reachable.' }, 503);
     }
     await next();
+  });
+  app.post('/api/assistant/chat', async (c) => {
+    const enabled =
+      options.assistantEnabled ?? process.env.ASSISTANT_ENABLED !== 'false';
+    if (!enabled || (!options.assistantModel && !process.env.GEMINI_API_KEY))
+      return c.json(
+        {
+          error:
+            'The assistant is not available right now. Please use the guide or try again later.',
+        },
+        503,
+      );
+    const input = questionSchema.safeParse(await json(c.req.raw));
+    if (!input.success)
+      return c.json(
+        {
+          error:
+            'Send a question of up to 1,200 characters and at most six previous questions.',
+        },
+        400,
+      );
+    const db = c.get('db');
+    const instant = now();
+    // Client IP headers are an abuse hint, never an authorization boundary.
+    // The durable global limits apply even if a caller rotates/spoofs a client hint.
+    const clientHint = (c.req.header('x-forwarded-for') || 'anonymous')
+      .split(',')[0]
+      .trim()
+      .slice(0, 100);
+    await rateLimit(db, `assistant-client:${digest(clientHint)}`, 6, instant);
+    await rateLimit(db, 'assistant-global', 30, instant);
+    const daily =
+      options.assistantDailyLimit ??
+      Number(process.env.ASSISTANT_DAILY_REQUEST_LIMIT || 200);
+    if (!Number.isInteger(daily) || daily < 1 || daily > 10000)
+      return c.json(
+        { error: 'The assistant is temporarily unavailable.' },
+        503,
+      );
+    if (activeAssistantRequests >= 2)
+      return c.json(
+        { error: 'The assistant is busy. Try again shortly.' },
+        429,
+      );
+    activeAssistantRequests++;
+    const requestId = randomUUID();
+    const started = Date.now();
+    c.header('X-Request-Id', requestId);
+    try {
+      await rateLimit(
+        db,
+        'assistant-day',
+        daily,
+        instant,
+        86400000,
+        'The assistant has reached its daily usage limit. Please use the guide and try again tomorrow.',
+      );
+      const signal = AbortSignal.any([
+        c.req.raw.signal,
+        AbortSignal.timeout(45000),
+      ]);
+      const reply = await answerQuestion(
+        input.data,
+        options.assistantModel ?? createGeminiModel(),
+        signal,
+      );
+      console.info(
+        JSON.stringify({
+          event: 'assistant',
+          requestId,
+          kind: reply.kind,
+          sources: reply.sources.map((source) => source.id),
+          durationMs: Date.now() - started,
+        }),
+      );
+      return c.json(reply);
+    } catch (failure) {
+      if (failure instanceof HTTPException) throw failure;
+      console.warn(
+        JSON.stringify({
+          event: 'assistant_failed',
+          requestId,
+          durationMs: Date.now() - started,
+        }),
+      );
+      return c.json(
+        {
+          error:
+            'I couldn’t complete that answer. Please try again or open the guide.',
+        },
+        503,
+      );
+    } finally {
+      activeAssistantRequests--;
+    }
   });
   app.post('/api/auth/challenge', async (c) => {
     const address = walletAddress((await json(c.req.raw)).address);

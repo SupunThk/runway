@@ -1,0 +1,23 @@
+{
+  "checkedAt": "2026-10-17T15:05:44.760Z",
+  "frontend": "https://mezo-runway-testnet.vercel.app",
+  "backend": "https://runway-api-rw61.onrender.com",
+  "checks": [
+    "Render and Vercel proxy health: database connected, no-store",
+    "Foreign origin rejected through Vercel",
+    "Hosted wallet message signature and Secure/HttpOnly/SameSite=Strict cookie",
+    "Browser workspace/contractor/invoice creation, reload persistence and Atlas records",
+    "Hosted confirmed index metadata, opaque invoice reference, draft state and mismatched legacy link rejection",
+    "All published schedule snapshots and derived claim/refund accounting match read-only checkpoint RPC reads",
+    "Second wallet isolation and consumed challenge replay rejected",
+    "Mobile layout, exact payment prefilling, no transactions or page errors",
+    "Logout clears cookie and revokes the stored session"
+  ],
+  "index": {
+    "checkpoint": "16210018",
+    "schedules": 2,
+    "checkedAt": "2026-10-17T15:06:04.937Z"
+  },
+  "status": "passed",
+  "verificationRecordsRemoved": true
+}

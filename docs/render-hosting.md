@@ -42,6 +42,8 @@ References: [Render web services](https://render.com/docs/web-services), [Bluepr
 
 ## Current hosted service
 
+Updated October 17, 2026: backend source is now `a95c4a9`, live deployment `dep-db9onn6q1p3s7391ld30`, still following `deploy/render-backend-2026-10-13`. `PAYMENT_INDEXER_ENABLED=true` is merged into service settings; initial reconciliation catch-up completed and the embedded worker maintains checkpoints. This supersedes the source commit in the historical paragraph below. Free-service sleep can pause indexing. HTTP health was verified explicitly; configured checks remain TCP.
+
 The free Singapore service runs backend commit `023087f` from `deploy/render-backend-2026-10-13`, with commit-triggered auto-deploy. Backend updates must reach this branch until the service is deliberately switched to main. Direct HTTPS health returned ready/database connected. The MCP creation tool cannot set healthCheckPath or checksPass; the live service currently uses default TCP health checks. Set `/api/health` in Dashboard settings when browser access is available. The Blueprint retains the recommended HTTP health and checksPass settings for future Blueprint-managed deployment.
 
 Vercel external API rewrite targets this actual Render origin. APP_ORIGIN stays https://mezo-runway-testnet.vercel.app and MongoDB credentials stay only in Render server environment settings.

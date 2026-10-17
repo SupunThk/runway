@@ -112,6 +112,14 @@ Health and scenarios may be unavailable when data is stale or price checks fail.
 
 - Loading fails: retry the affected schedule or history page. Earlier pages remain visible; check any partial or stale labels before relying on totals.
 
+## Ask Runway: app and Mezo questions
+
+Open Assistant to ask about Runway, MUSD and Mezo without connecting a wallet. Try a suggested question or type your own, then ask follow-ups. Answers include links to the reviewed documentation and useful app pages. If the reviewed sources do not support an answer, the assistant will say so.
+
+The assistant explains information; it cannot inspect live wallets or transactions, read private invoices, or carry out actions. Use the relevant app page to check current data. Unrelated topics are outside its scope.
+
+Questions are sent to Google Gemini. Do not paste private keys, seed phrases or other secrets. This release keeps the conversation in page memory, not account chat history. New chat clears its context, and reloading clears the conversation. Use Stop to stop waiting for an answer, Retry after a failure, or open the guide when the assistant is unavailable.
+
 ## What to know about this release
 
 Runway is a testnet prototype. Payment addresses, amounts, timing, and events are public. Sharing a schedule link lets anyone inspect its public payment details; it is not a private invitation.

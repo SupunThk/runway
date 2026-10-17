@@ -5,6 +5,8 @@
   "buildCommand": "corepack pnpm build",
   "outputDirectory": "apps/web/dist",
   "rewrites": [
+    { "source": "/assistant", "destination": "/index.html" },
+    { "source": "/assistant/", "destination": "/index.html" },
     {
       "source": "/borrowing",
       "destination": "/index.html"
