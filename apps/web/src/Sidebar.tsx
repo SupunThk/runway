@@ -1,3 +1,5 @@
+import { Icon } from './Icon';
+
 type Section =
   'overview' | 'create' | 'workspace' | 'borrowing' | 'assistant' | 'docs';
 
@@ -6,14 +8,14 @@ export function Sidebar({ active }: { active?: Section }) {
     section: Section,
     href: string,
     label: string,
-    icon: string,
+    icon: Parameters<typeof Icon>[0]['name'],
   ) => (
     <a
       href={href}
       className={active === section ? 'nav active' : 'nav'}
       aria-current={active === section ? 'page' : undefined}
     >
-      <span aria-hidden="true">{icon}</span> <span>{label}</span>
+      <Icon name={icon} /> <span>{label}</span>
     </a>
   );
   return (
@@ -24,15 +26,15 @@ export function Sidebar({ active }: { active?: Section }) {
       </a>
       <div className="workspace-label">YOUR WORKSPACE</div>
       <nav aria-label="Main navigation">
-        {link('overview', '/', 'Overview', '↗')}
-        {link('create', '/?create=1', 'New schedule', '＋')}
-        {link('workspace', '/workspace', 'Workspace', '▦')}
-        {link('borrowing', '/borrowing', 'Borrowing', '₿')}
-        {link('assistant', '/assistant', 'Assistant', '✦')}
+        {link('overview', '/', 'Overview', 'overview')}
+        {link('create', '/?create=1', 'New schedule', 'plus')}
+        {link('workspace', '/workspace', 'Workspace', 'workspace')}
+        {link('borrowing', '/borrowing', 'Borrowing', 'borrowing')}
+        {link('assistant', '/assistant', 'Assistant', 'assistant')}
       </nav>
       <div className="sidebar-footer">
         <nav aria-label="Help navigation">
-          {link('docs', '/docs', 'Documentation', '?')}
+          {link('docs', '/docs', 'Documentation', 'docs')}
         </nav>
         <div className="sidebar-bottom">
           <span className="network-dot" /> Mezo testnet

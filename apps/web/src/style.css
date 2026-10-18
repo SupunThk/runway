@@ -1377,7 +1377,7 @@ main {
   background: #304b3f;
   box-shadow: inset 3px 0 #9fc4b2;
 }
-.nav.active > span:first-child {
+.nav.active > .ui-icon {
   animation: active-marker 3s ease-in-out infinite;
 }
 .nav:active {

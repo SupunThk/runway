@@ -1,4 +1,5 @@
 import { Sidebar } from './Sidebar';
+import { Icon } from './Icon';
 import { useState } from 'react';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import {
@@ -425,7 +426,7 @@ export function App() {
             </div>
             {view === 'overview' && !scheduleId ? (
               <button className="button" onClick={() => setView('create')}>
-                ＋ Create schedule
+                <Icon name="plus" /> Create schedule
               </button>
             ) : null}
           </section>
@@ -793,27 +794,31 @@ export function App() {
                   </div>
                 ) : !schedules.error ? (
                   <div className="empty">
-                    <div className="empty-icon">↗</div>
-                    <h3>
-                      {scheduleId
-                        ? 'Schedule data unavailable'
-                        : address && readiness.data?.payments
-                          ? 'Your first payment starts here.'
-                          : 'A clearer way to pay your team.'}
-                    </h3>
-                    <p>
-                      {scheduleId
-                        ? 'The payment deployment must be configured and reachable to load this link.'
-                        : 'Fund a schedule with MUSD, share a link, and let your recipient claim what they’ve earned.'}
-                    </p>
-                    {!scheduleId ? (
-                      <button
-                        className="button secondary"
-                        onClick={() => setView('create')}
-                      >
-                        Create your first schedule ↗
-                      </button>
-                    ) : null}
+                    <div className="empty-icon">
+                      <Icon name="wallet" />
+                    </div>
+                    <div className="empty-copy">
+                      <h3>
+                        {scheduleId
+                          ? 'Schedule data unavailable'
+                          : address && readiness.data?.payments
+                            ? 'Your first payment starts here.'
+                            : 'A clearer way to pay your team.'}
+                      </h3>
+                      <p>
+                        {scheduleId
+                          ? 'The payment deployment must be configured and reachable to load this link.'
+                          : 'Fund a schedule with MUSD, share a link, and let your recipient claim what they’ve earned.'}
+                      </p>
+                      {!scheduleId ? (
+                        <button
+                          className="button secondary"
+                          onClick={() => setView('create')}
+                        >
+                          Create your first schedule ↗
+                        </button>
+                      ) : null}
+                    </div>
                   </div>
                 ) : null}
                 {scheduleSnapshot ? (
@@ -854,16 +859,32 @@ export function App() {
               <section className="info-grid">
                 <div className="info-card">
                   <span className="eyebrow">HOW IT WORKS</span>
-                  <h2>
-                    Committed once.
-                    <br />
-                    Claimed over time.
-                  </h2>
-                  <p>
-                    Each payment is fully backed by deposited MUSD. Accrual
-                    tracks what is earned; the recipient claims it with a
-                    transaction.
-                  </p>
+                  <h2>Committed once. Claimed over time.</h2>
+                  <ol className="payment-steps">
+                    <li>
+                      <span>01</span>
+                      <div>
+                        <h3>Fund a schedule</h3>
+                        <p>Deposit the full payment in MUSD.</p>
+                      </div>
+                    </li>
+                    <li>
+                      <span>02</span>
+                      <div>
+                        <h3>Let it accrue</h3>
+                        <p>
+                          Your recipient earns over the schedule’s duration.
+                        </p>
+                      </div>
+                    </li>
+                    <li>
+                      <span>03</span>
+                      <div>
+                        <h3>Claim what’s earned</h3>
+                        <p>The recipient claims with an onchain transaction.</p>
+                      </div>
+                    </li>
+                  </ol>
                 </div>
                 <div className="info-card light">
                   <span className="eyebrow">MEZO BORROWING</span>
@@ -873,7 +894,7 @@ export function App() {
                     your borrowing dashboard.
                   </p>
                   <a href="/borrowing" className="button secondary">
-                    View borrowing
+                    View borrowing <Icon name="arrow" />
                   </a>
                 </div>
               </section>

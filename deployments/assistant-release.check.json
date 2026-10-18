@@ -1,0 +1,40 @@
+﻿{
+  "checkedAt": "2026-10-17T20:22:00Z",
+  "sourceCommit": "547dc7de30096763aeafe9b92c6b592bb38e6b29",
+  "frontend": "https://mezo-runway-testnet.vercel.app",
+  "assistant": "https://mezo-runway-testnet.vercel.app/assistant",
+  "backend": "https://runway-api-rw61.onrender.com",
+  "renderDeploy": "dep-db9tf5m54i7c738f1o70",
+  "vercelDeploy": "dpl_2W4k2r6Lv8nEF6WX1T4aEQE9E1d2",
+  "status": "passed",
+  "checks": [
+    "TypeScript, 52 unit/API tests, 53 browser cases, build, formatting and whitespace passed",
+    "Actual server credentials absent from public assets and staged changes; Gemini transport absent from frontend",
+    "Backend live and real proxy/model verification passed before frontend push",
+    "Direct and proxied health ready with database connected and no-store",
+    "Foreign Origin and forged fields rejected",
+    "Hosted browser received real Gemini funded/paid answer with registered sources",
+    "Hosted unrelated/key-extraction request refused",
+    "New chat reset, five viewport widths, no page errors, desktop/mobile screenshots reviewed",
+    "Assistant direct routes and trailing-slash reload passed",
+    "Four hosted navigation checks passed and deployed CSS matches local build",
+    "GitHub backend-branch and main CI succeeded, including contract/browser checks",
+    "Render post-rollout and Vercel last-hour error scans returned no entries"
+  ],
+  "ciRuns": [39066004083, 39066210271],
+  "reconciliation": {
+    "available": true,
+    "checkpoint": "16213944",
+    "blocksBehindConfirmedTarget": "1",
+    "schedules": 2
+  },
+  "assistantDailyRequestLimit": 200,
+  "blockchainTransactionsSubmitted": false,
+  "userWorkspaceRecordsModified": false,
+  "limitations": [
+    "Phase 1 public documentation Q&A only; wallet reads and actions remain future scope",
+    "Installed real-wallet hosted login remains pending",
+    "Existing frontend bundle-size warning remains",
+    "Free Render service can sleep"
+  ]
+}

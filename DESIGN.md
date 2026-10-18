@@ -38,3 +38,19 @@ No emoji icons, Inter, generic serif fonts, pure black, neon glows, oversaturate
 ## Stitch Reference
 Project: https://stitch.withgoogle.com/projects/17991003567305310602
 The implemented application remains the source for functionality; Stitch screens are visual references.
+
+## October 18 refinement — approved theme, clearer hierarchy
+
+Preserve every existing color and font above. The current task improves composition and usability rather than changing the theme. Use the Stitch reference `c7613e19b94f40999a300e325f0a0ab2` for layout direction only. Its invented filters, borrowing parameters and claimable metric are not product requirements and must not be implemented without real functionality and validated data.
+
+- Navigation uses consistent 20px outline SVG icons with 1.6px strokes. Keep labels, selected-page semantics and always-visible mobile navigation. Use 6px vertical gaps and subtle separators around help and network information.
+- Content remains full width. Use 32px desktop gutters, 24px tablet gutters and 16px mobile gutters. Page headings and primary actions share one row where space permits.
+- The asymmetric treasury ledger retains the actual three metrics: available MUSD, funded obligations and BTC gas reserve. Tint its first cell very subtly to establish hierarchy. Disconnected values remain unavailable, never invented.
+- Payment schedules have a divided header and a compact, left-aligned empty state with a wallet outline and clear next action. On desktop use an icon column and content column; stack below 768px.
+- Explain funding, accrual and claiming in three numbered rows within one supporting panel. Use a smaller adjacent borrowing panel with its existing read-only purpose and link.
+- Workspace sign-in pairs the real wallet login controls with a supporting three-step explanation. Stack both sections below 1101px. Keep gas and fund-movement disclosures visible.
+- Forms separate headings from fields with a quiet rule and distinguish payment terms in a neutral inset. Saved records use consistent 24px padding and separated metadata.
+- Assistant welcome content is left aligned, with a comfortable 900px maximum reading/composer surface. Suggested questions have legible 13–14px type. Send and stop buttons are at least 44px square. Keep all source, provider and privacy disclosures.
+- Documentation uses a subtle rule to anchor its contents navigation. Keep the article measure and all existing anchor behavior.
+
+Implementation: `apps/web/src/refinements.css` is the final refinement layer over the existing base stylesheet. No additional UI or animation dependency is required.

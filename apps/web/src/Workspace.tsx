@@ -1,4 +1,5 @@
 import { Sidebar } from './Sidebar';
+import { Icon } from './Icon';
 import { useState, type FormEvent } from 'react';
 import {
   useInfiniteQuery,
@@ -227,26 +228,63 @@ function WorkspaceContent({ address }: { address?: string }) {
             </div>
           )}
           {!signedIn ? (
-            <section className="panel">
-              <h2>Sign in to your workspace</h2>
-              <p>
-                Connect your wallet, then sign a login message. Signing in does
-                not move funds or cost gas. Workspace access currently supports
-                personal wallets.
-              </p>
-              {!address && <p>Connect your wallet using the button above.</p>}
-              {address && chainId !== 31611 && (
-                <p>Switch your wallet to Mezo testnet to sign in.</p>
-              )}
-              <button
-                className="button"
-                disabled={
-                  !address || chainId !== 31611 || busy || session.isPending
-                }
-                onClick={() => void login()}
-              >
-                {busy ? 'Waiting for signature…' : 'Sign in with wallet'}
-              </button>
+            <section className="panel workspace-login">
+              <div className="workspace-login-main">
+                <div className="empty-icon">
+                  <Icon name="lock" />
+                </div>
+                <span className="eyebrow">YOUR PRIVATE WORKSPACE</span>
+                <h2>Sign in to your workspace</h2>
+                <p>
+                  Connect your wallet, then sign a login message. Signing in
+                  does not move funds or cost gas. Workspace access currently
+                  supports personal wallets.
+                </p>
+                {!address && <p>Connect your wallet using the button above.</p>}
+                {address && chainId !== 31611 && (
+                  <p>Switch your wallet to Mezo testnet to sign in.</p>
+                )}
+                <button
+                  className="button"
+                  disabled={
+                    !address || chainId !== 31611 || busy || session.isPending
+                  }
+                  onClick={() => void login()}
+                >
+                  {busy ? 'Waiting for signature…' : 'Sign in with wallet'}
+                </button>
+              </div>
+              <div className="workspace-login-guide">
+                <span className="eyebrow">FROM TEAM TO PAYMENT</span>
+                <ol className="payment-steps">
+                  <li>
+                    <span>01</span>
+                    <div>
+                      <h3>Save your contractors</h3>
+                      <p>Keep recipient names and wallet addresses together.</p>
+                    </div>
+                  </li>
+                  <li>
+                    <span>02</span>
+                    <div>
+                      <h3>Prepare an invoice</h3>
+                      <p>
+                        Set the amount, recipient and due date before funding.
+                      </p>
+                    </div>
+                  </li>
+                  <li>
+                    <span>03</span>
+                    <div>
+                      <h3>Track payment evidence</h3>
+                      <p>
+                        Review confirmed funding and claims alongside your
+                        invoice.
+                      </p>
+                    </div>
+                  </li>
+                </ol>
+              </div>
             </section>
           ) : (
             <>

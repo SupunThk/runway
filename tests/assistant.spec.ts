@@ -140,7 +140,7 @@ for (const width of [320, 390, 1440]) {
     await page.goto('/assistant/');
     await page.reload();
     await expect(page.locator('.sidebar [aria-current="page"]')).toHaveText(
-      '✦ Assistant',
+      'Assistant',
     );
     await expect(
       page.getByRole('button', { name: 'Send question' }),

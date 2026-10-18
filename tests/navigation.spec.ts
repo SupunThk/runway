@@ -14,12 +14,12 @@ for (const width of [1280, 390, 320]) {
     const sidebar = page.locator('.sidebar');
     const assertSidebar = async (active: string) => {
       await expect(sidebar.locator('nav').getByRole('link')).toHaveText([
-        '↗ Overview',
-        '＋ New schedule',
-        '▦ Workspace',
-        '₿ Borrowing',
-        '✦ Assistant',
-        '? Documentation',
+        'Overview',
+        'New schedule',
+        'Workspace',
+        'Borrowing',
+        'Assistant',
+        'Documentation',
       ]);
       await expect(sidebar.locator('[aria-current="page"]')).toHaveText(active);
       expect(
@@ -35,7 +35,7 @@ for (const width of [1280, 390, 320]) {
         ),
       ).toBe('preserved');
     };
-    await assertSidebar('↗ Overview');
+    await assertSidebar('Overview');
     const docsPosition = await sidebar
       .getByRole('link', { name: 'Documentation' })
       .boundingBox();
@@ -50,31 +50,31 @@ for (const width of [1280, 390, 320]) {
     await expect(
       page.getByRole('heading', { name: 'Your team, in one place.' }),
     ).toBeVisible();
-    await assertSidebar('▦ Workspace');
+    await assertSidebar('Workspace');
     await sidebar.getByRole('link', { name: 'Borrowing', exact: true }).click();
     await expect(
       page.getByRole('heading', { name: 'Mezo borrowing', exact: true }),
     ).toBeVisible();
-    await assertSidebar('₿ Borrowing');
+    await assertSidebar('Borrowing');
     await sidebar.getByRole('link', { name: 'Workspace', exact: true }).click();
     await sidebar.getByRole('link', { name: 'Documentation' }).click();
     await expect(
       page.getByRole('heading', { name: 'Understand your Runway.' }),
     ).toBeVisible();
-    await assertSidebar('? Documentation');
+    await assertSidebar('Documentation');
     await page.goBack();
     await expect(page).toHaveURL('/workspace');
-    await assertSidebar('▦ Workspace');
+    await assertSidebar('Workspace');
     await page.goForward();
-    await assertSidebar('? Documentation');
+    await assertSidebar('Documentation');
     await sidebar.getByRole('link', { name: 'New schedule' }).click();
     await expect(page.getByLabel('Recipient wallet')).toBeVisible();
-    await assertSidebar('＋ New schedule');
+    await assertSidebar('New schedule');
     await sidebar.getByRole('link', { name: 'Overview' }).click();
     await expect(
       page.getByRole('heading', { name: 'Your team. Funded forward.' }),
     ).toBeVisible();
-    await assertSidebar('↗ Overview');
+    await assertSidebar('Overview');
     expect(errors).toEqual([]);
     await page.screenshot({
       path: `.tools/navigation-${width}.png`,
