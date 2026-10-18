@@ -1,0 +1,41 @@
+{
+  "releaseDate": "2026-10-18",
+  "sourceCommit": "22d1e9cf2c3f3f8f930c3ae1e715697e2b8a9b03",
+  "frontend": "https://mezo-runway-testnet.vercel.app",
+  "deploymentUrl": "https://mezo-runway-testnet-krm7rvtgw-supunthks-projects.vercel.app",
+  "vercelDeploy": "dpl_DEz3bkbxMDaQg38MKohgpfbTUyTQ",
+  "target": "production",
+  "status": "READY",
+  "buildDurationSeconds": 14,
+  "backendSourceUnchanged": "547dc7de30096763aeafe9b92c6b592bb38e6b29",
+  "checks": {
+    "typecheck": "passed",
+    "unitApiTests": 52,
+    "localBrowserCases": 53,
+    "hostedResponsiveChecks": 36,
+    "hostedNavigationTests": 4,
+    "hostedPageErrors": 0,
+    "keyboardFocus": "passed",
+    "reducedMotion": "passed",
+    "cssMatchesVerifiedLocalBuild": true,
+    "cssSha256": "1a351402709eec79ffca21fdfcc6b021cbf08a87dc68dc2875720d4513cc2819",
+    "healthStatus": 200,
+    "database": "connected",
+    "unsignedSessionStatus": 401,
+    "formatting": "passed",
+    "whitespace": "passed",
+    "publicAndStagedCredentialScan": "passed",
+    "desktopMobileScreenshotsReviewed": true,
+    "ciRun": 39101437939,
+    "ciConclusion": "success",
+    "vercelErrorLogsLastHour": "no entries"
+  },
+  "blockchainTransactionsSubmitted": false,
+  "userWorkspaceRecordsModified": false,
+  "limitations": [
+    "Installed real-wallet hosted login remains pending",
+    "Existing frontend bundle-size warning remains",
+    "Free Render service can sleep",
+    "Monitoring and drains were not reassessed"
+  ]
+}

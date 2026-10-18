@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAccount, useConnect, useDisconnect } from 'wagmi';
+import { WalletSetup } from './WalletSetup';
 
 export function WalletConnection({
   onNotice,
@@ -47,16 +48,19 @@ export function WalletConnection({
 
   if (address)
     return (
-      <button
-        className="button secondary"
-        title={address}
-        onClick={() => disconnect()}
-      >
-        {connectedWallet?.name === 'Injected'
-          ? 'Browser wallet'
-          : connectedWallet?.name}{' '}
-        · {address.slice(0, 6)}…{address.slice(-4)} · Disconnect
-      </button>
+      <div className="connected-wallet-tools">
+        <WalletSetup key={connectedWallet?.uid + address} />
+        <button
+          className="button secondary"
+          title={address}
+          onClick={() => disconnect()}
+        >
+          {connectedWallet?.name === 'Injected'
+            ? 'Browser wallet'
+            : connectedWallet?.name}{' '}
+          · {address.slice(0, 6)}…{address.slice(-4)} · Disconnect
+        </button>
+      </div>
     );
 
   return (

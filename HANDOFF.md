@@ -1,6 +1,32 @@
 ﻿# Runway project handoff
 
-## Latest local work — Stitch UI refinement, October 18, 2026
+## Documentation addition — manual wallet setup, October 18, 2026
+
+User requested self-service manual setup documentation. Added two dedicated public guide sections, `manual-network-setup` and `manual-musd-import`, with wallet-menu steps and exact network/token values. They explain BTC gas currency, testnet-only scope, token import versus obtaining MUSD, and using the MUSD contract rather than the payment contract. Shared `guide.ts` supplies both `/docs` and the regenerated downloadable `docs/user-guide.md`; the table of contents includes both sections automatically. No wallet connection or RPC required to read them.
+
+Verification: both section anchors and exact metadata checked at 1440/390/320px without overflow or page errors; downloaded Markdown matches the generated repository guide byte for byte. Desktop/mobile screenshots visually reviewed. Formatting and whitespace passed. Ignored evidence: `.tools/verify-manual-wallet-docs.mjs`, `.tools/manual-wallet-docs.check.json`, `.tools/manual-*-docs-*.png`. This documentation and the wallet setup feature below remain local/uncommitted/undeployed; production remains `22d1e9c`.
+
+## Latest local work — wallet network/token setup, October 18, 2026
+
+User requested a way to add Mezo and MUSD when missing from a wallet. Added a shared Wallet setup control beside the connected wallet on Overview, New schedule, Workspace and Borrowing. `WalletSetup.tsx` uses only the selected connector's provider. Explicit user actions first request `wallet_switchEthereumChain`; on unknown-chain error 4902 (including the MetaMask Mobile wrapped form), request `wallet_addEthereumChain` with official Mezo testnet metadata, then switch if the wallet added without selecting it. Verify `eth_chainId` before reporting success. MUSD import rechecks actual provider chain 31611 and calls `wallet_watchAsset` with configured MUSD address, symbol and 18 decimals. It reports request acceptance rather than claiming the wallet definitely imported the token. No automatic setup prompts, signatures, transactions, approvals or fees.
+
+Panel includes manual network/token details, unsupported/declined feedback, pending guards, Escape/close focus return, bounded scrolling and mobile layout. Official docs confirmed RPC `https://rpc.test.mezo.org`, explorer `https://explorer.test.mezo.org`, chain 31611, native BTC 18 decimals, and testnet MUSD `0x118917a40FAF1CD7a13dB0Ef56C86De7973Ac503` (18 decimals). Public guide updated in `guide.ts`; regenerated `docs/user-guide.md`. No dependencies or backend changes.
+
+Validation: frontend TypeScript, production build, formatting and whitespace passed. All 58 browser cases passed, including five new setup cases. Following final CSS refinements, all nine wallet cases passed again. Tests cover missing-chain add then explicit switch, exact metadata, selected MetaMask rather than another installed provider, active-chain recheck blocking wrong-chain token import, declined setup, false token-import result, unsupported wallets, manual fallback, 320px overflow/popover bounds and Escape focus. Desktop/mobile screenshots `.tools/wallet-setup-desktop.png` / `.tools/wallet-setup-mobile.png` visually reviewed. EIP-1193/6963 doubles were used; installed-extension confirmation remains untested. No real transactions or records changed. Existing bundle warning remains.
+
+This feature is local, uncommitted and undeployed. Production remains UI release `22d1e9c` below. Preserve local release-record changes `HANDOFF.md` and `deployments/stitch-ui-release.check.json` plus `.env`. The latest user request did not explicitly request another deployment.
+
+## Current release — Stitch UI refinement deployed, October 18, 2026
+
+User authorized deployment. Source commit `22d1e9cf2c3f3f8f930c3ae1e715697e2b8a9b03` is committed and pushed to `main`. Vercel production deployment `dpl_DEz3bkbxMDaQg38MKohgpfbTUyTQ` is READY and aliased to https://mezo-runway-testnet.vercel.app. Deployment URL: https://mezo-runway-testnet-krm7rvtgw-supunthks-projects.vercel.app; build duration 14 seconds. This supersedes the local/uncommitted/undeployed UI statements below. The approved palette and fonts are preserved.
+
+This was a frontend release. Render remains on assistant source `547dc7d`; no backend deployment or configuration change was needed. The earlier Workspace unavailable message was caused by the frontend-only local preview lacking a running local API, not a required production backend change. Hosted read-only health returned 200 ready/database connected; unsigned `/api/auth/session` returned the expected 401 sign-in response.
+
+Release verification passed: frontend and API TypeScript, 52 unit/API tests, 53 local browser cases, production build, formatting, whitespace and credential scans. Hosted checks passed all 36 route/viewport combinations, reduced motion, keyboard focus and four navigation tests. Production CSS exactly matches the verified local build (SHA-256 `1a351402709eec79ffca21fdfcc6b021cbf08a87dc68dc2875720d4513cc2819`). Hosted desktop/mobile screenshots were visually reviewed. GitHub CI run `39101437939` succeeded on the exact source commit, including contract and browser checks. Vercel production error scan for the last hour returned no entries; monitoring/drains were not reassessed. Existing bundle-size warning remains. No blockchain transactions or user-record modifications occurred. Real installed-wallet hosted login remains pending.
+
+Evidence: new local `deployments/stitch-ui-release.check.json`; ignored `.tools/stitch-hosted-ui.check.json`, `.tools/stitch-backend.check.json`, `.tools/stitch-ci.check.json`, `.tools/stitch-hosted-*.png`, `.tools/verify-stitch-ui.mjs`, `.tools/verify-stitch-backend.mjs`, `.tools/stitch-ci.mjs`. The prior assistant release summary was included in the source commit. These post-release handoff/summary updates remain local until a later documentation commit; do not redeploy just to publish them. Preserve `.env` and all historical evidence. Next recommended work remains installed-wallet hosted login and demo/submission materials; assistant Phase 2/3 remain future scope.
+
+## Implementation history — Stitch UI refinement, October 18, 2026
 
 User requested improving the UI using Stitch while retaining the approved theme. Implemented locally, uncommitted and undeployed. Production remains assistant release `547dc7d` below. Preserve the existing assistant release evidence and `.env`.
 

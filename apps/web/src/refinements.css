@@ -1,4 +1,56 @@
 /* Stitch refinement: the approved palette with clearer hierarchy and rhythm. */
+.connected-wallet-tools {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+}
+.wallet-tools {
+  position: relative;
+}
+.wallet-setup {
+  position: static;
+}
+.wallet-setup-panel {
+  width: min(380px, calc(100vw - 32px));
+  max-height: 75dvh;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+.wallet-setup-panel .section-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 44px;
+  gap: 8px;
+  align-items: center;
+}
+.wallet-setup-panel .section-heading strong {
+  min-width: 0;
+  font-size: 14px;
+  line-height: 1.4;
+}
+.wallet-setup-panel summary {
+  min-height: 44px;
+  padding-block: 12px;
+  cursor: pointer;
+  color: var(--accent);
+  font-size: 13px;
+  letter-spacing: 0;
+}
+.wallet-setup-panel dd {
+  margin: 4px 0 14px;
+  font-family: 'Geist Mono', monospace;
+  font-size: 12px;
+}
+.wallet-setup-panel .wallet-setup-notice {
+  background: #edf4f0;
+  padding: 12px;
+  border-radius: 8px;
+}
 .ui-icon {
   flex: 0 0 auto;
   vertical-align: middle;
@@ -289,6 +341,9 @@
   }
 }
 @media (max-width: 767px) {
+  .connected-wallet-tools {
+    display: contents;
+  }
   .sidebar {
     padding: 16px;
   }

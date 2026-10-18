@@ -31,8 +31,50 @@ export const guideSections: GuideSection[] = [
     ],
     steps: [
       'Open Runway and select Connect wallet. Choose your installed EVM browser wallet; Rabby and MetaMask have explicit connectors, and other compatible wallets may appear through wallet discovery.',
-      'Select the intended account and switch to Mezo testnet when prompted.',
+      'Select the intended account. Open Wallet setup beside your connected wallet and choose Add / switch Mezo testnet. If your wallet has not saved the network, review and approve its add-network prompt, then switch to Mezo testnet.',
+      'In Wallet setup, choose Add MUSD to wallet and confirm in your wallet to show the token. This does not mint, buy or transfer MUSD. These setup requests do not spend gas. If your wallet does not support them, expand Manual network & token settings and enter those details in your wallet.',
       'If you are funding a schedule, make sure the account has enough test MUSD for the full payment and test BTC for fees. An account submitting a claim also needs test BTC.',
+    ],
+  },
+  {
+    id: 'manual-network-setup',
+    title: 'Manually add Mezo testnet to your wallet',
+    paragraphs: [
+      'You can add the network directly in your wallet without connecting to Runway. These settings are for Mezo testnet, which is the network Runway uses. Menu names vary between wallets.',
+      'Adding or switching a network does not transfer funds or spend gas. BTC is the native gas currency on Mezo; you do not need to import a BTC token contract for network fees.',
+    ],
+    steps: [
+      'Open your wallet’s network selector or Settings → Networks. Choose Add network, then Add a network manually or Custom network.',
+      'Enter the network details listed below. Use the decimal chain ID 31611 in a normal wallet form.',
+      'Save or approve the network, then select Mezo Testnet in your wallet. Check the selected network before sending or importing tokens.',
+    ],
+    bullets: [
+      'Network name: Mezo Testnet',
+      'RPC URL: https://rpc.test.mezo.org',
+      'Chain ID: 31611',
+      'Currency symbol: BTC',
+      'Native currency decimals, if requested: 18',
+      'Block explorer URL: https://explorer.test.mezo.org',
+    ],
+  },
+  {
+    id: 'manual-musd-import',
+    title: 'Manually add MUSD to your wallet',
+    paragraphs: [
+      'Importing MUSD makes the token visible in your wallet. It does not mint, buy or transfer tokens, and it costs no gas. If your balance is zero, importing the token will not change that.',
+      'Use the MUSD token contract below, not Runway’s payment contract. This is the Mezo testnet token address; mainnet uses a different token address.',
+    ],
+    steps: [
+      'Select Mezo Testnet in your wallet first.',
+      'Open the Tokens or Assets tab, choose Import tokens or Add token, then select Custom token.',
+      'Paste the MUSD token contract address below. If your wallet fills the symbol and decimals automatically, check that they match MUSD and 18. Otherwise enter those values yourself.',
+      'Review the details, confirm the import and return to the token list. If MUSD is already listed, you do not need to import it again.',
+    ],
+    bullets: [
+      'Network: Mezo Testnet (chain ID 31611)',
+      'MUSD token contract: 0x118917a40FAF1CD7a13dB0Ef56C86De7973Ac503',
+      'Token symbol: MUSD',
+      'Token decimals: 18',
     ],
   },
   {
