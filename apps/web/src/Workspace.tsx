@@ -1,6 +1,6 @@
 import { Sidebar } from './Sidebar';
 import { Icon } from './Icon';
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import {
   useInfiniteQuery,
   useQuery,
@@ -9,6 +9,9 @@ import {
 import { useAccount, useSignMessage } from 'wagmi';
 import { WalletConnection } from './WalletConnection';
 import { formatUnits } from 'viem';
+import { apiFetch, readJson, BackendUnavailableError } from './api';
+import { useBackendWake } from './hooks/useBackendWake';
+import { BackendWakeNotice } from './BackendWakeNotice';
 
 type WorkspaceRecord = { _id: string; name: string };
 type Contractor = { _id: string; name: string; address: string };
@@ -31,7 +34,7 @@ type Invoice = {
 };
 type Page<T> = { items: T[]; nextCursor: string | null };
 async function request<T>(path: string, body?: unknown): Promise<T> {
-  const response = await fetch(`/api${path}`, {
+  const response = await apiFetch(`/api${path}`, {
     credentials: 'same-origin',
     ...(body === undefined
       ? {}
@@ -41,14 +44,7 @@ async function request<T>(path: string, body?: unknown): Promise<T> {
           body: JSON.stringify(body),
         }),
   });
-  let result;
-  try {
-    result = await response.json();
-  } catch {
-    throw new Error(
-      'The workspace service is unavailable. Please try again later.',
-    );
-  }
+  const result = await readJson<{ error?: string }>(response);
   if (!response.ok)
     throw new Error(result.error || 'Request failed. Please retry.');
   return result as T;
@@ -89,15 +85,19 @@ function WorkspaceContent({ address }: { address?: string }) {
     retry: false,
     staleTime: 0,
     queryFn: async () => {
-      const response = await fetch('/api/auth/session', {
+      const response = await apiFetch('/api/auth/session', {
         credentials: 'same-origin',
       });
       if (response.status === 401) return null;
+      const result = await readJson<{ address: string; error?: string }>(
+        response,
+      );
       if (!response.ok)
         throw new Error(
-          'The workspace service is unavailable. Check the backend connection.',
+          result.error ||
+            'The workspace service is unavailable. Check the backend connection.',
         );
-      return (await response.json()) as { address: string };
+      return result;
     },
   });
   const signedIn = Boolean(wallet && session.data?.address === wallet);
@@ -129,6 +129,24 @@ function WorkspaceContent({ address }: { address?: string }) {
     wallet,
     signedIn && Boolean(workspaceId),
   );
+  const wake = useBackendWake(async () => {
+    await session.refetch();
+    await cache.invalidateQueries({ queryKey: ['workspace-records', wallet] });
+  });
+  useEffect(() => {
+    if (
+      [session.error, workspaces.error, contractors.error, invoices.error].some(
+        (error) => error instanceof BackendUnavailableError,
+      )
+    )
+      wake.wake();
+  }, [
+    session.error,
+    workspaces.error,
+    contractors.error,
+    invoices.error,
+    wake.wake,
+  ]);
   const contractorRows = contractors.data?.pages.flatMap((p) => p.items) ?? [];
   const invoiceRows = (invoices.data?.pages.flatMap((p) => p.items) ?? []).map(
     (row) =>
@@ -141,6 +159,10 @@ function WorkspaceContent({ address }: { address?: string }) {
     try {
       await run();
     } catch (error) {
+      if (error instanceof BackendUnavailableError) {
+        wake.wake();
+        return;
+      }
       setNotice(
         error instanceof Error
           ? error.message.split('\n')[0]
@@ -216,17 +238,19 @@ function WorkspaceContent({ address }: { address?: string }) {
               {notice}
             </p>
           )}
-          {session.error && (
-            <div className="callout warning" role="alert">
-              {session.error.message}{' '}
-              <button
-                className="text-button"
-                onClick={() => void session.refetch()}
-              >
-                Retry connection
-              </button>
-            </div>
-          )}
+          <BackendWakeNotice wake={wake} />
+          {session.error &&
+            !(session.error instanceof BackendUnavailableError) && (
+              <div className="callout warning" role="alert">
+                {session.error.message}{' '}
+                <button
+                  className="text-button"
+                  onClick={() => void session.refetch()}
+                >
+                  Retry connection
+                </button>
+              </div>
+            )}
           {!signedIn ? (
             <section className="panel workspace-login">
               <div className="workspace-login-main">
@@ -247,7 +271,11 @@ function WorkspaceContent({ address }: { address?: string }) {
                 <button
                   className="button"
                   disabled={
-                    !address || chainId !== 31611 || busy || session.isPending
+                    !address ||
+                    chainId !== 31611 ||
+                    busy ||
+                    session.isPending ||
+                    wake.status === 'waking'
                   }
                   onClick={() => void login()}
                 >
@@ -315,7 +343,9 @@ function WorkspaceContent({ address }: { address?: string }) {
                 {workspaces.isPending && <p>Loading workspaces…</p>}
                 {workspaces.error && (
                   <p role="alert">
-                    {workspaces.error.message}{' '}
+                    {workspaces.error instanceof BackendUnavailableError
+                      ? 'Workspace data unavailable while the backend reconnects.'
+                      : workspaces.error.message}{' '}
                     <button onClick={() => void workspaces.refetch()}>
                       Retry workspaces
                     </button>
@@ -364,7 +394,9 @@ function WorkspaceContent({ address }: { address?: string }) {
                     {contractors.isPending && <p>Loading contractors…</p>}
                     {contractors.error && (
                       <p role="alert">
-                        {contractors.error.message}{' '}
+                        {contractors.error instanceof BackendUnavailableError
+                          ? 'Contractor data unavailable while the backend reconnects.'
+                          : contractors.error.message}{' '}
                         <button onClick={() => void contractors.refetch()}>
                           Retry contractors
                         </button>
@@ -441,7 +473,9 @@ function WorkspaceContent({ address }: { address?: string }) {
                     {invoices.isPending && <p>Loading invoices…</p>}
                     {invoices.error && (
                       <p role="alert">
-                        {invoices.error.message}{' '}
+                        {invoices.error instanceof BackendUnavailableError
+                          ? 'Invoice data unavailable while the backend reconnects.'
+                          : invoices.error.message}{' '}
                         <button onClick={() => void invoices.refetch()}>
                           Retry invoices
                         </button>

@@ -6,6 +6,9 @@ import {
   type KeyboardEvent,
 } from 'react';
 import { Sidebar } from './Sidebar';
+import { apiFetch, readJson, BackendUnavailableError } from './api';
+import { useBackendWake } from './hooks/useBackendWake';
+import { BackendWakeNotice } from './BackendWakeNotice';
 
 type Reply = {
   kind: string;
@@ -42,6 +45,7 @@ export function Assistant() {
   const [question, setQuestion] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const wake = useBackendWake();
   const controller = useRef<AbortController | null>(null);
   const input = useRef<HTMLTextAreaElement>(null);
   const latest = useRef<HTMLElement>(null);
@@ -52,6 +56,7 @@ export function Assistant() {
   }, [turns.length]);
 
   function clear() {
+    wake.reset();
     controller.current?.abort();
     controller.current = null;
     sequence.current++;
@@ -69,7 +74,9 @@ export function Assistant() {
     setError('Answer stopped. You can retry or ask another question.');
   }
   async function ask(text: string, retry = false) {
-    if (busy || controller.current || !text.trim()) return;
+    if (busy || controller.current || !text.trim() || wake.status === 'waking')
+      return;
+    wake.reset();
     const prompt = text.trim();
     const previous = retry ? turns.slice(0, -1) : turns;
     const history = previous
@@ -85,13 +92,17 @@ export function Assistant() {
     const abort = new AbortController();
     controller.current = abort;
     try {
-      const response = await fetch('/api/assistant/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question: prompt, history }),
-        signal: AbortSignal.any([abort.signal, AbortSignal.timeout(65000)]),
-      });
-      const data = await response.json().catch(() => null);
+      const response = await apiFetch(
+        '/api/assistant/chat',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question: prompt, history }),
+          signal: abort.signal,
+        },
+        65000,
+      );
+      const data = await readJson<Reply & { error?: string }>(response);
       if (!response.ok)
         throw new Error(
           data?.error ||
@@ -101,6 +112,12 @@ export function Assistant() {
       setTurns([...previous, { id, question: prompt, reply: data as Reply }]);
     } catch (failure) {
       if (sequence.current !== id) return;
+      if (failure instanceof BackendUnavailableError) {
+        // Restore the failed prompt unless the user has already drafted a new one.
+        setQuestion((current) => current || prompt);
+        wake.wake();
+        return;
+      }
       setError(
         failure instanceof Error && failure.name !== 'AbortError'
           ? failure.message
@@ -244,6 +261,12 @@ export function Assistant() {
             </section>
           )}
           <div className="assistant-compose-area">
+            <BackendWakeNotice wake={wake} />
+            {wake.status === 'ready' && (
+              <p className="hint" role="status">
+                The backend is ready. Send your question when you are ready.
+              </p>
+            )}
             {error && (
               <div className="assistant-error" role="alert">
                 <p>{error}</p>
@@ -300,7 +323,7 @@ export function Assistant() {
                     type="submit"
                     className="assistant-send"
                     aria-label="Send question"
-                    disabled={!question.trim()}
+                    disabled={!question.trim() || wake.status === 'waking'}
                   >
                     <span aria-hidden="true">↑</span>
                   </button>

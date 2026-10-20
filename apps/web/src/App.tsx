@@ -20,6 +20,7 @@ import { usePaymentActions } from './hooks/usePaymentActions';
 import { NewSchedule } from './routes/NewSchedule';
 import { Overview } from './routes/Overview';
 import { ScheduleDetail } from './routes/ScheduleDetail';
+import { useBackendPrewarm } from './hooks/useBackendPrewarm';
 export function App() {
   const { address, chainId } = useAccount();
   const { switchChainAsync } = useSwitchChain();
@@ -37,6 +38,7 @@ export function App() {
   const scheduleId = scheduleMatch ? BigInt(scheduleMatch[1]) : undefined;
   const invalidRoute =
     window.location.pathname !== '/' && scheduleId === undefined;
+  useBackendPrewarm(view === 'overview' && !scheduleId && !invalidRoute);
 
   const readiness = useDeploymentReadiness();
   const decimals = readiness.data?.decimals ?? 18;
