@@ -3,6 +3,11 @@ export * from './borrowing';
 export * from './stress';
 
 export const TESTNET_CHAIN_ID = 31611;
+// RPC metadata verified on chain 31611, block 16260076, 2026-10-20.
+// Native token: https://github.com/mezo-org/mezod/tree/main/precompile/mezotoken
+export const MEZO_TESTNET_TOKEN = getAddress(
+  '0x7B7c000000000000000000000000000000000001',
+);
 export const DEFAULT_RPC = 'https://rpc.test.mezo.org';
 export const DEFAULT_EXPLORER = 'https://explorer.test.mezo.org';
 export const mezoTestnet = defineChain({

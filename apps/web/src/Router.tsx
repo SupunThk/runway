@@ -5,11 +5,9 @@ import { RouteFallback } from './RouteFallback';
 const Documentation = lazy(() =>
   import('./Documentation').then((m) => ({ default: m.Documentation })),
 );
-// Resolve a direct Workspace entry before mounting so reloads expose its real
-// wallet/session controls immediately. Other entries fetch it on navigation.
-const Workspace = /^\/workspace\/?$/.test(window.location.pathname)
-  ? (await import('./Workspace')).Workspace
-  : lazy(() => import('./Workspace').then((m) => ({ default: m.Workspace })));
+const Workspace = lazy(() =>
+  import('./Workspace').then((m) => ({ default: m.Workspace })),
+);
 const Borrowing = lazy(() =>
   import('./Borrowing').then((m) => ({ default: m.Borrowing })),
 );

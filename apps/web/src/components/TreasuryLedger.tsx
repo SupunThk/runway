@@ -65,6 +65,13 @@ export function TreasuryLedger({
           {balances.data ? amount(balances.data.btc) : '—'} <small>BTC</small>
         </strong>
         <p>Used for approvals, funding and claims</p>
+        <p className="hint mono">
+          {!address
+            ? '—'
+            : balances.data?.mezo !== undefined && !balances.error
+              ? `${amount(balances.data.mezo)} MEZO · Mezo network token`
+              : 'MEZO balance unavailable'}
+        </p>
       </div>
     </section>
   );

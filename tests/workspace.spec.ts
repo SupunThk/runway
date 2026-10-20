@@ -127,6 +127,10 @@ test('wallet login → MongoDB workspace/contractor/invoice → reload → prefi
     page.getByText('1000.123456789012345678 MUSD · Due 2026-11-01'),
   ).toBeVisible();
   await page.reload();
+  // The lazy route must finish before an immediate wallet visibility check.
+  await expect(
+    page.getByRole('heading', { name: 'Your team, in one place.' }),
+  ).toBeVisible();
   if (
     await page
       .getByRole('button', { name: 'Connect wallet', exact: true })

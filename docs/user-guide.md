@@ -114,6 +114,8 @@ Accrual uses chain timestamps and rounds down in the token’s smallest units. C
 
 ## Reading your overview
 
+The gas reserve cell shows BTC for transaction fees and a separate MEZO network-token balance after token validation. If that optional read fails, MEZO is unavailable; payment funding and claims remain available when their own checks pass.
+
 Overview discovers schedules sent by and received by your connected account, loading up to 20 IDs per direction per page. Use Load more schedules until discovery is complete. A schedule that appears in both directions is displayed once.
 
 Loaded schedules share one source block. The displayed block and timestamp tell you when that snapshot was read. Refresh obtains a fresh snapshot; a failed refresh can leave older results visible with a warning.

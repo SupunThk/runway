@@ -5,9 +5,13 @@ import {
   optionalAddress,
   DEFAULT_RPC,
   DEFAULT_EXPLORER,
+  MEZO_TESTNET_TOKEN,
 } from '@runway/mezo';
 
 export const musdAddress = optionalAddress(import.meta.env.VITE_MUSD_ADDRESS);
+export const mezoTokenAddress =
+  optionalAddress(import.meta.env.VITE_MEZO_TOKEN_ADDRESS) ??
+  MEZO_TESTNET_TOKEN;
 export const paymentAddress = optionalAddress(
   import.meta.env.VITE_PAYMENT_CONTRACT_ADDRESS,
 );
