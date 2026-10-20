@@ -1,6 +1,6 @@
 import { Sidebar } from './Sidebar';
 import { Icon } from './Icon';
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import {
   useInfiniteQuery,
   useQuery,
@@ -133,19 +133,40 @@ function WorkspaceContent({ address }: { address?: string }) {
     await session.refetch();
     await cache.invalidateQueries({ queryKey: ['workspace-records', wallet] });
   });
+  const automaticWakes = useRef(0);
   useEffect(() => {
     if (
       [session.error, workspaces.error, contractors.error, invoices.error].some(
         (error) => error instanceof BackendUnavailableError,
       )
-    )
-      wake.wake();
+    ) {
+      // A ready health route does not prove every application route recovered.
+      // Bound automatic retries for one incident; explicit Retry remains available.
+      if (automaticWakes.current < 2) {
+        automaticWakes.current++;
+        wake.wake();
+      } else wake.fail();
+    } else if (
+      session.isSuccess &&
+      (!signedIn ||
+        (workspaces.isSuccess &&
+          (!workspaceId || (contractors.isSuccess && invoices.isSuccess))))
+    ) {
+      automaticWakes.current = 0;
+    }
   }, [
     session.error,
     workspaces.error,
     contractors.error,
     invoices.error,
     wake.wake,
+    wake.fail,
+    session.isSuccess,
+    signedIn,
+    workspaces.isSuccess,
+    workspaceId,
+    contractors.isSuccess,
+    invoices.isSuccess,
   ]);
   const contractorRows = contractors.data?.pages.flatMap((p) => p.items) ?? [];
   const invoiceRows = (invoices.data?.pages.flatMap((p) => p.items) ?? []).map(

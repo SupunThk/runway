@@ -95,5 +95,9 @@ export function useBackendWake(onReady?: () => void | Promise<unknown>) {
     stop();
     setState({ status: 'idle', elapsedSeconds: 0 });
   }, [stop]);
-  return { ...state, wake, retry, reset };
+  const fail = useCallback(() => {
+    stop();
+    setState({ status: 'failed', elapsedSeconds: 0 });
+  }, [stop]);
+  return { ...state, wake, retry, reset, fail };
 }

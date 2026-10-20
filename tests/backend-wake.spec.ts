@@ -176,6 +176,37 @@ test('a failed signed-in record read wakes and refreshes without exposing intern
   ).toHaveCount(0);
 });
 
+test('a healthy health endpoint cannot cause endless automatic session retries', async ({
+  page,
+}) => {
+  await page.clock.install();
+  await installPlannerFixture(page);
+  let sessions = 0;
+  await page.route('**/api/auth/session', (route) => {
+    sessions++;
+    return route.fulfill({
+      status: 502,
+      contentType: 'text/html',
+      body: 'Gateway unavailable',
+    });
+  });
+  await page.route('**/api/health', (route) =>
+    route.fulfill({ json: { status: 'ready', database: 'connected' } }),
+  );
+  await page.goto('/workspace');
+  await connectPlannerWallet(page);
+  await expect(page.getByRole('alert')).toContainText(
+    'The backend is still unavailable.',
+  );
+  expect(sessions).toBe(3);
+  await page.clock.runFor(90001);
+  expect(sessions).toBe(3);
+  await page
+    .getByRole('button', { name: 'Retry connection', exact: true })
+    .click();
+  await expect.poll(() => sessions).toBe(4);
+});
+
 test('leaving a waking route cancels its polling and timers', async ({
   page,
 }) => {
