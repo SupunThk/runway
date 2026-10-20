@@ -459,6 +459,12 @@
   overflow-wrap: anywhere;
   font-variant-numeric: tabular-nums;
 }
+@media (min-width: 1101px) {
+  .borrowing-explainer {
+    grid-column: 2;
+    grid-row: 1;
+  }
+}
 @media (max-width: 767px) {
   .planner-grid {
     grid-template-columns: minmax(0, 1fr);

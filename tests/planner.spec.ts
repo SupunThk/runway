@@ -28,6 +28,10 @@ test('planner combines current schedules and wallet funds, then stresses borrowi
   await expect(
     panel.getByText('Not covered in this scenario', { exact: false }),
   ).toHaveCount(0);
+  await panel.getByLabel('Months', { exact: true }).fill('3');
+  await expect(panel).toContainText('Not covered in this scenario');
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.screenshot({ path: '.tools/planner-desktop.png', fullPage: true });
   await page.setViewportSize({ width: 320, height: 900 });
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth <= 320),
