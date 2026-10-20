@@ -1,4 +1,4 @@
-import { Icon } from '../Icon';
+import { RunwaySummary } from '../RunwaySummary';
 import {
   TreasuryLedger,
   type TreasuryLedgerProps,
@@ -41,17 +41,7 @@ export function Overview(props: OverviewProps) {
             </li>
           </ol>
         </div>
-        <div className="info-card light">
-          <span className="eyebrow">MEZO BORROWING</span>
-          <h2>Keep an eye on your BTC-backed loan.</h2>
-          <p>
-            View collateral, MUSD debt and BTC price-drop scenarios in your
-            borrowing dashboard.
-          </p>
-          <a href="/borrowing" className="button secondary">
-            View borrowing <Icon name="arrow" />
-          </a>
-        </div>
+        <RunwaySummary {...props} />
       </section>
     </>
   );

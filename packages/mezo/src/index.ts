@@ -1,6 +1,7 @@
 import { defineChain, getAddress, isAddress, parseAbi } from 'viem';
 export * from './borrowing';
 export * from './stress';
+export * from './planner';
 
 export const TESTNET_CHAIN_ID = 31611;
 // RPC metadata verified on chain 31611, block 16260076, 2026-10-20.

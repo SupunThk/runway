@@ -42,6 +42,20 @@ Calculations use bigint throughout: scenario price = snapshot price × (100 − 
 
 Debt and collateral are held fixed at the displayed source block, including already accrued interest, redistribution and the gas reserve. Future interest, repayments, redistribution and system-wide liquidation conditions are not modelled. Scenarios are hypothetical price-only estimates, not liquidation predictions or repayment quotes. No additional RPC requests or wallet actions are needed to move the slider.
 
+## Runway planner
+
+The planner uses the connected wallet's payment schedules and loan even if another public address is entered in the position viewer. It never submits borrowing transactions. The Overview summary reuses payment data and makes no borrowing RPC reads.
+
+Current streams are sent by the connected wallet, not cancelled, and have `start <= paymentsChainTime < end`. Future-starting schedules are excluded and disclosed. Per-stream rate is `ceil(total / (end - start))` in 18-decimal base units per second. Total rate is their sum; daily rate is total rate × 86,400. This conservative rounding prevents a tiny stream from disappearing.
+
+Every current stream is escrow-funded until the earliest end. To calculate continuous payroll coverage, sort/group stream end times. At each end, add that stream's rate to wallet renewal spending. Spend `renewalRate × intervalSeconds` until the next end. If the wallet cannot cover the interval, coverage ends at `intervalStart + floor(walletRemaining / renewalRate)`. After the last end, use the same formula with the full rate. Never reuse another recipient's escrow or add unclaimed escrow to wallet cash. This assumes immediate renewal at unchanged rates and no payment gaps.
+
+A planning month is 30 × 86,400 seconds. Needed for N additional months is `rate × monthSeconds × N`, for whole N from 1 to 24. Stress price is `price × (100 - dropPercent) / 100`, floored. Maximum debt is `collateral × stressPrice / targetRatio`, floored; additional capacity is `max(maxDebt - currentDebt, 0)`. Ratios use 1e18 scaling. Target presets must exceed the protocol minimum plus 10 percentage points. Whole months covered are `floor(capacity / (rate × monthSeconds))`; zero current rate has no coverage verdict.
+
+Borrowing capacity alone is compared with the additional-month requirement. It does not include current wallet cash or escrow and is not added to the coverage date as a continuous-coverage promise. Estimates exclude fees, minimum debt, gas compensation on new debt, future interest and system-wide recovery conditions. They treat 1 MUSD as 1 USD under protocol debt accounting and are not borrowing quotes or guarantees of eligibility.
+
+Complete payment pagination and verified 18-decimal MUSD are required. Payment results older than 60 seconds since update, a source head older than 120 seconds or more than 60 seconds ahead of the browser, and failed refreshes suppress coverage. The same borrowing freshness checks as the position viewer gate loan estimates separately. Source blocks are disclosed, including a warning if their chain timestamps differ by over 120 seconds.
+
 ## Verification and operation
 
 `node scripts/inspect-borrowing.mjs` uses the same reader as the UI, defaults to the existing founder and contractor accounts, and writes `deployments/mezo-testnet.borrowing.check.json`. Node 24+ is required to import the TypeScript reader. Optional public address arguments replace the defaults.

@@ -1,51 +1,19 @@
-import { useEffect, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { useAccount, usePublicClient } from 'wagmi';
+import { useState } from 'react';
+import { useAccount } from 'wagmi';
 import { formatUnits, getAddress, isAddress, type Address } from 'viem';
-import {
-  borrowingDeployment,
-  readBorrowingPosition,
-  TESTNET_CHAIN_ID,
-} from '@runway/mezo';
+import { borrowingDeployment } from '@runway/mezo';
 import { explorer, musdAddress } from './config';
 import { BorrowingStress } from './BorrowingStress';
+import { useBorrowingPosition } from './hooks/useBorrowingPosition';
 
 const percent = (ratio: bigint) => `${formatUnits(ratio / 10n ** 12n, 4)}%`;
 export function BorrowingPosition() {
   const { address } = useAccount();
-  const client = usePublicClient({ chainId: TESTNET_CHAIN_ID });
   const [draft, setDraft] = useState('');
   const [selected, setSelected] = useState<Address>();
   const [inputError, setInputError] = useState('');
-  const [now, setNow] = useState(Date.now);
-  useEffect(() => {
-    const timer = setInterval(() => setNow(Date.now()), 10000);
-    return () => clearInterval(timer);
-  }, []);
   const account = selected ?? address;
-  const position = useQuery({
-    queryKey: [
-      'borrowing',
-      TESTNET_CHAIN_ID,
-      client?.transport.url,
-      account,
-      musdAddress,
-    ],
-    enabled: Boolean(account && client && musdAddress),
-    queryFn: () => readBorrowingPosition(client!, account!, musdAddress!),
-    retry: false,
-    refetchInterval: 30000,
-    staleTime: 15000,
-  });
-  const data = position.data;
-  const stale = Boolean(
-    data &&
-    (now - position.dataUpdatedAt > 60000 ||
-      now / 1000 - Number(data.chainTime) > 120 ||
-      Number(data.chainTime) - now / 1000 > 60),
-  );
-  const price =
-    data?.active && !position.error && !stale ? data.price : undefined;
+  const { query: position, data, stale, price } = useBorrowingPosition(account);
   return (
     <section
       className="info-card light borrowing"

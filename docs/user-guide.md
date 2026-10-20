@@ -122,6 +122,14 @@ Loaded schedules share one source block. The displayed block and timestamp tell 
 
 Funded obligations count the connected account’s sent schedules only. They represent funding still owed under those schedules, including earned but unpaid amounts after cancellation. Until all pages are loaded, the figure is labelled a partial subtotal.
 
+## Runway planner
+
+Open Borrowing to combine your connected wallet’s current sent schedules, available MUSD and verified loan snapshot. Payroll coverage assumes each current stream renews immediately at its existing rate as its escrow ends. Wallet MUSD pays for renewals; existing escrow cannot be reassigned between recipients. Future-starting schedules are excluded and disclosed separately. Rates round up conservatively.
+
+Planning months are 30 days. Choose 1–24 months, a BTC price drop and a target collateral ratio to compare the full current payment rate with additional borrowing capacity alone. This estimate is separate from the wallet coverage date. Load every schedule on Overview before planning; missing or stale payment data hides coverage, while missing loan health hides only borrowing estimates.
+
+The planner never borrows for you. Open Mezo to manage your loan, or fund a Runway schedule yourself. Estimates exclude borrowing fees, minimum debt, gas compensation on new debt, future interest and system-wide recovery conditions. They use protocol debt accounting of 1 MUSD = 1 USD and are not borrowing quotes.
+
 ## History, receipts, and CSV exports
 
 1. Open Transaction history & receipts on a schedule to see funding, claims, and cancellation/refund events, oldest first. Event times are shown in UTC.

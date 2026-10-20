@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Sidebar } from './Sidebar';
 import { WalletConnection } from './WalletConnection';
 import { BorrowingPosition } from './BorrowingPosition';
+import { RunwayPlanner } from './RunwayPlanner';
 
 export function Borrowing() {
   const [notice, setNotice] = useState('');
@@ -30,6 +31,7 @@ export function Borrowing() {
           )}
           <div className="borrowing-layout">
             <BorrowingPosition />
+            <RunwayPlanner />
             <section
               className="info-card borrowing-explainer"
               aria-label="How Mezo borrowing works"

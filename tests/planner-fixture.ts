@@ -95,9 +95,7 @@ export async function installPlannerFixture(
       } else if (request.method === 'eth_getBlockByNumber')
         result = {
           number: toHex(block),
-          timestamp: toHex(
-            now - (options.staleLoan || options.stalePayments ? 130n : 0n),
-          ),
+          timestamp: toHex(now - (options.stalePayments ? 130n : 0n)),
           transactions: [],
           gasLimit: '0x100',
           gasUsed: '0x0',
@@ -144,7 +142,7 @@ export async function installPlannerFixture(
         const values: Record<string, unknown> = {
           symbol: mezo ? (options.symbol ?? 'MEZO') : 'MUSD',
           decimals: 18,
-          balanceOf: mezo ? 42n * unit : 100n * unit,
+          balanceOf: mezo ? 42n * unit : options.unequal ? 50n : 100n * unit,
           musd: options.invalidDeployment
             ? MEZO_TESTNET_TOKEN
             : deployment.musd,
@@ -153,7 +151,9 @@ export async function installPlannerFixture(
           getSchedule: {
             sender: plannerAccount,
             recipient: '0x0000000000000000000000000000000000000022',
-            total: ((end - start) * unit) / 86400n,
+            total: options.unequal
+              ? end - start
+              : ((end - start) * unit) / 86400n,
             start: options.future ? time + 10n : start,
             end,
             claimed: 0n,
@@ -170,7 +170,13 @@ export async function installPlannerFixture(
           getTroveInterestRate: 100,
           MCR: options.minimumRatio ?? 1100000000000000000n,
           MUSD_GAS_COMPENSATION: 200n * unit,
-          latestRoundData: [1n, 4000n * unit, now, now, 0n],
+          latestRoundData: [
+            1n,
+            4000n * unit,
+            now,
+            now - (options.staleLoan ? 61n : 0n),
+            0n,
+          ],
           fetchPrice: 4000n * unit,
           getCurrentICR: 4n * unit,
         };
