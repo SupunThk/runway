@@ -1,61 +1,30 @@
 import { Sidebar } from './Sidebar';
 import { Icon } from './Icon';
 import { useState } from 'react';
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import {
   useAccount,
   usePublicClient,
   useSwitchChain,
   useWalletClient,
 } from 'wagmi';
-import {
-  erc20Abi,
-  encodeFunctionData,
-  formatUnits,
-  getAddress,
-  isAddress,
-  parseEventLogs,
-  parseUnits,
-  zeroHash,
-  type Hash,
-  type Address,
-} from 'viem';
-import { paymentsAbi, TESTNET_CHAIN_ID } from '@runway/mezo';
+import { TESTNET_CHAIN_ID } from '@runway/mezo';
 import { WalletConnection } from './WalletConnection';
-import { TransactionHistory } from './TransactionHistory';
-import { usePendingTransaction, type PendingTransaction } from './pending';
+import { usePendingTransaction } from './pending';
 import { PendingTransactionPanel } from './PendingTransactionPanel';
-import {
-  readSchedulePage,
-  uniqueSchedules,
-  type ScheduleCursor,
-} from './schedules';
-import {
-  chainConfigValid,
-  explorer,
-  musdAddress,
-  paymentAddress,
-} from './config';
-
-function errorText(error: unknown) {
-  return error instanceof Error
-    ? error.message.split('\n')[0]
-    : 'Request failed. Please try again.';
-}
-function short(address: string) {
-  return `${address.slice(0, 6)}…${address.slice(-4)}`;
-}
-const amount = (value: bigint, decimals = 18) => formatUnits(value, decimals);
-
+import { explorer, paymentAddress } from './config';
+import { errorText } from './format';
+import { useDeploymentReadiness } from './hooks/useDeploymentReadiness';
+import { useBalances } from './hooks/useBalances';
+import { useSchedules } from './hooks/useSchedules';
+import { usePaymentActions } from './hooks/usePaymentActions';
+import { NewSchedule } from './routes/NewSchedule';
+import { Overview } from './routes/Overview';
+import { ScheduleDetail } from './routes/ScheduleDetail';
 export function App() {
   const { address, chainId } = useAccount();
   const { switchChainAsync } = useSwitchChain();
   const client = usePublicClient({ chainId: TESTNET_CHAIN_ID });
   const { data: wallet } = useWalletClient();
-  const [notice, setNotice] = useState('');
-  const [hash, setHash] = useState<Hash>();
-  const [busy, setBusy] = useState(false);
-  const [historyRevision, setHistoryRevision] = useState(0);
   const recovery = usePendingTransaction(paymentAddress);
   const [view, setView] = useState<'overview' | 'create'>(
     new URLSearchParams(window.location.search).get('create') === '1'
@@ -69,335 +38,52 @@ export function App() {
   const invalidRoute =
     window.location.pathname !== '/' && scheduleId === undefined;
 
-  const readiness = useQuery({
-    queryKey: ['deployment', musdAddress, paymentAddress],
-    queryFn: async () => {
-      if (!client || !chainConfigValid)
-        throw new Error('Invalid testnet configuration.');
-      if ((await client.getChainId()) !== TESTNET_CHAIN_ID)
-        throw new Error('RPC is connected to the wrong chain.');
-      if (!musdAddress) return { token: false, payments: false, decimals: 18 };
-      const [code, decimals, symbol] = await Promise.all([
-        client.getCode({ address: musdAddress }),
-        client.readContract({
-          address: musdAddress,
-          abi: erc20Abi,
-          functionName: 'decimals',
-        }),
-        client.readContract({
-          address: musdAddress,
-          abi: erc20Abi,
-          functionName: 'symbol',
-        }),
-      ]);
-      if (!code || code === '0x' || symbol !== 'MUSD')
-        throw new Error('Configured MUSD contract failed validation.');
-      let payments = false;
-      if (paymentAddress) {
-        const [paymentCode, token] = await Promise.all([
-          client.getCode({ address: paymentAddress }),
-          client.readContract({
-            address: paymentAddress,
-            abi: paymentsAbi,
-            functionName: 'musd',
-          }),
-        ]);
-        payments = Boolean(
-          paymentCode &&
-          paymentCode !== '0x' &&
-          getAddress(token) === musdAddress,
-        );
-        if (!payments)
-          throw new Error(
-            'Payment deployment does not match the configured MUSD token.',
-          );
-      }
-      return { token: true, payments, decimals };
-    },
-    staleTime: 60000,
-  });
+  const readiness = useDeploymentReadiness();
   const decimals = readiness.data?.decimals ?? 18;
-  const balances = useQuery({
-    queryKey: ['balances', address, chainId, musdAddress],
-    enabled: Boolean(address && client && readiness.isSuccess),
-    queryFn: async () => {
-      const block = await client!.getBlockNumber();
-      const [btc, musd] = await Promise.all([
-        client!.getBalance({ address: address!, blockNumber: block }),
-        musdAddress && readiness.data?.token
-          ? client!.readContract({
-              address: musdAddress,
-              abi: erc20Abi,
-              functionName: 'balanceOf',
-              args: [address!],
-              blockNumber: block,
-            })
-          : undefined,
-      ]);
-      return { btc, musd, block };
-    },
-    refetchInterval: 15000,
+  const balances = useBalances({ address, chainId, readiness });
+  const {
+    query: schedules,
+    rows: scheduleRows,
+    snapshot: scheduleSnapshot,
+    outstanding,
+  } = useSchedules({ address, chainId, scheduleId, readiness });
+  const {
+    notice,
+    setNotice,
+    hash,
+    busy,
+    historyRevision,
+    setHistoryRevision,
+    canTransact,
+    create,
+    settle,
+  } = usePaymentActions({
+    client,
+    wallet,
+    address,
+    chainId,
+    readiness,
+    recovery,
+    balances,
+    schedules,
+    decimals,
+    onCreated: () => setView('overview'),
   });
-  const schedules = useInfiniteQuery({
-    queryKey: [
-      'schedules',
-      TESTNET_CHAIN_ID,
-      client?.transport.url,
-      address,
-      chainId,
-      paymentAddress,
-      scheduleId?.toString(),
-    ],
-    enabled: Boolean(
-      client && readiness.data?.payments && (address || scheduleId),
-    ),
-    initialPageParam: undefined as ScheduleCursor | undefined,
-    queryFn: ({ pageParam }) =>
-      readSchedulePage(
-        client!,
-        paymentAddress!,
-        address,
-        scheduleId,
-        pageParam,
-      ),
-    getNextPageParam: (page) => page.next,
-    retry: false,
-    refetchOnWindowFocus: false,
-    refetchInterval: 15000,
-  });
-  const scheduleRows = schedules.data
-    ? uniqueSchedules(schedules.data.pages)
-    : undefined;
-  const scheduleSnapshot = schedules.data?.pages[0];
-  const canTransact = Boolean(
-    address &&
-    chainId === TESTNET_CHAIN_ID &&
-    wallet &&
-    readiness.isSuccess &&
-    readiness.data?.payments &&
-    !recovery.pending &&
-    !recovery.error &&
-    !busy,
-  );
-
-  async function transaction(action: () => Promise<void>) {
-    setBusy(true);
-    setNotice('');
-    setHash(undefined);
-    try {
-      if (!canTransact || !client || !wallet)
-        throw new Error(
-          'Connect to Mezo testnet and verify the payment deployment first.',
-        );
-      recovery.checkStorage();
-      await action();
-      setHistoryRevision((value) => value + 1);
-      await Promise.all([balances.refetch(), schedules.refetch()]);
-    } catch (error) {
-      setNotice(errorText(error));
-    } finally {
-      setBusy(false);
-    }
-  }
-  async function waitTracked(
-    tx: Hash,
-    action: PendingTransaction['action'],
-    target: Address,
-    data: `0x${string}`,
-    id?: bigint,
-  ) {
-    let tracked: PendingTransaction = {
-      version: 1,
-      chainId: TESTNET_CHAIN_ID,
-      contract: paymentAddress!,
-      sender: address!,
-      target,
-      hash: tx,
-      data,
-      action,
-      scheduleId: id?.toString(),
-      submittedAt: new Date().toISOString(),
-    };
-    recovery.save(tracked);
-    setHash(tx);
-    let changedAction = false;
-    const receipt = await client!.waitForTransactionReceipt({
-      hash: tx,
-      timeout: 120000,
-      onReplaced: (replacement) => {
-        changedAction = replacement.reason !== 'repriced';
-        tracked = { ...tracked, hash: replacement.transaction.hash };
-        recovery.save(tracked);
-        setHash(tracked.hash);
-      },
-    });
-    if (changedAction)
-      throw new Error(
-        'Transaction was replaced. Check the saved transaction before continuing.',
-      );
-    recovery.clear(tracked.hash);
-    return receipt;
-  }
-  async function settle(id: bigint, cancel: boolean) {
-    await transaction(async () => {
-      const { request } = await client!.simulateContract({
-        account: address!,
-        address: paymentAddress!,
-        abi: paymentsAbi,
-        functionName: cancel ? 'cancel' : 'claim',
-        args: [id],
-      });
-      const tx = await wallet!.writeContract(request);
-      setHash(tx);
-      setNotice('Transaction submitted. Waiting for confirmation…');
-      const receipt = await waitTracked(
-        tx,
-        cancel ? 'Cancellation' : 'Claim',
-        paymentAddress!,
-        encodeFunctionData({
-          abi: paymentsAbi,
-          functionName: cancel ? 'cancel' : 'claim',
-          args: [id],
-        }),
-        id,
-      );
-      if (receipt.status !== 'success')
-        throw new Error('Transaction reverted. Refresh state before retrying.');
-      setNotice(
-        cancel
-          ? 'Cancellation confirmed. Vested funds remain claimable.'
-          : 'Claim confirmed. MUSD was sent to the stored recipient.',
-      );
-    });
-  }
-  async function create(form: HTMLFormElement) {
-    const data = new FormData(form);
-    await transaction(async () => {
-      const recipient = String(data.get('recipient'));
-      if (
-        !isAddress(recipient) ||
-        BigInt(recipient) === 0n ||
-        getAddress(recipient) === paymentAddress
-      )
-        throw new Error('Enter a valid recipient address.');
-      const text = String(data.get('total'));
-      if (
-        !/^\d+(\.\d+)?$/.test(text) ||
-        (text.split('.')[1]?.length ?? 0) > decimals
-      )
-        throw new Error(`Use at most ${decimals} decimal places.`);
-      const total = parseUnits(text, decimals);
-      if (total <= 0n) throw new Error('Funding must be greater than zero.');
-      const reference = new URLSearchParams(window.location.search).get(
-        'reference',
-      );
-      if (reference && !/^0x[a-fA-F0-9]{64}$/.test(reference))
-        throw new Error(
-          'Invalid invoice payment reference. Open the payment from your workspace again.',
-        );
-      const referenceHash = (reference || zeroHash) as Hash;
-      const durationMinutes = Number(data.get('duration'));
-      if (
-        !Number.isSafeInteger(durationMinutes) ||
-        durationMinutes < 1 ||
-        durationMinutes > 525600
-      )
-        throw new Error('Duration must be 1–525600 whole minutes.');
-      const balance = await client!.readContract({
-        address: musdAddress!,
-        abi: erc20Abi,
-        functionName: 'balanceOf',
-        args: [address!],
-      });
-      if (balance < total)
-        throw new Error('Insufficient MUSD. Fund your wallet first.');
-      const allowance = await client!.readContract({
-        address: musdAddress!,
-        abi: erc20Abi,
-        functionName: 'allowance',
-        args: [address!, paymentAddress!],
-      });
-      if (allowance < total) {
-        setNotice('Approve the exact funding amount in your wallet.');
-        const { request } = await client!.simulateContract({
-          account: address!,
-          address: musdAddress!,
-          abi: erc20Abi,
-          functionName: 'approve',
-          args: [paymentAddress!, total],
-        });
-        const approval = await wallet!.writeContract(request);
-        setHash(approval);
-        const receipt = await waitTracked(
-          approval,
-          'Approval',
-          musdAddress!,
-          encodeFunctionData({
-            abi: erc20Abi,
-            functionName: 'approve',
-            args: [paymentAddress!, total],
-          }),
-        );
-        if (receipt.status !== 'success')
-          throw new Error('Approval reverted; no schedule was funded.');
-      }
-      // Use current chain time after approval, allowing two minutes for the next signature.
-      const block = await client!.getBlock();
-      const start = block.timestamp + 120n;
-      const end = start + BigInt(durationMinutes) * 60n;
-      setNotice(
-        'Approval ready. Confirm schedule creation in your wallet; accrual starts about two minutes from now.',
-      );
-      const { request } = await client!.simulateContract({
-        account: address!,
-        address: paymentAddress!,
-        abi: paymentsAbi,
-        functionName: 'createSchedule',
-        args: [getAddress(recipient), total, start, end, referenceHash],
-      });
-      recovery.checkStorage();
-      const tx = await wallet!.writeContract(request);
-      setHash(tx);
-      setNotice('Schedule submitted. Waiting for confirmation…');
-      const receipt = await waitTracked(
-        tx,
-        'Funding',
-        paymentAddress!,
-        encodeFunctionData({
-          abi: paymentsAbi,
-          functionName: 'createSchedule',
-          args: [getAddress(recipient), total, start, end, referenceHash],
-        }),
-      );
-      if (receipt.status !== 'success')
-        throw new Error(
-          'Creation reverted; no schedule was funded. Approval may remain. Retry with a fresh start time.',
-        );
-      const events = parseEventLogs({
-        abi: paymentsAbi,
-        logs: receipt.logs,
-        eventName: 'ScheduleCreated',
-      });
-      const id = events[0]?.args.scheduleId;
-      setNotice(
-        id
-          ? `Schedule #${id} confirmed. Share its recipient link below.`
-          : 'Schedule confirmed. Refresh to view it.',
-      );
-      setView('overview');
-      window.history.replaceState(null, '', '/');
-    });
-  }
-
-  const outstanding = address
-    ? scheduleRows
-        ?.filter((s) => s.sender.toLowerCase() === address.toLowerCase())
-        .reduce(
-          (sum, s) =>
-            sum + (s.cancelled ? s.vestedAtCancellation : s.total) - s.claimed,
-          0n,
-        )
-    : undefined;
+  const routeProps = {
+    address,
+    balances,
+    schedules,
+    scheduleId,
+    scheduleRows,
+    scheduleSnapshot,
+    readiness,
+    decimals,
+    outstanding,
+    canTransact,
+    settle,
+    historyRevision,
+    setView,
+  };
   return (
     <div className="shell">
       <Sidebar active={invalidRoute || scheduleId ? undefined : view} />
@@ -508,397 +194,16 @@ export function App() {
               <a href="/">Back to overview</a>
             </div>
           ) : view === 'create' ? (
-            <section className="panel form-panel">
-              <div className="section-heading">
-                <h2>Fund a payment schedule</h2>
-                <span className="badge">MUSD</span>
-              </div>
-              <p>Fully funded upfront. The recipient address is permanent.</p>
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  void create(e.currentTarget);
-                }}
-              >
-                <label>
-                  Recipient wallet
-                  <input
-                    name="recipient"
-                    defaultValue={
-                      new URLSearchParams(window.location.search).get(
-                        'recipient',
-                      ) ?? ''
-                    }
-                    required
-                    placeholder="0x…"
-                    autoComplete="off"
-                  />
-                </label>
-                <div className="form-row">
-                  <label>
-                    Total funding · MUSD
-                    <input
-                      name="total"
-                      defaultValue={
-                        new URLSearchParams(window.location.search).get(
-                          'amount',
-                        ) ?? ''
-                      }
-                      required
-                      inputMode="decimal"
-                      placeholder="0.00"
-                    />
-                  </label>
-                  <label>
-                    Accrual duration · minutes
-                    <input
-                      name="duration"
-                      required
-                      type="number"
-                      min="1"
-                      max="525600"
-                      step="1"
-                      defaultValue="60"
-                    />
-                  </label>
-                </div>
-                <div className="terms">
-                  <strong>Before you sign</strong>
-                  <p>
-                    Accrual starts about two minutes after approval, using chain
-                    time. Funds accrue linearly; a claim transaction sends MUSD
-                    to the recipient. Only the sender can cancel. Cancellation
-                    returns unvested funds and preserves earned payments. All
-                    amounts, addresses and timestamps are public.
-                  </p>
-                  <p>
-                    You will approve the exact MUSD amount, then sign a separate
-                    funding transaction. Retain BTC for gas.
-                  </p>
-                </div>
-                <button className="button" disabled={!canTransact}>
-                  {busy
-                    ? 'Waiting for transaction…'
-                    : 'Approve & fund schedule'}
-                </button>
-                {!address ? (
-                  <p className="hint">Connect your wallet to continue.</p>
-                ) : null}
-              </form>
-            </section>
+            <NewSchedule
+              address={address}
+              create={create}
+              canTransact={canTransact}
+              busy={busy}
+            />
+          ) : scheduleId ? (
+            <ScheduleDetail {...routeProps} />
           ) : (
-            <>
-              <section className="metrics" aria-label="Treasury balances">
-                <div className="metric">
-                  <span>AVAILABLE IN WALLET</span>
-                  <strong>
-                    {balances.data?.musd !== undefined
-                      ? amount(balances.data.musd, decimals)
-                      : '—'}{' '}
-                    <small>MUSD</small>
-                  </strong>
-                  <p>
-                    {address
-                      ? balances.error
-                        ? 'Balance unavailable · retry below'
-                        : !musdAddress
-                          ? 'MUSD configuration pending'
-                          : 'Free to fund your next schedule'
-                      : 'Connect to see your balance'}
-                  </p>
-                </div>
-                <div className="metric">
-                  <span>
-                    {schedules.hasNextPage && !scheduleId
-                      ? 'LOADED FUNDED OBLIGATIONS'
-                      : 'FUNDED OBLIGATIONS'}
-                  </span>
-                  <strong>
-                    {outstanding !== undefined
-                      ? amount(outstanding, decimals)
-                      : '—'}{' '}
-                    <small>MUSD</small>
-                  </strong>
-                  <p>
-                    {schedules.error
-                      ? 'Previous snapshot · refresh to verify'
-                      : schedules.hasNextPage && !scheduleId
-                        ? 'Partial subtotal · load all schedules for the total'
-                        : scheduleId
-                          ? 'This schedule only · sent by you'
-                          : 'Your sent schedules · separate from cash'}
-                  </p>
-                </div>
-                <div className="metric">
-                  <span>GAS RESERVE</span>
-                  <strong>
-                    {balances.data ? amount(balances.data.btc) : '—'}{' '}
-                    <small>BTC</small>
-                  </strong>
-                  <p>Used for approvals, funding and claims</p>
-                </div>
-              </section>
-              <section
-                className="panel schedules"
-                aria-label="Payment schedules"
-              >
-                <div className="section-heading">
-                  <div>
-                    <h2>
-                      {scheduleId ? 'Recipient payment' : 'Payment schedules'}
-                    </h2>
-                    <p>Real entitlements. Onchain settlement.</p>
-                  </div>
-                  <button
-                    className="text-button"
-                    disabled={schedules.isFetching}
-                    onClick={() => {
-                      void balances.refetch();
-                      void schedules.refetch();
-                    }}
-                  >
-                    Refresh ↻
-                  </button>
-                </div>
-                {schedules.error && (
-                  <div className="callout warning" role="alert">
-                    Could not load schedules: {errorText(schedules.error)}
-                    {schedules.data
-                      ? ' Previously loaded schedules remain visible.'
-                      : ''}
-                  </div>
-                )}
-                {schedules.isFetching && !schedules.data ? (
-                  <div className="schedule-loading" role="status">
-                    <p>Loading schedule state…</p>
-                    <span className="skeleton-line" aria-hidden="true" />
-                    <span className="skeleton-line short" aria-hidden="true" />
-                  </div>
-                ) : scheduleRows?.length ? (
-                  <div className="schedule-list">
-                    {scheduleRows.map((s) => (
-                      <article className="schedule-card" key={String(s.id)}>
-                        <div className="section-heading">
-                          <a href={`/schedules/${s.id}`}>
-                            <strong>Schedule #{String(s.id)}</strong>
-                          </a>
-                          <span className="badge">
-                            {s.cancelled
-                              ? 'CANCELLED'
-                              : s.claimed === s.total
-                                ? 'COMPLETED'
-                                : 'FUNDED'}
-                          </span>
-                        </div>
-                        <p>
-                          Recipient:{' '}
-                          <a
-                            href={`${explorer}/address/${s.recipient}`}
-                            title={s.recipient}
-                          >
-                            {short(s.recipient)}
-                          </a>
-                        </p>
-                        <dl>
-                          <div>
-                            <dt>Total funded</dt>
-                            <dd>{amount(s.total, decimals)} MUSD</dd>
-                          </div>
-                          <div>
-                            <dt>Already claimed</dt>
-                            <dd>{amount(s.claimed, decimals)} MUSD</dd>
-                          </div>
-                          <div>
-                            <dt>Claimable now</dt>
-                            <dd>{amount(s.claimable, decimals)} MUSD</dd>
-                          </div>
-                          {s.cancelled ? (
-                            <>
-                              <div>
-                                <dt>Total earned by recipient</dt>
-                                <dd>
-                                  {amount(s.vestedAtCancellation, decimals)}{' '}
-                                  MUSD
-                                </dd>
-                              </div>
-                              <div>
-                                <dt>Refunded to sender</dt>
-                                <dd>
-                                  {amount(
-                                    s.total - s.vestedAtCancellation,
-                                    decimals,
-                                  )}{' '}
-                                  MUSD
-                                </dd>
-                              </div>
-                            </>
-                          ) : null}
-                        </dl>
-                        {s.cancelled ? (
-                          <p className="hint">
-                            {s.claimable === 0n
-                              ? 'Cancellation settled. All earned MUSD has been paid; the unearned portion was refunded to the sender.'
-                              : 'Accrual stopped. The unearned portion was refunded; earned, unpaid MUSD remains claimable.'}
-                          </p>
-                        ) : s.claimed === s.total ? (
-                          <p className="hint">
-                            Payment complete. All funded MUSD has been paid to
-                            the recipient.
-                          </p>
-                        ) : s.chainTime >= s.end ? (
-                          <p className="hint">
-                            Accrual ended. Claim the remaining earned MUSD to
-                            complete this payment.
-                          </p>
-                        ) : null}
-                        <p className="hint">
-                          {new Date(Number(s.start) * 1000).toLocaleString()} →{' '}
-                          {new Date(Number(s.end) * 1000).toLocaleString()}{' '}
-                          (your local timezone)
-                        </p>
-                        <div className="actions">
-                          <button
-                            className="button"
-                            disabled={!canTransact || s.claimable === 0n}
-                            onClick={() => void settle(s.id, false)}
-                          >
-                            Claim to recipient
-                          </button>
-                          {address &&
-                          getAddress(address) === getAddress(s.sender) &&
-                          !s.cancelled &&
-                          s.chainTime < s.end ? (
-                            <button
-                              className="button secondary"
-                              disabled={!canTransact}
-                              onClick={() => {
-                                if (
-                                  window.confirm(
-                                    'Cancel this schedule? Unvested funds return to you; unpaid vested funds remain claimable. Final amounts depend on chain execution time.',
-                                  )
-                                )
-                                  void settle(s.id, true);
-                              }}
-                            >
-                              Cancel schedule
-                            </button>
-                          ) : null}
-                          <a href={`/schedules/${s.id}`}>Recipient link ↗</a>
-                        </div>
-                        <TransactionHistory
-                          scheduleId={s.id}
-                          revision={historyRevision}
-                        />
-                      </article>
-                    ))}
-                  </div>
-                ) : !schedules.error ? (
-                  <div className="empty">
-                    <div className="empty-icon">
-                      <Icon name="wallet" />
-                    </div>
-                    <div className="empty-copy">
-                      <h3>
-                        {scheduleId
-                          ? 'Schedule data unavailable'
-                          : address && readiness.data?.payments
-                            ? 'Your first payment starts here.'
-                            : 'A clearer way to pay your team.'}
-                      </h3>
-                      <p>
-                        {scheduleId
-                          ? 'The payment deployment must be configured and reachable to load this link.'
-                          : 'Fund a schedule with MUSD, share a link, and let your recipient claim what they’ve earned.'}
-                      </p>
-                      {!scheduleId ? (
-                        <button
-                          className="button secondary"
-                          onClick={() => setView('create')}
-                        >
-                          Create your first schedule ↗
-                        </button>
-                      ) : null}
-                    </div>
-                  </div>
-                ) : null}
-                {scheduleSnapshot ? (
-                  <div className="schedule-pagination">
-                    <p className="hint" role="status">
-                      {scheduleRows?.length} unique schedules loaded · Block{' '}
-                      {String(scheduleSnapshot.blockNumber)}
-                      {' · '}
-                      {new Date(Number(scheduleSnapshot.chainTime) * 1000)
-                        .toISOString()
-                        .replace('T', ' ')
-                        .replace('.000Z', ' UTC')}
-                      {scheduleId
-                        ? ' · Direct schedule view.'
-                        : schedules.hasNextPage
-                          ? ' · Partial list; more schedules may be available.'
-                          : ' · All sent and received schedules loaded at this snapshot.'}
-                      {schedules.error && !schedules.isFetchNextPageError
-                        ? ' Refresh failed; displayed values are from the previous snapshot.'
-                        : ''}
-                    </p>
-                    {schedules.hasNextPage && !scheduleId && (
-                      <button
-                        className="button secondary"
-                        disabled={schedules.isFetching}
-                        onClick={() => void schedules.fetchNextPage()}
-                      >
-                        {schedules.isFetchingNextPage
-                          ? 'Loading more schedules…'
-                          : schedules.isFetchNextPageError
-                            ? 'Retry loading more schedules'
-                            : 'Load more schedules'}
-                      </button>
-                    )}
-                  </div>
-                ) : null}
-              </section>
-              <section className="info-grid">
-                <div className="info-card">
-                  <span className="eyebrow">HOW IT WORKS</span>
-                  <h2>Committed once. Claimed over time.</h2>
-                  <ol className="payment-steps">
-                    <li>
-                      <span>01</span>
-                      <div>
-                        <h3>Fund a schedule</h3>
-                        <p>Deposit the full payment in MUSD.</p>
-                      </div>
-                    </li>
-                    <li>
-                      <span>02</span>
-                      <div>
-                        <h3>Let it accrue</h3>
-                        <p>
-                          Your recipient earns over the schedule’s duration.
-                        </p>
-                      </div>
-                    </li>
-                    <li>
-                      <span>03</span>
-                      <div>
-                        <h3>Claim what’s earned</h3>
-                        <p>The recipient claims with an onchain transaction.</p>
-                      </div>
-                    </li>
-                  </ol>
-                </div>
-                <div className="info-card light">
-                  <span className="eyebrow">MEZO BORROWING</span>
-                  <h2>Keep an eye on your BTC-backed loan.</h2>
-                  <p>
-                    View collateral, MUSD debt and BTC price-drop scenarios in
-                    your borrowing dashboard.
-                  </p>
-                  <a href="/borrowing" className="button secondary">
-                    View borrowing <Icon name="arrow" />
-                  </a>
-                </div>
-              </section>
-            </>
+            <Overview {...routeProps} />
           )}
           <footer>
             <span>Runway · Built on Mezo</span>
