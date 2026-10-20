@@ -1,0 +1,35 @@
+{
+  "reviewDate": "2026-10-20",
+  "chainId": 31611,
+  "musd": "0x118917a40FAF1CD7a13dB0Ef56C86De7973Ac503",
+  "blockNumber": "16260633",
+  "eip1967Implementation": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "eip1967Admin": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "eip1967Beacon": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "owner": "0x123694886DBf5Ac94DDA07135349534536D14cAf",
+  "ownerControlIdentityVerified": false,
+  "explorerContractName": "MUSD",
+  "explorerVerified": true,
+  "explorerProxyType": null,
+  "explorerImplementations": [],
+  "source": "https://api.explorer.test.mezo.org/api/v2/smart-contracts/0x118917a40FAF1CD7a13dB0Ef56C86De7973Ac503",
+  "sourceObservations": [
+    "MUSD inherits ERC20Permit, Ownable and CheckContract; no upgrade entry or proxy fallback in the verified source",
+    "Owner manages mint and burn allowlists and system-contract roles",
+    "Authorized burn(account, amount) does not require ERC-20 allowance; external token privileges are a solvency trust assumption"
+  ],
+  "localFoundry": {
+    "totalTests": 24,
+    "passed": 24,
+    "failed": 0,
+    "skipped": 0,
+    "accountingFuzzRuns": 256,
+    "invariantCampaigns": 2,
+    "runsPerInvariant": 128,
+    "callsPerInvariant": 16384,
+    "unexpectedReverts": 0,
+    "discards": 0
+  },
+  "blockchainTransactionsSubmitted": false,
+  "independentAudit": false
+}
