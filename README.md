@@ -10,6 +10,13 @@ Read the [user guide](docs/user-guide.md) for wallet setup, funding, claims, can
 
 Guide content lives in `apps/web/src/guide.ts`. Run `pnpm docs:generate` after editing it to update the repository copy. Developer setup and verification instructions follow below.
 
+Wave 1 polish is prepared locally, awaiting release approval:
+
+- **Runway planner:** current payroll coverage from escrow and wallet MUSD, plus separate BTC price-stress borrowing-capacity estimates. Planning months are 30 days; Runway never borrows for you.
+- **MEZO balance:** an independently validated network-token balance beside BTC gas reserves; unavailable MEZO reads do not block payments.
+- **Backend wake notice:** bounded health polling, retry and database-outage feedback for cold starts. Assistant questions remain available to resend manually.
+- **Security:** the [security policy and threat model](SECURITY.md) describes contract invariants, external token privileges, application boundaries and reporting.
+
 ## Run locally
 
 **October 13 scope update:** A local MongoDB-backed workspace increment adds wallet login, contractors and draft invoices at `/workspace`. Add your server-only connection settings to the existing `.env` using [backend setup](docs/backend.md). `pnpm dev` now runs both the API and frontend. The live database and hosted backend still need verification. See [revised Wave 1/Wave 2 workflow](docs/development-workflow.md) for delivered versus planned features.

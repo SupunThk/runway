@@ -1,0 +1,153 @@
+{
+  "reviewDate": "2026-10-20",
+  "baselineSource": "9638145",
+  "implementationHead": "bfad1260c5a52c4ae85bf231fb72196ec610f76b",
+  "releaseState": "local; push/deploy/tag not authorized",
+  "checks": {
+    "typecheck": "passed",
+    "unitApiFrontendTests": 66,
+    "browserCases": 81,
+    "foundryTests": 24,
+    "formatting": "passed",
+    "whitespace": "passed",
+    "sourceCredentialScan": "no credentials; one existing instructional placeholder",
+    "builtCredentialScan": "no credentials; one reviewed minified-vendor false positive",
+    "securitySourceLinks": "passed",
+    "productionPreviewRouteWidthChecks": 18,
+    "productionPrewarmDeduplication": "passed",
+    "keepaliveDateBoundaries": "passed",
+    "productionGuideAnchorDownload": "passed; exact repository match and zero RPC reads"
+  },
+  "sourceFindings": [
+    {
+      "path": "docs/backend.md",
+      "line": 10,
+      "classification": "existing instructional URI placeholder"
+    }
+  ],
+  "builtFindings": [
+    {
+      "path": "apps/web/dist/assets/wallet-B80nKZVj.js",
+      "offset": 295771,
+      "length": 2880,
+      "classification": "minified onBegin option through private-field error; no PEM marker"
+    }
+  ],
+  "bundle": {
+    "baselineMainBytes": 683820,
+    "baselineMainGzipBytes": 204500,
+    "largestFinalChunk": {
+      "path": "apps/web/dist/assets/wallet-B80nKZVj.js",
+      "bytes": 373328,
+      "gzipBytes": 109444
+    },
+    "chunks": [
+      {
+        "path": "apps/web/dist/assets/wallet-B80nKZVj.js",
+        "bytes": 373328,
+        "gzipBytes": 109444
+      },
+      {
+        "path": "apps/web/dist/assets/react-D-Ke1sYc.js",
+        "bytes": 210543,
+        "gzipBytes": 64997
+      },
+      {
+        "path": "apps/web/dist/assets/index-uIcrK_L_.js",
+        "bytes": 40286,
+        "gzipBytes": 12826
+      },
+      {
+        "path": "apps/web/dist/assets/Documentation-wUstdW1b.js",
+        "bytes": 20018,
+        "gzipBytes": 7431
+      },
+      {
+        "path": "apps/web/dist/assets/Borrowing-jbdhvEi8.js",
+        "bytes": 17131,
+        "gzipBytes": 5371
+      },
+      {
+        "path": "apps/web/dist/assets/WalletConnection-CTwi1AHp.js",
+        "bytes": 13733,
+        "gzipBytes": 4987
+      },
+      {
+        "path": "apps/web/dist/assets/Workspace-BZACDONc.js",
+        "bytes": 12884,
+        "gzipBytes": 4059
+      },
+      {
+        "path": "apps/web/dist/assets/query-Dm43vmun.js",
+        "bytes": 7922,
+        "gzipBytes": 2448
+      },
+      {
+        "path": "apps/web/dist/assets/Assistant-NhFXCcVJ.js",
+        "bytes": 7543,
+        "gzipBytes": 2776
+      },
+      {
+        "path": "apps/web/dist/assets/BackendWakeNotice-CFB9QEJV.js",
+        "bytes": 2948,
+        "gzipBytes": 1362
+      },
+      {
+        "path": "apps/web/dist/assets/Sidebar-BSP6FoOh.js",
+        "bytes": 2062,
+        "gzipBytes": 987
+      },
+      {
+        "path": "apps/web/dist/assets/rolldown-runtime-hePW80VL.js",
+        "bytes": 716,
+        "gzipBytes": 428
+      }
+    ],
+    "baselineSizesAreRoundedBuildOutput": true,
+    "largestFinalReportedKB": 373.32,
+    "largestFinalReportedGzipKB": 110.45,
+    "gzipMethod": "Final gzipBytes values computed separately with Node zlib defaults; reported kB values are rounded Vite output"
+  },
+  "lineCounts": {
+    "App.tsx": 221,
+    "RouteFallback.tsx": 20,
+    "RunwayPlanner.tsx": 151,
+    "RunwayScenario.tsx": 180,
+    "RunwaySummary.tsx": 44,
+    "BackendWakeNotice.tsx": 27,
+    "routes/Overview.tsx": 48,
+    "routes/NewSchedule.tsx": 86,
+    "routes/ScheduleDetail.tsx": 4,
+    "components/TreasuryLedger.tsx": 78,
+    "components/ScheduleList.tsx": 139,
+    "components/ScheduleCard.tsx": 120
+  },
+  "mezoToken": {
+    "address": "0x7B7c000000000000000000000000000000000001",
+    "chainId": 31611,
+    "symbol": "MEZO",
+    "decimals": 18,
+    "name": "MEZO",
+    "blockNumber": "16260076",
+    "chainTime": "1792489084",
+    "verifiedAt": "2026-10-20T09:38:09.226Z",
+    "source": "https://github.com/mezo-org/mezod/blob/main/precompile/mezotoken/mezotoken.go"
+  },
+  "borrowRoute": {
+    "url": "https://testnet.mezo.org/borrow",
+    "status": 200,
+    "finalUrl": "https://testnet.mezo.org/borrow",
+    "checkedAt": "2026-10-20T09:56:15.521Z"
+  },
+  "protectedChanges": [],
+  "blockchainTransactionsSubmitted": false,
+  "backendRedeployed": false,
+  "remoteActionsPerformed": false,
+  "followups": [
+    "assistant-knowledge.md planner content requires a separate backend release",
+    "Real installed-wallet setup/login validation",
+    "Confirm organizer deadline timezone and intended judging windows before remote activation",
+    "Check actual Render workspace shared free-hours consumption before remote activation",
+    "Optional Vercel VITE_MEZO_TOKEN_ADDRESS; verified default is built in"
+  ]
+}

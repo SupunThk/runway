@@ -154,6 +154,8 @@ Health and scenarios may be unavailable when data is stale or price checks fail.
 
 ## Pending transactions and troubleshooting
 
+Free hosting can pause the workspace and assistant backend after inactivity. A waking notice polls health for up to 90 seconds and offers Retry connection if it remains unavailable. A separate message identifies a database outage. Workspace refreshes after a successful wake; the assistant keeps your question for you to send again and never resends it automatically.
+
 - Wallet missing: install or unlock a compatible browser wallet, reload, and select the intended wallet from Connect wallet.
 
 - Actions disabled: check the account, Mezo testnet network, connection status, and any saved pending transaction. Funding needs MUSD and submitting a transaction needs test BTC.
