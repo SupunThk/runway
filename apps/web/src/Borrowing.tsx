@@ -32,38 +32,42 @@ export function Borrowing() {
           <div className="borrowing-layout">
             <BorrowingPosition />
             <RunwayPlanner />
-            <section
+            <details
               className="info-card borrowing-explainer"
               aria-label="How Mezo borrowing works"
             >
-              <span className="eyebrow">FROM BTC TO WORKING CAPITAL</span>
-              <h2>Borrow against your BTC.</h2>
-              <p>
-                Mezo lets you lock BTC as collateral and borrow MUSD against it.
-                The MUSD is a loan that accrues interest.
-              </p>
-              <p>
-                You can use MUSD to fund Runway payment schedules. Paying your
-                team does not repay your Mezo loan; repayment is a separate
-                action.
-              </p>
-              <p>
-                If BTC falls in value, your collateral ratio falls too. A
-                position can be liquidated when it no longer meets the protocol
-                requirements.
-              </p>
-              <p>
-                This page reads your testnet position and explores hypothetical
-                price changes. Open Mezo to borrow, add collateral or repay.
-              </p>
-              <a
-                href="https://mezo.org/docs/users/resources/faqs"
-                target="_blank"
-                rel="noreferrer"
-              >
-                Learn about Mezo borrowing ↗
-              </a>
-            </section>
+              <summary>How Mezo borrowing works</summary>
+              <div className="borrowing-explainer-content">
+                <span className="eyebrow">FROM BTC TO WORKING CAPITAL</span>
+                <h2>Borrow against your BTC.</h2>
+                <p>
+                  Mezo lets you lock BTC as collateral and borrow MUSD against
+                  it. The MUSD is a loan that accrues interest.
+                </p>
+                <p>
+                  You can use MUSD to fund Runway payment schedules. Paying your
+                  team does not repay your Mezo loan; repayment is a separate
+                  action.
+                </p>
+                <p>
+                  If BTC falls in value, your collateral ratio falls too. A
+                  position can be liquidated when it no longer meets the
+                  protocol requirements.
+                </p>
+                <p>
+                  This page reads your testnet position and explores
+                  hypothetical price changes. Open Mezo to borrow, add
+                  collateral or repay.
+                </p>
+                <a
+                  href="https://mezo.org/docs/users/resources/faqs"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Learn about Mezo borrowing ↗
+                </a>
+              </div>
+            </details>
           </div>
           <footer>
             <span>Runway · Built on Mezo</span>

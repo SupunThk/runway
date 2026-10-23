@@ -623,12 +623,21 @@ dd {
 }
 .borrowing-layout {
   display: grid;
-  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 23px;
   align-items: start;
 }
 .borrowing-explainer {
   min-width: 0;
+}
+.borrowing-explainer > summary {
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: 600;
+}
+.borrowing-explainer-content {
+  max-width: 75ch;
+  margin-top: 24px;
 }
 .borrowing {
   overflow-wrap: anywhere;

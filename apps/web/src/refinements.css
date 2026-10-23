@@ -418,17 +418,30 @@
 }
 
 /* Runway planner */
+.info-card.light.borrowing {
+  display: block;
+}
+.borrowing p {
+  max-width: 85ch;
+}
+.info-card.light.borrowing .button {
+  margin-top: 0;
+}
 .runway-planner {
   grid-column: 1 / -1;
   min-width: 0;
 }
 .planner-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 32px;
 }
 .planner-grid > div {
   min-width: 0;
+}
+.planner-grid > div + div {
+  border-top: 1px solid var(--border);
+  padding-top: 24px;
 }
 .planner-headline {
   font-family: 'Geist Mono', monospace;
@@ -459,10 +472,9 @@
   overflow-wrap: anywhere;
   font-variant-numeric: tabular-nums;
 }
-@media (min-width: 1101px) {
-  .borrowing-explainer {
-    grid-column: 2;
-    grid-row: 1;
+@media (min-width: 1200px) {
+  .borrowing > .borrowing-values {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 @media (max-width: 767px) {
