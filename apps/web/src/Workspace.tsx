@@ -12,6 +12,7 @@ import { formatUnits } from 'viem';
 import { apiFetch, readJson, BackendUnavailableError } from './api';
 import { useBackendWake } from './hooks/useBackendWake';
 import { BackendWakeNotice } from './BackendWakeNotice';
+import { explorer } from './config';
 
 type WorkspaceRecord = { _id: string; name: string };
 type Contractor = { _id: string; name: string; address: string };
@@ -23,9 +24,11 @@ type Invoice = {
   dueDate: string;
   status: 'draft';
   paymentReference?: string;
+  paymentType?: 'schedule' | 'one-time';
   payment?: {
     status: string;
     scheduleId?: string;
+    transactionHash?: string;
     fundedBaseUnits?: string;
     claimedBaseUnits?: string;
     refundedBaseUnits?: string;
@@ -213,33 +216,47 @@ function WorkspaceContent({ address }: { address?: string }) {
       await cache.invalidateQueries({ queryKey: ['workspace-session'] });
     });
   }
-  async function linkSchedule(invoiceId: string, scheduleId: string) {
+  async function linkSchedule(
+    invoiceId: string,
+    scheduleId: string,
+    oneTime = false,
+  ) {
     setBusy(true);
     setLinkingInvoice(invoiceId);
     setLinkResults((results) => ({
       ...results,
-      [invoiceId]: { error: false, message: 'Linking schedule…' },
+      [invoiceId]: {
+        error: false,
+        message: oneTime ? 'Linking transaction…' : 'Linking schedule…',
+      },
     }));
     let linked = false;
     try {
       await request(`${prefix}/invoices/${invoiceId}/payment`, {
-        scheduleId: scheduleId.trim(),
+        ...(oneTime
+          ? { transactionHash: scheduleId.trim() }
+          : { scheduleId: scheduleId.trim() }),
       });
       linked = true;
       const refreshed = await invoices.refetch();
       if (refreshed.isError) throw refreshed.error;
       setLinkResults((results) => ({
         ...results,
-        [invoiceId]: { error: false, message: 'Confirmed schedule linked.' },
+        [invoiceId]: {
+          error: false,
+          message: oneTime
+            ? 'Transfer linked. Payment status updates after 12 confirmations.'
+            : 'Confirmed schedule linked.',
+        },
       }));
     } catch (error) {
       const message = linked
-        ? 'Schedule linked, but payment status could not refresh. Use Refresh payment status to check it.'
+        ? 'Payment linked, but payment status could not refresh. Use Refresh payment status to check it.'
         : error instanceof BackendUnavailableError
           ? 'Could not confirm the link because the workspace service is unavailable. Refresh payment status, then retry if the schedule is still unlinked.'
           : error instanceof Error
             ? error.message.split('\n')[0]
-            : 'Could not link this schedule. Please retry.';
+            : 'Could not link this payment. Please retry.';
       setLinkResults((results) => ({
         ...results,
         [invoiceId]: { error: true, message },
@@ -519,11 +536,10 @@ function WorkspaceContent({ address }: { address?: string }) {
                   <section className="panel">
                     <h2>Invoices</h2>
                     <p>
-                      Invoice payments match confirmed schedules by their
-                      payment reference. Funded means MUSD is committed; paid
-                      means the recipient has claimed the full amount. Indexing
-                      waits for 12 blocks of confirmation. Opening a form does
-                      not move funds.
+                      Choose a one-time payment or a payment over time. Paid
+                      means the recipient received the full MUSD amount.
+                      Payments wait for 12 blocks of confirmation. Opening a
+                      form does not move funds.
                     </p>
                     <button
                       className="text-button"
@@ -559,16 +575,32 @@ function WorkspaceContent({ address }: { address?: string }) {
                             {row.amount} MUSD · Due {row.dueDate}
                           </p>
                           <p>Recipient: {row.recipient}</p>
+                          <p>
+                            {row.paymentType === 'one-time'
+                              ? 'One-time payment'
+                              : 'Payment over time'}
+                          </p>
+                          {row.payment?.transactionHash && (
+                            <a
+                              href={`${explorer}/tx/${row.payment.transactionHash}`}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              View payment transaction
+                            </a>
+                          )}
                           {row.payment?.status === 'unavailable' && (
                             <p>
                               Payment reconciliation is unavailable or catching
-                              up. Check existing schedules before funding again.
+                              up. Check existing transactions and schedules
+                              before paying again.
                             </p>
                           )}
                           {row.payment?.status === 'conflict' && (
                             <p role="alert">
-                              Multiple schedules use this reference. Link the
-                              intended schedule below after reviewing them.
+                              Payment evidence could not be matched uniquely to
+                              this invoice. Review the linked payment before
+                              sending again.
                             </p>
                           )}
                           {row.payment?.scheduleId && (
@@ -606,50 +638,76 @@ function WorkspaceContent({ address }: { address?: string }) {
                               </p>
                             </>
                           )}
-                          {!row.payment?.scheduleId && (
-                            <a
-                              href={paymentLink(
-                                row.recipient,
-                                row.amount,
-                                row.paymentReference,
-                              )}
-                            >
-                              Prepare payment
-                            </a>
-                          )}
-                          {!row.payment?.scheduleId && (
-                            <form
-                              className="workspace-form"
-                              onSubmit={(event) => {
-                                event.preventDefault();
-                                const scheduleId = String(
-                                  new FormData(event.currentTarget).get(
-                                    'scheduleId',
-                                  ) ?? '',
-                                );
-                                void linkSchedule(row._id, scheduleId);
-                              }}
-                            >
-                              <label>
-                                Existing schedule ID for {row.description}
-                                <input
-                                  name="scheduleId"
-                                  inputMode="numeric"
-                                  pattern="[1-9][0-9]*"
-                                  maxLength={78}
-                                  required
-                                />
-                              </label>
-                              <button
-                                className="button secondary"
-                                disabled={busy}
+                          {!row.payment?.scheduleId &&
+                            !row.payment?.transactionHash && (
+                              <a
+                                href={
+                                  paymentLink(
+                                    row.recipient,
+                                    row.amount,
+                                    row.paymentReference,
+                                  ) +
+                                  `&${new URLSearchParams({ paymentType: row.paymentType ?? 'schedule', workspaceId, invoiceId: row._id })}`
+                                }
                               >
-                                {linkingInvoice === row._id
-                                  ? 'Linking schedule…'
-                                  : 'Link existing schedule'}
-                              </button>
-                            </form>
-                          )}
+                                Prepare payment
+                              </a>
+                            )}
+                          {!row.payment?.scheduleId &&
+                            !row.payment?.transactionHash && (
+                              <form
+                                className="workspace-form"
+                                onSubmit={(event) => {
+                                  event.preventDefault();
+                                  const scheduleId = String(
+                                    new FormData(event.currentTarget).get(
+                                      'paymentEvidence',
+                                    ) ?? '',
+                                  );
+                                  void linkSchedule(
+                                    row._id,
+                                    scheduleId,
+                                    row.paymentType === 'one-time',
+                                  );
+                                }}
+                              >
+                                <label>
+                                  {row.paymentType === 'one-time'
+                                    ? 'Payment transaction hash for '
+                                    : 'Existing schedule ID for '}
+                                  {row.description}
+                                  <input
+                                    name="paymentEvidence"
+                                    inputMode={
+                                      row.paymentType === 'one-time'
+                                        ? 'text'
+                                        : 'numeric'
+                                    }
+                                    pattern={
+                                      row.paymentType === 'one-time'
+                                        ? '0x[a-fA-F0-9]{64}'
+                                        : '[1-9][0-9]*'
+                                    }
+                                    maxLength={
+                                      row.paymentType === 'one-time' ? 66 : 78
+                                    }
+                                    required
+                                  />
+                                </label>
+                                <button
+                                  className="button secondary"
+                                  disabled={busy}
+                                >
+                                  {linkingInvoice === row._id
+                                    ? row.paymentType === 'one-time'
+                                      ? 'Linking transaction…'
+                                      : 'Linking schedule…'
+                                    : row.paymentType === 'one-time'
+                                      ? 'Link payment transaction'
+                                      : 'Link existing schedule'}
+                                </button>
+                              </form>
+                            )}
                           {linkResults[row._id] && (
                             <p
                               className="callout"
@@ -679,6 +737,7 @@ function WorkspaceContent({ address }: { address?: string }) {
                           'description',
                           'amount',
                           'dueDate',
+                          'paymentType',
                         ])
                       }
                     >
@@ -698,6 +757,13 @@ function WorkspaceContent({ address }: { address?: string }) {
                               {row.name}
                             </option>
                           ))}
+                        </select>
+                      </label>
+                      <label>
+                        Invoice payment type
+                        <select name="paymentType" defaultValue="schedule">
+                          <option value="schedule">Payment over time</option>
+                          <option value="one-time">One-time payment</option>
                         </select>
                       </label>
                       <label>

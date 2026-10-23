@@ -29,48 +29,60 @@ for (const scenario of [
   'corrupt',
   'claim-submitted',
   'approval-submitted',
+  'payment',
+  'payment-submitted',
+  'payment-confirmed',
 ] as const) {
   test(`recovers ${scenario} transaction after reload without signing`, async ({
     page,
   }) => {
-    const submitted = scenario.endsWith('-submitted');
-    const action = scenario.startsWith('approval')
-      ? 'Approval'
-      : scenario === 'funding'
-        ? 'Funding'
-        : scenario === 'cancellation'
-          ? 'Cancellation'
-          : 'Claim';
+    const submitted =
+      scenario.endsWith('-submitted') || scenario === 'payment-confirmed';
+    const action = scenario.startsWith('payment')
+      ? 'Payment'
+      : scenario.startsWith('approval')
+        ? 'Approval'
+        : scenario === 'funding'
+          ? 'Funding'
+          : scenario === 'cancellation'
+            ? 'Cancellation'
+            : 'Claim';
     const data =
-      action === 'Funding'
+      action === 'Payment'
         ? encodeFunctionData({
-            abi: paymentsAbi,
-            functionName: 'createSchedule',
-            args: [sender, 1n, 100n, 1000n, toHex(0n, { size: 32 })],
+            abi: erc20Abi,
+            functionName: 'transfer',
+            args: [sender, 1000000000000000000n],
           })
-        : action === 'Cancellation'
+        : action === 'Funding'
           ? encodeFunctionData({
               abi: paymentsAbi,
-              functionName: 'cancel',
-              args: [2n],
+              functionName: 'createSchedule',
+              args: [sender, 1n, 100n, 1000n, toHex(0n, { size: 32 })],
             })
-          : action === 'Approval'
+          : action === 'Cancellation'
             ? encodeFunctionData({
-                abi: erc20Abi,
-                functionName: 'approve',
-                args: [contract, submitted ? 1000000000000000000n : 1n],
-              })
-            : encodeFunctionData({
                 abi: paymentsAbi,
-                functionName: 'claim',
+                functionName: 'cancel',
                 args: [2n],
-              });
+              })
+            : action === 'Approval'
+              ? encodeFunctionData({
+                  abi: erc20Abi,
+                  functionName: 'approve',
+                  args: [contract, submitted ? 1000000000000000000n : 1n],
+                })
+              : encodeFunctionData({
+                  abi: paymentsAbi,
+                  functionName: 'claim',
+                  args: [2n],
+                });
     const record = {
       version: 1,
       chainId: 31611,
       contract,
       sender,
-      target: action === 'Approval' ? token : contract,
+      target: action === 'Approval' || action === 'Payment' ? token : contract,
       hash,
       data,
       action,
@@ -81,6 +93,7 @@ for (const scenario of [
       ({ key, record, scenario }) => {
         if (
           !scenario.endsWith('-submitted') &&
+          scenario !== 'payment-confirmed' &&
           !sessionStorage.getItem('recovery-seeded')
         ) {
           localStorage.setItem(
@@ -120,7 +133,20 @@ for (const scenario of [
         { sender, hash },
       );
     let resolved =
-      !submitted && scenario !== 'pending' && scenario !== 'rpc-error';
+      scenario === 'payment-confirmed' ||
+      (!submitted && scenario !== 'pending' && scenario !== 'rpc-error');
+    let invoicePayment: unknown;
+    if (scenario === 'payment-confirmed') {
+      await page.route(
+        '**/api/workspaces/test-workspace/invoices/test-invoice/payment',
+        async (route) => {
+          invoicePayment = route.request().postDataJSON();
+          await route.fulfill({
+            json: { ok: true, status: 'awaiting_confirmation' },
+          });
+        },
+      );
+    }
     await page.route('https://rpc.test.mezo.org/**', async (route) => {
       const respond = (request: any) => {
         let result: unknown;
@@ -236,6 +262,7 @@ for (const scenario of [
             allowance: 0n,
             claim: undefined,
             approve: true,
+            transfer: true,
             getSenderScheduleIds: [],
             getRecipientScheduleIds: [],
             symbol: 'MUSD',
@@ -268,7 +295,11 @@ for (const scenario of [
       });
     });
     await page.goto(
-      scenario === 'approval-submitted' ? '/?create=1' : '/schedules/2',
+      scenario === 'payment-confirmed'
+        ? `/?create=1&paymentType=one-time&workspaceId=test-workspace&invoiceId=test-invoice&reference=0x${'2'.repeat(64)}`
+        : scenario === 'approval-submitted' || scenario === 'payment-submitted'
+          ? '/?create=1'
+          : '/schedules/2',
     );
     if (submitted) {
       const connect = page.getByRole('button', { name: 'Connect wallet' });
@@ -279,7 +310,21 @@ for (const scenario of [
           .getByRole('button', { name: 'MetaMask', exact: true })
           .click();
       }
-      if (scenario === 'approval-submitted') {
+      if (
+        scenario === 'payment-submitted' ||
+        scenario === 'payment-confirmed'
+      ) {
+        if (scenario === 'payment-submitted')
+          await page.getByLabel('Payment type').selectOption('one-time');
+        await page.getByLabel('Recipient wallet').fill(sender);
+        await page.getByLabel('Amount · MUSD', { exact: true }).fill('1');
+        await expect(
+          page.getByRole('button', { name: 'Send MUSD', exact: true }),
+        ).toBeEnabled();
+        await page
+          .getByRole('button', { name: 'Send MUSD', exact: true })
+          .click();
+      } else if (scenario === 'approval-submitted') {
         await page.getByLabel('Recipient wallet').fill(sender);
         await page.getByLabel('Total funding').fill('1');
         await expect(
@@ -294,6 +339,23 @@ for (const scenario of [
         ).toBeEnabled();
         await page.getByRole('button', { name: 'Claim MUSD' }).click();
       }
+      if (scenario === 'payment-confirmed') {
+        await expect(
+          page.getByText(
+            'Payment confirmed and linked to the invoice. Invoice status updates after 12 confirmations.',
+          ),
+        ).toBeVisible();
+        expect(invoicePayment).toEqual({ transactionHash: hash });
+        expect(
+          await page.evaluate(
+            () =>
+              (window as any).recoveryWalletCalls.filter(
+                (method: string) => method === 'eth_sendTransaction',
+              ).length,
+          ),
+        ).toBe(1);
+        return;
+      }
       await expect
         .poll(() => page.evaluate((key) => localStorage.getItem(key), key))
         .not.toBeNull();
@@ -304,6 +366,7 @@ for (const scenario of [
       expect(saved.hash).toBe(hash);
       expect(saved.action).toBe(action);
       expect(saved.data).toBe(data);
+      expect(saved.target).toBe(record.target);
       expect(
         await page.evaluate(
           () =>
@@ -372,9 +435,7 @@ for (const scenario of [
       await panel
         .getByRole('button', { name: 'Check transaction status' })
         .click();
-      await expect(panel).toContainText(
-        action === 'Approval' ? 'Approval confirmed.' : 'Claim confirmed.',
-      );
+      await expect(panel).toContainText(`${action} confirmed.`);
     }
     await panel.getByRole('button', { name: 'Acknowledge & refresh' }).click();
     await expect(panel).toHaveCount(0);

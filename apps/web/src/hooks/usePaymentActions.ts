@@ -14,6 +14,8 @@ import {
 import { paymentsAbi, TESTNET_CHAIN_ID } from '@runway/mezo';
 import { musdAddress, paymentAddress } from '../config';
 import { errorText } from '../format';
+import { paymentDurationMinutes } from '../paymentOptions';
+import { apiFetch, readJson } from '../api';
 import type { usePendingTransaction, PendingTransaction } from '../pending';
 import type { useDeploymentReadiness } from './useDeploymentReadiness';
 import type { useBalances } from './useBalances';
@@ -172,13 +174,27 @@ export function usePaymentActions({
           'Invalid invoice payment reference. Open the payment from your workspace again.',
         );
       const referenceHash = (reference || zeroHash) as Hash;
-      const durationMinutes = Number(data.get('duration'));
+      const paymentType = String(data.get('paymentType') ?? 'schedule');
+      if (!['schedule', 'one-time'].includes(paymentType))
+        throw new Error('Choose a payment type.');
+      const params = new URLSearchParams(window.location.search);
+      const invoiceId = params.get('invoiceId');
+      const workspaceId = params.get('workspaceId');
       if (
-        !Number.isSafeInteger(durationMinutes) ||
-        durationMinutes < 1 ||
-        durationMinutes > 525600
+        paymentType === 'one-time' &&
+        reference &&
+        (!invoiceId || !workspaceId)
       )
-        throw new Error('Duration must be 1–525600 whole minutes.');
+        throw new Error(
+          'Open this one-time invoice from your workspace again.',
+        );
+      const durationMinutes =
+        paymentType === 'schedule'
+          ? paymentDurationMinutes(
+              String(data.get('duration')),
+              String(data.get('durationUnit') ?? 'minutes'),
+            )
+          : 0;
       const balance = await client!.readContract({
         address: musdAddress!,
         abi: erc20Abi,
@@ -187,6 +203,65 @@ export function usePaymentActions({
       });
       if (balance < total)
         throw new Error('Insufficient MUSD. Fund your wallet first.');
+      if (paymentType === 'one-time') {
+        setNotice('Confirm the one-time MUSD payment in your wallet.');
+        const args = [getAddress(recipient), total] as const;
+        const { request, result } = await client!.simulateContract({
+          account: address!,
+          address: musdAddress!,
+          abi: erc20Abi,
+          functionName: 'transfer',
+          args,
+        });
+        if (!result)
+          throw new Error(
+            'The token rejected this payment. No transaction was submitted.',
+          );
+        recovery.checkStorage();
+        const tx = await wallet!.writeContract(request);
+        setNotice('Payment submitted. Waiting for confirmation…');
+        const receipt = await waitTracked(
+          tx,
+          'Payment',
+          musdAddress!,
+          encodeFunctionData({ abi: erc20Abi, functionName: 'transfer', args }),
+        );
+        if (receipt.status !== 'success')
+          throw new Error(
+            'Payment reverted. Check the transaction before retrying.',
+          );
+        setNotice(
+          'One-time payment confirmed. MUSD was sent directly to the recipient. View the transaction for your receipt.',
+        );
+        if (invoiceId && workspaceId) {
+          try {
+            const response = await apiFetch(
+              `/api/workspaces/${encodeURIComponent(workspaceId)}/invoices/${encodeURIComponent(invoiceId)}/payment`,
+              {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  transactionHash: receipt.transactionHash,
+                }),
+              },
+            );
+            const result = await readJson<{ error?: string }>(response);
+            if (!response.ok)
+              throw new Error(result.error || 'Invoice update unavailable.');
+            setNotice(
+              'Payment confirmed and linked to the invoice. Invoice status updates after 12 confirmations.',
+            );
+          } catch {
+            setNotice(
+              'Payment confirmed, but the invoice link could not be saved. Do not pay again. Copy this transaction hash and use Link payment transaction in your workspace.',
+            );
+          }
+        }
+        onCreated();
+        window.history.replaceState(null, '', '/');
+        return;
+      }
       const allowance = await client!.readContract({
         address: musdAddress!,
         abi: erc20Abi,

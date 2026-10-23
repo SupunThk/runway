@@ -6,7 +6,7 @@ Open the app: https://mezo-runway-testnet.vercel.app
 
 ## How Runway works
 
-Runway is a fully funded contractor payment app on Mezo testnet. A founder or sender deposits the entire agreed MUSD payment into a smart contract. The contractor or recipient earns that payment gradually over a fixed period.
+Runway supports one-time MUSD transfers and fully funded contractor payment schedules on Mezo testnet. With a schedule, a founder or sender deposits the entire agreed MUSD payment into a smart contract. The contractor or recipient earns that payment gradually over a fixed period.
 
 The contract holds the funds and enforces the schedule. Earning happens as chain time passes; a claim transaction is needed to transfer earned MUSD to the recipient. Keeping a browser open does not send payments automatically.
 
@@ -80,7 +80,7 @@ Use the MUSD token contract below, not Runway’s payment contract. This is the 
 
 ## Founder: fund a schedule
 
-1. Open New schedule. Enter the contractor’s recipient wallet, the total MUSD funding, and the accrual duration in whole minutes (1–525600).
+1. Open New payment and choose Payment over time. Enter the contractor’s recipient wallet, total MUSD funding, and payment period. Choose minutes, hours, or days and enter a whole number, up to 365 days.
 
 2. Check the recipient carefully: the recipient, amount, and timing cannot be edited after creation.
 
@@ -91,6 +91,18 @@ Use the MUSD token contract below, not Runway’s payment contract. This is the 
 5. Wait for confirmation, then open the funded schedule and share its /schedules/<id> link with the contractor.
 
 A rejected or reverted creation does not create a funded schedule. If approval succeeded first, that allowance may remain. Check the saved transaction before trying again.
+
+## Send a one-time payment
+
+1. Open New payment and choose One-time payment. Enter the recipient wallet and MUSD amount. No duration is required.
+
+2. Check the recipient and amount, then choose Send MUSD and confirm the transfer in your wallet. You need MUSD for the payment and test BTC for gas. No token approval or recipient claim is required.
+
+3. Wait for confirmation and use View transaction as your receipt. If confirmation is interrupted, check the saved transaction before sending again.
+
+The full amount goes directly to the recipient and cannot be cancelled. Direct payments do not appear in the schedule list. For an invoice, choose One-time payment when creating the draft, then use Prepare payment. A successful transfer is linked automatically; the invoice becomes paid after 12 block confirmations.
+
+If the invoice update is interrupted, copy the payment transaction hash from your wallet or saved transaction, then use Link payment transaction beside the invoice. Do not pay again. The transfer must match the invoice owner, recipient and exact amount, and occur after invoice creation. A transfer can settle only one invoice.
 
 ## Contractor: claim a payment
 
@@ -192,7 +204,7 @@ The deployed payment contract’s source is exact-match verified on the Mezo tes
 
 Workspace is an additional service that must be configured by the operator. Connect a personal EVM wallet on Mezo testnet, open Workspace and sign the login message. Signing in costs no gas and does not authorize a payment.
 
-Create a workspace, save a contractor name and wallet, then prepare a draft invoice with a MUSD amount and due date. Workspaces are private to their owner wallet; shared team access and contractor invoice submission are upcoming.
+Create a workspace, save a contractor name and wallet, then prepare a draft invoice with a MUSD amount, due date and payment type: One-time payment or Payment over time. Workspaces are private to their owner wallet; shared team access and contractor invoice submission are upcoming.
 
 Create payment or Prepare payment opens the funding form with the recipient and, for invoices, amount and an opaque payment reference filled in. Review the recipient and amount before signing. Invoice matches require the original sender, recipient, amount and reference. Repeated funding can create duplicate payments.
 

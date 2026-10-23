@@ -30,7 +30,7 @@ for (const scenario of [
     } else await expect(ledger).toContainText('MEZO balance unavailable');
     await expect(ledger).toContainText('100');
     await page
-      .getByRole('button', { name: 'Create schedule', exact: false })
+      .getByRole('button', { name: 'New payment', exact: false })
       .first()
       .click();
     await expect(

@@ -15,7 +15,7 @@ for (const width of [1280, 390, 320]) {
     const assertSidebar = async (active: string) => {
       await expect(sidebar.locator('nav').getByRole('link')).toHaveText([
         'Overview',
-        'New schedule',
+        'New payment',
         'Workspace',
         'Borrowing',
         'Assistant',
@@ -67,9 +67,9 @@ for (const width of [1280, 390, 320]) {
     await assertSidebar('Workspace');
     await page.goForward();
     await assertSidebar('Documentation');
-    await sidebar.getByRole('link', { name: 'New schedule' }).click();
+    await sidebar.getByRole('link', { name: 'New payment' }).click();
     await expect(page.getByLabel('Recipient wallet')).toBeVisible();
-    await assertSidebar('New schedule');
+    await assertSidebar('New payment');
     await sidebar.getByRole('link', { name: 'Overview' }).click();
     await expect(
       page.getByRole('heading', { name: 'Your team. Funded forward.' }),

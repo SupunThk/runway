@@ -10,7 +10,7 @@ export type PendingTransaction = {
   target: Address;
   hash: Hash;
   data: `0x${string}`;
-  action: 'Approval' | 'Funding' | 'Claim' | 'Cancellation';
+  action: 'Approval' | 'Funding' | 'Claim' | 'Cancellation' | 'Payment';
   scheduleId?: string;
   submittedAt: string;
 };
@@ -36,7 +36,9 @@ function readPending(contract: Address): PendingTransaction | undefined {
     !isAddress(value.target ?? '') ||
     !isHash(value.hash ?? '') ||
     !/^0x([a-fA-F0-9]{2})+$/.test(value.data ?? '') ||
-    !['Approval', 'Funding', 'Claim', 'Cancellation'].includes(value.action) ||
+    !['Approval', 'Funding', 'Claim', 'Cancellation', 'Payment'].includes(
+      value.action,
+    ) ||
     (value.scheduleId !== undefined && !/^[1-9]\d*$/.test(value.scheduleId)) ||
     typeof value.submittedAt !== 'string' ||
     !Number.isFinite(Date.parse(value.submittedAt))

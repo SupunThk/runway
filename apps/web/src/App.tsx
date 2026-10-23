@@ -107,14 +107,14 @@ export function App() {
                 {scheduleId
                   ? `Payment #${scheduleId}`
                   : view === 'create'
-                    ? 'Make room for your next hire.'
+                    ? 'Make a payment.'
                     : 'Your team. Funded forward.'}
               </h1>
-              <p>Commit MUSD once. Let your team claim as they earn.</p>
+              <p>Send MUSD now or let your team claim as they earn.</p>
             </div>
             {view === 'overview' && !scheduleId ? (
               <button className="button" onClick={() => setView('create')}>
-                <Icon name="plus" /> Create schedule
+                <Icon name="plus" /> New payment
               </button>
             ) : null}
           </section>

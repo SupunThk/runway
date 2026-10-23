@@ -15,6 +15,11 @@ import {
 import { createSiweMessage } from 'viem/siwe';
 import { database } from './db.ts';
 import {
+  directPaymentVerifier,
+  type DirectVerifier,
+} from './direct-payments.ts';
+import type { Hash } from 'viem';
+import {
   answerQuestion,
   createGeminiModel,
   questionSchema,
@@ -57,6 +62,8 @@ type Invoice = RecordBase & {
   status: 'draft';
   paymentReference?: string;
   paymentKey?: string;
+  paymentType?: 'schedule' | 'one-time';
+  transactionHash?: Hash;
   scheduleId?: string;
   createdAt: string;
 };
@@ -181,11 +188,14 @@ export function createApp(
     assistantModel?: AssistantModel;
     assistantEnabled?: boolean;
     assistantDailyLimit?: number;
+    verifyDirectPayment?: DirectVerifier;
   } = {},
 ) {
   const app = new Hono<{ Variables: Variables }>();
   const getDb = options.getDb ?? database;
   const now = options.now ?? (() => new Date());
+  const verifyDirectPayment =
+    options.verifyDirectPayment ?? directPaymentVerifier();
   let activeAssistantRequests = 0;
   const configuredOrigin =
     options.origin ??
@@ -503,6 +513,7 @@ export function createApp(
         rows.items,
         c.get('address'),
         now(),
+        verifyDirectPayment,
       )),
     });
   });
@@ -516,6 +527,62 @@ export function createApp(
       });
       if (!invoice) return fail(404, 'Invoice not found.');
       const body = await json(c.req.raw);
+      if (invoice.paymentType === 'one-time') {
+        if (
+          typeof body.transactionHash !== 'string' ||
+          !/^0x[a-fA-F0-9]{64}$/.test(body.transactionHash)
+        )
+          return fail(400, 'Enter a valid transaction hash.');
+        const transactionHash = body.transactionHash.toLowerCase() as Hash;
+        if (
+          invoice.transactionHash &&
+          invoice.transactionHash !== transactionHash
+        )
+          return fail(409, 'This invoice already has a linked transaction.');
+        const status = await verifyDirectPayment(
+          transactionHash,
+          invoice,
+          c.get('address'),
+          now(),
+        );
+        if (status === 'invalid')
+          return fail(
+            409,
+            'Transfer must match this invoice’s sender, recipient and exact MUSD amount, and occur after invoice creation.',
+          );
+        if (status === 'unavailable')
+          return fail(
+            503,
+            'Could not verify the payment. Retry linking this transaction; do not send another payment.',
+          );
+        try {
+          const result = await db.collection<Invoice>('invoices').updateOne(
+            {
+              _id: invoice._id,
+              $or: [
+                { transactionHash: { $exists: false } },
+                { transactionHash },
+              ],
+            },
+            {
+              $set: {
+                transactionHash,
+                paymentKey: `${paymentDeployment.chainId}:${paymentDeployment.token}:${transactionHash}`,
+              },
+            },
+          );
+          if (!result.matchedCount)
+            return fail(409, 'This invoice already has a linked transaction.');
+        } catch (error) {
+          if (error instanceof MongoServerError && error.code === 11000)
+            return fail(
+              409,
+              'This transfer is already linked to another invoice.',
+            );
+          throw error;
+        }
+        return c.json({ ok: true, status, chainId: paymentDeployment.chainId });
+      }
       if (
         typeof body.scheduleId !== 'string' ||
         !/^[1-9]\d{0,77}$/.test(body.scheduleId) ||
@@ -588,6 +655,9 @@ export function createApp(
     if (!contractor)
       return fail(404, 'Contractor not found in this workspace.');
     const amountBaseUnits = invoiceAmount(body.amount);
+    const paymentType = body.paymentType ?? 'schedule';
+    if (paymentType !== 'schedule' && paymentType !== 'one-time')
+      return fail(400, 'Choose a valid invoice payment type.');
     const dueDate = text(body.dueDate, 'Due date', 10);
     if (
       !/^\d{4}-\d{2}-\d{2}$/.test(dueDate) ||
@@ -603,6 +673,7 @@ export function createApp(
       description: text(body.description, 'Description', 500),
       amount: body.amount as string,
       amountBaseUnits,
+      paymentType,
       dueDate,
       status: 'draft',
       paymentReference: `0x${randomBytes(32).toString('hex')}`,

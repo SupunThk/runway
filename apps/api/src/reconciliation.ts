@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { type Db, MongoServerError } from 'mongodb';
+import type { DirectVerifier } from './direct-payments.ts';
 import {
   createPublicClient,
   http,
@@ -363,16 +364,47 @@ export type ReconcilableInvoice = {
   paymentReference?: string;
   paymentKey?: string;
   scheduleId?: string;
+  paymentType?: 'schedule' | 'one-time';
+  transactionHash?: Hash;
+  createdAt?: string;
 };
 export async function reconcileInvoices(
   db: Db,
   invoices: ReconcilableInvoice[],
   owner: string,
   now = new Date(),
+  verifyDirectPayment?: DirectVerifier,
 ) {
   const { state, available } = await reconciliationState(db, now);
   const items = await Promise.all(
     invoices.map(async (invoice) => {
+      if (invoice.paymentType === 'one-time') {
+        const status = !invoice.transactionHash
+          ? 'draft'
+          : !verifyDirectPayment || !invoice.createdAt
+            ? 'unavailable'
+            : await verifyDirectPayment(
+                invoice.transactionHash,
+                { ...invoice, createdAt: invoice.createdAt },
+                owner,
+                now,
+              );
+        return {
+          ...invoice,
+          payment: {
+            status: status === 'invalid' ? 'conflict' : status,
+            transactionHash: invoice.transactionHash,
+            ...(status === 'paid'
+              ? {
+                  fundedBaseUnits: invoice.amountBaseUnits,
+                  claimedBaseUnits: invoice.amountBaseUnits,
+                  refundedBaseUnits: '0',
+                  outstandingBaseUnits: '0',
+                }
+              : {}),
+          },
+        };
+      }
       const filter = invoice.scheduleId
         ? { scheduleId: invoice.scheduleId }
         : invoice.paymentReference

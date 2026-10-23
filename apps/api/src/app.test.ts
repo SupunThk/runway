@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import type { DirectStatus } from './direct-payments.ts';
 import { MongoClient, type Db } from 'mongodb';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
@@ -87,6 +88,73 @@ afterAll(async () => {
 });
 
 describe('MongoDB API integration', () => {
+  it('creates one-time invoices, tracks confirmation, isolates owners and prevents transfer reuse', async () => {
+    let status: DirectStatus = 'awaiting_confirmation';
+    app = createApp({
+      getDb: async () => db,
+      origin,
+      now: () => instant,
+      verifyDirectPayment: async () => status,
+    });
+    const cookie = await login();
+    const other = await login(outsider);
+    const path = `/workspaces/${await workspace(cookie)}`;
+    const contractor = await (
+      await call(
+        `${path}/contractors`,
+        { name: 'Alex', address: outsider.address },
+        cookie,
+      )
+    ).json();
+    const body = {
+      contractorId: contractor._id,
+      description: 'One-off work',
+      amount: '1.000000000000000001',
+      dueDate: '2026-11-01',
+      paymentType: 'one-time',
+    };
+    const first = await (await call(`${path}/invoices`, body, cookie)).json();
+    const second = await (await call(`${path}/invoices`, body, cookie)).json();
+    expect(first.paymentType).toBe('one-time');
+    const endpoint = `${path}/invoices/${first._id}/payment`;
+    const evidence = { transactionHash: zeroHash };
+    expect((await call(endpoint, evidence, other)).status).toBe(404);
+    expect((await call(endpoint, { scheduleId: '1' }, cookie)).status).toBe(
+      400,
+    );
+    status = 'invalid';
+    expect((await call(endpoint, evidence, cookie)).status).toBe(409);
+    status = 'unavailable';
+    expect((await call(endpoint, evidence, cookie)).status).toBe(503);
+    status = 'awaiting_confirmation';
+    expect((await call(endpoint, evidence, cookie)).status).toBe(200);
+    expect((await call(endpoint, evidence, cookie)).status).toBe(200);
+    let list = await (await call(`${path}/invoices`, undefined, cookie)).json();
+    expect(
+      list.items.find((row: { _id: string }) => row._id === first._id).payment
+        .status,
+    ).toBe('awaiting_confirmation');
+    expect(
+      (await call(`${path}/invoices/${second._id}/payment`, evidence, cookie))
+        .status,
+    ).toBe(409);
+    status = 'paid';
+    list = await (await call(`${path}/invoices`, undefined, cookie)).json();
+    expect(
+      list.items.find((row: { _id: string }) => row._id === first._id).payment,
+    ).toMatchObject({
+      status: 'paid',
+      transactionHash: zeroHash,
+      claimedBaseUnits: '1000000000000000001',
+      outstandingBaseUnits: '0',
+    });
+    status = 'unavailable';
+    list = await (await call(`${path}/invoices`, undefined, cookie)).json();
+    expect(
+      list.items.find((row: { _id: string }) => row._id === first._id).payment
+        .status,
+    ).toBe('unavailable');
+  });
   it('links only confirmed matching payments, isolates owners and prevents schedule reuse', async () => {
     const cookie = await login();
     const other = await login(outsider);

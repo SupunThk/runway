@@ -84,7 +84,7 @@ test('wallet-free questions through API, sources, follow-up isolation and app na
   await page.getByRole('button', { name: 'New chat' }).click();
   await page.getByRole('button', { name: /Pay a contractor/ }).click();
   await page
-    .getByRole('link', { name: 'New schedule', exact: true })
+    .getByRole('link', { name: 'New payment', exact: true })
     .last()
     .click();
   await expect(page.getByLabel('Recipient wallet')).toBeVisible();

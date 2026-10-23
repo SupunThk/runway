@@ -27,7 +27,7 @@ export function Sidebar({ active }: { active?: Section }) {
       <div className="workspace-label">YOUR WORKSPACE</div>
       <nav aria-label="Main navigation">
         {link('overview', '/', 'Overview', 'overview')}
-        {link('create', '/?create=1', 'New schedule', 'plus')}
+        {link('create', '/?create=1', 'New payment', 'plus')}
         {link('workspace', '/workspace', 'Workspace', 'workspace')}
         {link('borrowing', '/borrowing', 'Borrowing', 'borrowing')}
         {link('assistant', '/assistant', 'Assistant', 'assistant')}

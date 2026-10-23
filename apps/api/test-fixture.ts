@@ -4,10 +4,15 @@ import { serve } from '@hono/node-server';
 import { createApp } from './src/app.ts';
 import { initializeDatabase } from './src/db.ts';
 import type { AssistantModel } from './src/assistant.ts';
+import type { DirectVerifier } from './src/direct-payments.ts';
 
 // Temporary local database only; never reads MONGODB_URI or the user's data.
 export async function startTestBackend(
-  options: { assistantModel?: AssistantModel; origin?: string } = {},
+  options: {
+    assistantModel?: AssistantModel;
+    origin?: string;
+    verifyDirectPayment?: DirectVerifier;
+  } = {},
 ) {
   const mongo = await MongoMemoryServer.create({
     binary: { version: '8.0.17' },
@@ -20,6 +25,7 @@ export async function startTestBackend(
       getDb: async () => db,
       origin: options.origin ?? 'http://127.0.0.1:5173',
       assistantModel: options.assistantModel,
+      verifyDirectPayment: options.verifyDirectPayment,
     });
     const server = serve({ fetch: app.fetch, hostname: '127.0.0.1', port: 0 });
     await new Promise<void>((resolve) =>

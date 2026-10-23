@@ -12,7 +12,7 @@ const account = privateKeyToAccount(generatePrivateKey());
 let backend: Awaited<ReturnType<typeof startTestBackend>>;
 test.beforeAll(async () => {
   test.setTimeout(600000); // Allow the initial isolated MongoDB binary download.
-  backend = await startTestBackend();
+  backend = await startTestBackend({ verifyDirectPayment: async () => 'paid' });
 });
 test.afterAll(async () => {
   await backend?.close();
@@ -308,6 +308,53 @@ test('wallet login → MongoDB workspace/contractor/invoice → reload → prefi
   expect(
     await backend.db.collection('invoices').findOne({ _id: invoice!._id }),
   ).toMatchObject({ scheduleId: '1' });
+  expect(errors).toEqual([]);
+  await page
+    .getByLabel('Invoice contractor', { exact: true })
+    .selectOption({ label: 'Alex' });
+  await page.getByLabel('Invoice payment type').selectOption('one-time');
+  await page
+    .getByLabel('Invoice description', { exact: true })
+    .fill('One-time design');
+  await page.getByLabel('Invoice amount (MUSD)', { exact: true }).fill('25');
+  await page.getByLabel('Invoice due date', { exact: true }).fill('2026-11-01');
+  await page
+    .getByRole('button', { name: 'Save draft invoice', exact: true })
+    .click();
+  const directCard = page
+    .getByRole('article')
+    .filter({ has: page.getByRole('heading', { name: 'One-time design' }) });
+  await expect(
+    directCard.getByText('One-time payment', { exact: true }),
+  ).toBeVisible();
+  expect(
+    await backend.db
+      .collection('invoices')
+      .findOne({ description: 'One-time design' }),
+  ).toMatchObject({
+    paymentType: 'one-time',
+    amountBaseUnits: '25000000000000000000',
+  });
+  await directCard.getByRole('link', { name: 'Prepare payment' }).click();
+  await expect(page.getByLabel('Payment type')).toHaveValue('one-time');
+  await expect(page.getByLabel('Payment period', { exact: true })).toHaveCount(
+    0,
+  );
+  await expect(page.locator('input[name="total"]')).toHaveValue('25');
+  await page.getByRole('link', { name: 'Workspace', exact: true }).click();
+  await directCard
+    .getByLabel('Payment transaction hash for One-time design')
+    .fill(zeroHash);
+  await directCard
+    .getByRole('button', { name: 'Link payment transaction' })
+    .click();
+  await expect(directCard.getByText('PAID', { exact: true })).toBeVisible();
+  await expect(
+    directCard.getByRole('link', { name: 'View payment transaction' }),
+  ).toHaveAttribute('href', `https://explorer.test.mezo.org/tx/${zeroHash}`);
+  await expect(
+    directCard.getByRole('link', { name: 'Prepare payment' }),
+  ).toHaveCount(0);
   expect(errors).toEqual([]);
 });
 

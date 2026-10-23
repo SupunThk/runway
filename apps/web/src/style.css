@@ -517,6 +517,22 @@ footer {
 .form-panel {
   padding: 30px;
 }
+.payment-fields {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.payment-fields select {
+  padding: 13px 14px;
+  border: 1px solid #d0d3d7;
+  border-radius: 5px;
+  background: #fff;
+  color: #202225;
+  width: 100%;
+  min-width: 0;
+  font: inherit;
+}
 form {
   margin-top: 25px;
 }
