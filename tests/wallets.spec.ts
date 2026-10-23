@@ -201,6 +201,31 @@ test('legacy Rabby injection is selectable without EIP-6963 announcements', asyn
   ).toBeVisible();
 });
 
+test('wallet picker closes outside and remains usable inside on desktop and mobile', async ({
+  page,
+}) => {
+  await installWallets(page);
+  await page.goto('/');
+  const trigger = page.getByRole('button', {
+    name: 'Connect wallet',
+    exact: true,
+  });
+  const picker = page.getByRole('group', { name: 'Choose wallet' });
+  for (const width of [1440, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    await trigger.click();
+    await picker.getByText('Choose your wallet', { exact: true }).click();
+    await expect(picker).toBeVisible();
+    await page.mouse.click(width - 12, 700);
+    await expect(picker).toHaveCount(0);
+    await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+    await trigger.click();
+    await expect(picker).toBeVisible();
+    await trigger.click();
+    await expect(picker).toHaveCount(0);
+  }
+});
+
 test('rejected wallet connection keeps the picker usable', async ({ page }) => {
   await installWallets(page, true, true);
   await page.goto('/');

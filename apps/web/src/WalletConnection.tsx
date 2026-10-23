@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAccount, useConnect, useDisconnect } from 'wagmi';
 import { WalletSetup } from './WalletSetup';
@@ -9,6 +9,19 @@ export function WalletConnection({
   onNotice: (message: string) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const picker = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    function dismiss(event: PointerEvent) {
+      if (
+        event.target instanceof Node &&
+        !picker.current?.contains(event.target)
+      )
+        setOpen(false);
+    }
+    document.addEventListener('pointerdown', dismiss);
+    return () => document.removeEventListener('pointerdown', dismiss);
+  }, [open]);
   const { address, connector: connectedWallet } = useAccount();
   const { connectAsync, connectors, isPending } = useConnect();
   const { disconnect } = useDisconnect();
@@ -65,6 +78,7 @@ export function WalletConnection({
 
   return (
     <div
+      ref={picker}
       className="wallet-picker"
       onKeyDown={(event) => {
         if (event.key === 'Escape') {

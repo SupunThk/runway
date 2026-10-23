@@ -266,10 +266,48 @@ test('wallet login → MongoDB workspace/contractor/invoice → reload → prefi
     .updateOne({ _id: indexed._id }, { $set: { referenceHash: zeroHash } });
   await page.getByRole('button', { name: 'Refresh payment status' }).click();
   await expect(page.getByText('DRAFT', { exact: true })).toBeVisible();
+  const invoiceCard = page.getByRole('article').filter({
+    has: page.getByRole('heading', { name: 'October design' }),
+  });
+  // Failed links must explain the failure beside the invoice on mobile.
+  await page.getByLabel('Existing schedule ID for October design').fill('3');
+  await page.getByRole('button', { name: 'Link existing schedule' }).click();
+  await expect(invoiceCard.getByRole('alert')).toHaveText(
+    'Schedule has not been confirmed by the indexer.',
+  );
+  await expect(invoiceCard.getByRole('alert')).toBeInViewport();
+  await backend.db
+    .collection<IndexState>('paymentIndex')
+    .updateOne({ _id: indexKey }, { $set: { error: 'Rebuilding' } });
+  await page.getByRole('button', { name: 'Link existing schedule' }).click();
+  await expect(invoiceCard.getByRole('alert')).toHaveText(
+    'Payment indexing is not current. Retry after synchronization.',
+  );
+  await backend.db
+    .collection<IndexState>('paymentIndex')
+    .updateOne({ _id: indexKey }, { $unset: { error: '' } });
+  let releaseLink!: () => void;
+  const linkGate = new Promise<void>((resolve) => {
+    releaseLink = resolve;
+  });
+  await page.route('**/invoices/*/payment', async (route) => {
+    await linkGate;
+    await route.fallback();
+  });
   await page.getByLabel('Existing schedule ID for October design').fill('1');
   await page.getByRole('button', { name: 'Link existing schedule' }).click();
-  await expect(page.getByText('Confirmed schedule linked.')).toBeVisible();
+  await expect(
+    invoiceCard.getByRole('button', { name: 'Linking schedule…' }),
+  ).toBeDisabled();
+  await expect(invoiceCard.getByRole('status')).toHaveText('Linking schedule…');
+  releaseLink();
+  await expect(invoiceCard.getByRole('status')).toHaveText(
+    'Confirmed schedule linked.',
+  );
   await expect(page.getByText('CANCELLED', { exact: true })).toBeVisible();
+  expect(
+    await backend.db.collection('invoices').findOne({ _id: invoice!._id }),
+  ).toMatchObject({ scheduleId: '1' });
   expect(errors).toEqual([]);
 });
 

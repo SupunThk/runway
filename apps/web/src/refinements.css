@@ -292,7 +292,7 @@
   margin-bottom: 28px;
 }
 .assistant-symbol {
-  margin: 0 0 24px;
+  margin: 0 auto 24px;
 }
 .assistant-welcome h1 {
   font-size: clamp(30px, 3.2vw, 42px);

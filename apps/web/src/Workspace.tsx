@@ -76,6 +76,10 @@ function WorkspaceContent({ address }: { address?: string }) {
   const cache = useQueryClient();
   const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
+  const [linkingInvoice, setLinkingInvoice] = useState('');
+  const [linkResults, setLinkResults] = useState<
+    Record<string, { error: boolean; message: string }>
+  >({});
   const [selected, setSelected] = useState('');
   const [createdWorkspace, setCreatedWorkspace] = useState<WorkspaceRecord>();
   const wallet = address?.toLowerCase() ?? '';
@@ -208,6 +212,43 @@ function WorkspaceContent({ address }: { address?: string }) {
       cache.removeQueries({ queryKey: ['workspace-records'] });
       await cache.invalidateQueries({ queryKey: ['workspace-session'] });
     });
+  }
+  async function linkSchedule(invoiceId: string, scheduleId: string) {
+    setBusy(true);
+    setLinkingInvoice(invoiceId);
+    setLinkResults((results) => ({
+      ...results,
+      [invoiceId]: { error: false, message: 'Linking schedule…' },
+    }));
+    let linked = false;
+    try {
+      await request(`${prefix}/invoices/${invoiceId}/payment`, {
+        scheduleId: scheduleId.trim(),
+      });
+      linked = true;
+      const refreshed = await invoices.refetch();
+      if (refreshed.isError) throw refreshed.error;
+      setLinkResults((results) => ({
+        ...results,
+        [invoiceId]: { error: false, message: 'Confirmed schedule linked.' },
+      }));
+    } catch (error) {
+      const message = linked
+        ? 'Schedule linked, but payment status could not refresh. Use Refresh payment status to check it.'
+        : error instanceof BackendUnavailableError
+          ? 'Could not confirm the link because the workspace service is unavailable. Refresh payment status, then retry if the schedule is still unlinked.'
+          : error instanceof Error
+            ? error.message.split('\n')[0]
+            : 'Could not link this schedule. Please retry.';
+      setLinkResults((results) => ({
+        ...results,
+        [invoiceId]: { error: true, message },
+      }));
+      if (error instanceof BackendUnavailableError) wake.wake();
+    } finally {
+      setLinkingInvoice('');
+      setBusy(false);
+    }
   }
   function save(
     event: FormEvent<HTMLFormElement>,
@@ -586,14 +627,7 @@ function WorkspaceContent({ address }: { address?: string }) {
                                     'scheduleId',
                                   ) ?? '',
                                 );
-                                void action(async () => {
-                                  await request(
-                                    `${prefix}/invoices/${row._id}/payment`,
-                                    { scheduleId },
-                                  );
-                                  await invoices.refetch();
-                                  setNotice('Confirmed schedule linked.');
-                                });
+                                void linkSchedule(row._id, scheduleId);
                               }}
                             >
                               <label>
@@ -610,9 +644,21 @@ function WorkspaceContent({ address }: { address?: string }) {
                                 className="button secondary"
                                 disabled={busy}
                               >
-                                Link existing schedule
+                                {linkingInvoice === row._id
+                                  ? 'Linking schedule…'
+                                  : 'Link existing schedule'}
                               </button>
                             </form>
+                          )}
+                          {linkResults[row._id] && (
+                            <p
+                              className="callout"
+                              role={
+                                linkResults[row._id].error ? 'alert' : 'status'
+                              }
+                            >
+                              {linkResults[row._id].message}
+                            </p>
                           )}
                         </article>
                       ))}
