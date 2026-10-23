@@ -518,10 +518,21 @@ footer {
   padding: 30px;
 }
 .payment-fields {
+  display: grid;
+  gap: 24px;
   border: 0;
   padding: 0;
   margin: 0;
   min-width: 0;
+}
+.payment-fields > label,
+.payment-fields .form-row > label,
+.payment-fields > .terms {
+  margin: 0;
+}
+.payment-fields > .button {
+  justify-self: start;
+  max-width: 100%;
 }
 .payment-fields select {
   padding: 13px 14px;
@@ -1803,41 +1814,26 @@ footer {
   }
 }
 @media (min-width: 1200px) {
-  .form-panel form {
-    display: grid;
+  .form-panel .payment-fields {
     grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
-    grid-template-areas:
-      'recipient terms'
-      'amounts terms'
-      'submit terms'
-      'hint terms';
-    gap: 16px 32px;
+    gap: 24px 32px;
     align-items: start;
   }
-  .form-panel form > label {
-    grid-area: recipient;
-    margin: 0;
+  .payment-fields > label,
+  .payment-fields > .form-row,
+  .payment-fields > .hint,
+  .payment-fields > .button {
+    grid-column: 1;
   }
-  .form-panel .form-row {
-    grid-area: amounts;
+  .payment-fields > .form-row {
     min-width: 0;
   }
-  .form-panel .form-row label {
-    margin: 0;
-    min-width: 0;
-  }
-  .form-panel .terms {
-    grid-area: terms;
-    margin: 0;
-  }
-  .form-panel form > .button {
-    grid-area: submit;
-    justify-self: start;
-    max-width: 100%;
+  .payment-fields > .terms {
+    grid-column: 2;
+    grid-row: 1 / span 4;
   }
   .form-panel form > .hint {
-    grid-area: hint;
-    margin: 0;
+    margin: 16px 0 0;
   }
 }
 @media (prefers-reduced-motion: reduce) {
