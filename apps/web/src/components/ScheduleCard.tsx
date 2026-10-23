@@ -91,7 +91,9 @@ export function ScheduleCard({
           disabled={!canTransact || s.claimable === 0n}
           onClick={() => void settle(s.id, false)}
         >
-          Claim to recipient
+          {address && getAddress(address) === getAddress(s.recipient)
+            ? 'Claim MUSD'
+            : 'Pay recipient'}
         </button>
         {address &&
         getAddress(address) === getAddress(s.sender) &&

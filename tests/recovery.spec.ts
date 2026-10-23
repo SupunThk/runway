@@ -290,9 +290,9 @@ for (const scenario of [
           .click();
       } else {
         await expect(
-          page.getByRole('button', { name: 'Claim to recipient' }),
+          page.getByRole('button', { name: 'Claim MUSD' }),
         ).toBeEnabled();
-        await page.getByRole('button', { name: 'Claim to recipient' }).click();
+        await page.getByRole('button', { name: 'Claim MUSD' }).click();
       }
       await expect
         .poll(() => page.evaluate((key) => localStorage.getItem(key), key))
@@ -324,7 +324,7 @@ for (const scenario of [
         'Saved transaction data is damaged',
       );
       await expect(
-        page.getByRole('button', { name: 'Claim to recipient' }),
+        page.getByRole('button', { name: 'Pay recipient' }),
       ).toBeDisabled();
       page.once('dialog', (dialog) => dialog.accept());
       await page
