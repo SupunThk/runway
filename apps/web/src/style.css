@@ -161,7 +161,8 @@ body {
   margin: 0;
 }
 button,
-input {
+input,
+.planner-controls select {
   font: inherit;
 }
 button,
@@ -555,7 +556,8 @@ label {
   color: #44484f;
   margin: 18px 0;
 }
-input {
+input,
+.planner-controls select {
   padding: 13px 14px;
   border: 1px solid #d0d3d7;
   border-radius: 5px;
@@ -1580,7 +1582,8 @@ label,
   gap: 8px;
 }
 input,
-.workspace-content select {
+.workspace-content select,
+.planner-controls select {
   min-height: 48px;
   font-size: 16px;
   border-radius: 10px;
