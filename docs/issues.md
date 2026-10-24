@@ -10,7 +10,7 @@
 
 ### ISSUE-01: Deadline timezone unconfirmed
 - **Priority:** High  
-- **File:** [plan.md](plan.md) — line 208\
+- **File:** [project-plan.md](project-plan.md) — line 208\
 - **Problem:** The brief says Wave 1 deadline is October 26 at "15:00" but does not specify timezone. Plan correctly flags this but it remains unresolved.  
 - **Action:** Confirm on AKINDO platform countdown or ask in Mezo Discord.  
 - [ ] Resolved
@@ -32,7 +32,7 @@
 
 ### ISSUE-04: EVM wallet for testing not specified
 - **Priority:** Medium  
-- **File:** [plan.md](plan.md) — §6; [wave1Steps.md](wave1Steps.md) — Step 19 (line 522)\
+- **File:** [project-plan.md](project-plan.md) — §6; [wave1Steps.md](wave1Steps.md) — Step 19 (line 522)\
 - **Problem:** "Start with one tested EVM wallet" but no wallet named. MetaMask is the safe default for Mezo testnet compatibility.  
 - **Action:** Confirm MetaMask (or alternative), install, and test custom network addition with Mezo testnet RPC.  
 - [ ] Resolved
@@ -57,14 +57,14 @@
 
 ### ISSUE-07: No MEZO token usage
 - **Priority:** Low  
-- **File:** [plan.md](plan.md) — §5 (line 123)\
+- **File:** [project-plan.md](project-plan.md) — §5 (line 123)\
 - **Problem:** Plan correctly states "MUSD alone meets the brief's asset requirement" (brief says "MUSD and/or MEZO"). However, displaying MEZO token balance in the dashboard would be a zero-cost integration signal.  
 - **Action:** Consider adding a MEZO balance read in the dashboard alongside MUSD. Low effort, slight scoring upside.  
 - [ ] Resolved
 
 ### ISSUE-08: GPL-3.0 license risk from musd repo
 - **Priority:** Medium  
-- **File:** [plan.md](plan.md) — §12 (line 299)\
+- **File:** [project-plan.md](project-plan.md) — §12 (line 299)\
 - **Problem:** The `mezo-org/musd` repository is GPL-3.0. Copying Solidity implementation code would create license obligations. Plan flags this but no decision is documented.  
 - **Action:** Confirm approach: only interface with deployed contracts via ABIs, do not copy source code. Document this decision in `docs/product-scope.md`.  
 - [ ] Resolved

@@ -27,7 +27,7 @@ Public release summary: `deployments/wave1-release.check.json`. Detailed ignored
 
 ## Implementation history: Wave 1 polish, October 20, 2026
 
-Implementation of `codex_plan.md` is complete through final verification. The implementation evidence below was recorded before deployment; the current release entry above supersedes its local-only status. All listed commits are now pushed and deployed through `553fc9f`, with exact-commit hosted/CI verification complete. Render remains on `547dc7d`; tagging is deferred at the user's request.
+Implementation of `plan.md` is complete through final verification. The implementation evidence below was recorded before deployment; the current release entry above supersedes its local-only status. All listed commits are now pushed and deployed through `553fc9f`, with exact-commit hosted/CI verification complete. Render remains on `547dc7d`; tagging is deferred at the user's request.
 
 | Phase | Local commit | Result |
 | --- | --- | --- |
@@ -150,7 +150,7 @@ Ignored local preview helper `.tools/assistant-preview.mjs` serves http://127.0.
 
 ## Scope addition — phased AI assistant, October 17, 2026
 
-User requested an assistant for app/Mezo questions first, with wallet/transaction reads and app actions in later phases. Added `docs/ai-assistant.md` and updated `plan.md` / `docs/development-workflow.md`. Phase 1 is a wallet-free, sourced Q&A page over reviewed public Runway guidance and official Mezo documentation, using the existing React/Hono architecture. Phase 2 adds validated read-only tools; Phase 3 prepares supported actions for explicit user review and wallet confirmation. Autonomous signing and fund movement remain excluded. No assistant implementation, dependencies, provider account, credentials, paid services, commit or deployment is part of this scope-only update. Choose the provider/model and usage budget before enabling inference. Preserve the existing local release-record changes below. The payment reconciliation release remains the current deployed application.
+User requested an assistant for app/Mezo questions first, with wallet/transaction reads and app actions in later phases. Added `docs/ai-assistant.md` and updated `project-plan.md` / `docs/development-workflow.md`. Phase 1 is a wallet-free, sourced Q&A page over reviewed public Runway guidance and official Mezo documentation, using the existing React/Hono architecture. Phase 2 adds validated read-only tools; Phase 3 prepares supported actions for explicit user review and wallet confirmation. Autonomous signing and fund movement remain excluded. No assistant implementation, dependencies, provider account, credentials, paid services, commit or deployment is part of this scope-only update. Choose the provider/model and usage budget before enabling inference. Preserve the existing local release-record changes below. The payment reconciliation release remains the current deployed application.
 
 ## Previous release — payment reconciliation deployed, October 17, 2026
 
@@ -527,7 +527,7 @@ Next: demo/submission materials and release review. Borrowing and repayment shou
 | `vercel.json`, `render.yaml`, `scripts/configure-api-proxy.mjs` | Vercel build/routes/API proxy, intended Render Blueprint and proxy configuration helper |
 | `README.md`, `docs/frontend-hosting.md` | Setup and current deployment workflow |
 | `docs/test-results.md` | Test history; later sections/updates supersede earlier pending statements |
-| `wave1Steps.md`, `plan.md`, `issues.md` | Broader project plan and prior review |
+| `wave1Steps.md`, `project-plan.md`, `issues.md` | Broader project plan and prior review |
 
 ## 10. Useful commands
 

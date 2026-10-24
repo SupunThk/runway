@@ -29,9 +29,9 @@ Start with the [repository overview](../README.md) or the [user guide](user-guid
 These notes include historical plans; use the release entries and implementation documentation for current behavior.
 
 - [Project handoff](HANDOFF.md)
-- [Project plan](plan.md)
+- [Project plan](project-plan.md)
 - [Wave 1 steps](wave1Steps.md)
-- [Implementation plan](codex_plan.md)
+- [Implementation plan](plan.md)
 - [Prior review and issues](issues.md)
 
 ## Buildathon and submission

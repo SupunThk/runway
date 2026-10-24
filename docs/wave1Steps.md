@@ -1,7 +1,7 @@
 # Mezo Runway — Wave 1 implementation steps
 
 **Status:** Initial local implementation started October 10, 2026; release and external verification remain incomplete. See `docs/test-results.md`.  
-**Related documents:** `plan.md`, `issues.md`  
+**Related documents:** `project-plan.md`, `issues.md`\
 **Network:** Mezo testnet only  
 **Primary track:** Access and Distribution  
 **Goal:** Ship the expanded testnet treasury workflow: funded MUSD payments, MongoDB workspaces/contractors/invoices, and verified borrowing/repayment, planning and onboarding integrations.
@@ -332,7 +332,7 @@ Responsibilities:
 
 Frontend environment variables are public. They must never contain private keys.
 
-Define this public template in the root `.env.example` (candidate network values from `plan.md`; reverify them in Steps 4–5):
+Define this public template in the root `.env.example` (candidate network values from `project-plan.md`; reverify them in Steps 4–5):
 
 ```dotenv
 VITE_MEZO_TESTNET_RPC=https://rpc.test.mezo.org
