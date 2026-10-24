@@ -3,7 +3,7 @@
 **Pitch:** Turn Bitcoin-backed MUSD into dependable contractor payments, with a clear view of your team's cash runway and borrowing risk.
 
 **Prepared:** October 10, 2026  
-**Scope revised:** October 17, 2026. Adds a phased AI assistant, starting with sourced Runway/Mezo questions and answers. The October 13 MongoDB and expanded Wave 1 decisions remain. See [current workflow](docs/development-workflow.md) and [AI assistant scope](docs/ai-assistant.md).
+**Scope revised:** October 17, 2026. Adds a phased AI assistant, starting with sourced Runway/Mezo questions and answers. The October 13 MongoDB and expanded Wave 1 decisions remain. See [current workflow](development-workflow.md) and [AI assistant scope](ai-assistant.md).
 
 **Recommended submission:** Track 2 (Access and Distribution); consider Track 1 when borrowing and repayment are implemented and verified.
 **Deployment:** Mezo testnet first.  
@@ -129,7 +129,7 @@ Deliver these in priority order:
 6. **Mezo Passport:** Verify compatibility and integrate the additional wallet path within Wave 1. Initial backend authentication supports EOA personal wallets; smart-contract wallet verification needs separate implementation.
 7. **Indexed payment reconciliation:** Persist verified chain events with block/log identifiers, replay and reorg handling, then associate confirmed schedules with contractors/invoices. Keep direct RPC access for public recipient claims and clear indexer-lag disclosure.
 
-8. **AI assistant, Phase 1:** A wallet-free chat page answers questions about Runway and Mezo using reviewed documentation, supporting source links and relevant app navigation. Implemented locally, uncommitted and undeployed, using server-side Gemini calls and isolated bounded retrieval in the existing React/Hono stack. Follow-on Phase 2 adds read-only wallet/transaction tools; Phase 3 prepares supported app actions for explicit user review and wallet confirmation. See [phased scope and acceptance criteria](docs/ai-assistant.md).
+8. **AI assistant, Phase 1:** A wallet-free chat page answers questions about Runway and Mezo using reviewed documentation, supporting source links and relevant app navigation. Implemented locally, uncommitted and undeployed, using server-side Gemini calls and isolated bounded retrieval in the existing React/Hono stack. Follow-on Phase 2 adds read-only wallet/transaction tools; Phase 3 prepares supported app actions for explicit user review and wallet confirmation. See [phased scope and acceptance criteria](ai-assistant.md).
 
 ### Wave 2: team treasury operations
 
@@ -231,7 +231,7 @@ Check oracle timestamps, positive prices, and decimal scaling; disable fresh bor
 
 ## 8. Delivery schedule
 
-Dates below come from [the supplied buildathon brief](./Mezo_Buildathon_MUSD_MEZO.md). The public AKINDO page did not expose detailed dates to the text browser, so verify the platform countdown and deadline timezone during registration. Do not assume its `15:00` deadline uses Sri Lanka time.
+Dates below come from [the supplied buildathon brief](Mezo_Buildathon_MUSD_MEZO.md). The public AKINDO page did not expose detailed dates to the text browser, so verify the platform countdown and deadline timezone during registration. Do not assume its `15:00` deadline uses Sri Lanka time.
 
 | Dates | Deliverable |
 | --- | --- |

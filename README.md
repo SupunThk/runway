@@ -60,7 +60,7 @@ To deploy through a browser wallet without exporting keys, run `pnpm deploy:brow
 
 The frontend is live at [mezo-runway-testnet.vercel.app](https://mezo-runway-testnet.vercel.app), using the existing testnet contract. The existing Vercel project is connected to [SupunThk/runway](https://github.com/SupunThk/runway): pushes to `main` trigger production builds. `vercel.json` configures the source build and recipient-route fallback; public testnet environment settings are configured in Vercel. A fallback static build can be prepared with `pnpm prepare:hosting`; see [hosting instructions](docs/frontend-hosting.md). Contract deployment requires a funded test wallet and a local signing method; do not commit credentials.
 
-See [Wave 1 checklist](wave1Steps.md), [integration evidence](docs/integration-verification.md), [product scope](docs/product-scope.md), and [buildathon readiness](docs/buildathon.md).
+See [Wave 1 checklist](docs/wave1Steps.md), [integration evidence](docs/integration-verification.md), [product scope](docs/product-scope.md), and [buildathon readiness](docs/buildathon.md).
 
 The borrowing view reads an existing testnet loan for a connected wallet or an entered public address. It shows protocol collateral, interest-inclusive debt, the fixed annual rate, and dated loan health only when price checks pass. Borrowing and repayments open in Mezo. See [borrowing integration](docs/borrowing.md); `node scripts/inspect-borrowing.mjs` records read-only evidence using the same reader.
 
@@ -71,3 +71,5 @@ The deployed dashboard loads sent and received schedules in pages of 20 IDs per 
 The existing payment contract is [source verified on the explorer](https://explorer.test.mezo.org/address/0x01A1662F2EB6C15Bfb2c8fd010c53c9055478b7D?tab=contract). Reproduction and evidence: [explorer verification](docs/explorer-verification.md). The local Solidity suite passes 24 tests, including adversarial token/reentrancy cases and two independent-model stateful invariant campaigns; see [security tests](docs/security-testing.md). Remaining work includes demo/submission materials and release review. The current source is a testnet prototype without independent security review; see the [security policy and threat model](SECURITY.md).
 
 OpenZeppelin utilities are MIT-licensed; preserve their notices. No MUSD protocol implementation code has been copied. Other dependency licenses are supplied in their packages.
+
+Browse the [documentation index](docs/README.md) for guides, design, planning notes and submission assets.

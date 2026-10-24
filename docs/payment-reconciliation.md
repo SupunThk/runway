@@ -1,6 +1,6 @@
 # Payment reconciliation
 
-Released October 17, 2026 as `a95c4a9` on both production frontend and Render backend. Embedded indexing is enabled on the existing free Render service and initial catch-up is complete. The normal worker retains 500-block batches; one-time release backfill also used the indexer's supported 5,000-block bound. Hosted API checks and read-only snapshot/accounting comparisons passed. See [release evidence](../deployments/reconciliation-release.check.json) and the latest entry in [HANDOFF.md](../HANDOFF.md).
+Released October 17, 2026 as `a95c4a9` on both production frontend and Render backend. Embedded indexing is enabled on the existing free Render service and initial catch-up is complete. The normal worker retains 500-block batches; one-time release backfill also used the indexer's supported 5,000-block bound. Hosted API checks and read-only snapshot/accounting comparisons passed. See [release evidence](../deployments/reconciliation-release.check.json) and the latest entry in [HANDOFF.md](HANDOFF.md).
 
 Invoice reconciliation reads the existing Mezo testnet payment contract. It does not change contract rules or submit transactions. New invoice payment links include a random 32-byte reference; names, descriptions and invoice IDs are not published onchain. Automatic matches require that reference, the workspace owner as sender, the saved recipient and the exact invoice amount in MUSD base units.
 

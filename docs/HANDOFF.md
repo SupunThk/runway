@@ -325,8 +325,8 @@ Schedule 2's cancellation transaction is `0xc925c772c8205fcfd90721cd52a731945ccd
 
 Full event histories and transaction hashes are in:
 
-- [deployments/schedule-1.check.json](deployments/schedule-1.check.json)
-- [deployments/schedule-2.check.json](deployments/schedule-2.check.json)
+- [deployments/schedule-1.check.json](../deployments/schedule-1.check.json)
+- [deployments/schedule-2.check.json](../deployments/schedule-2.check.json)
 
 Both tests are finished. Do not ask the user to repeat them just to establish project context. Existing on-chain history is suitable for developing the next feature.
 
@@ -361,7 +361,7 @@ Vercel has the five public `VITE_` values from `.env.example`, plus `ENABLE_EXPE
 
 The Vercel connector initially had restricted/stale access (403 on project creation and later 404 on the new project). The authenticated **Vercel CLI fallback succeeded**. Use explicit team/project scope for future operations. The static fallback directory `.publish/mezo-runway-testnet` has a local Vercel project link; do not assume an arbitrary directory is linked to the correct project.
 
-Important evidence distinction: `deployments/mezo-testnet.frontend.json` describes the **initial static deployment**, not the later GitHub deployment above. It is not evidence that GitHub integration is missing. See [docs/frontend-hosting.md](docs/frontend-hosting.md) for the current workflow.
+Important evidence distinction: `deployments/mezo-testnet.frontend.json` describes the **initial static deployment**, not the later GitHub deployment above. It is not evidence that GitHub integration is missing. See [docs/frontend-hosting.md](frontend-hosting.md) for the current workflow.
 
 ## 7. Verification already performed
 

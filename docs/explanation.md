@@ -233,9 +233,9 @@ The two claims paid 0.19 and 0.27 MUSD. At that snapshot, the accounting was:
 0.54 reserved = 0.23 earned but unpaid + 0.31 not yet earned
 ```
 
-These are historical numbers from the initial partial-claim check. A later check confirmed that the final 0.54 MUSD was claimed: schedule 1 is now complete with 1 MUSD claimed and zero claimable. The updated evidence is saved in [deployments/schedule-1.check.json](deployments/schedule-1.check.json).
+These are historical numbers from the initial partial-claim check. A later check confirmed that the final 0.54 MUSD was claimed: schedule 1 is now complete with 1 MUSD claimed and zero claimable. The updated evidence is saved in [deployments/schedule-1.check.json](../deployments/schedule-1.check.json).
 
-Your second, cancelled schedule has also settled. Its recipient earned and claimed 0.628333333333333333 MUSD, and its cancellation refunded 0.371666666666666667 MUSD to the sender. Zero remains claimable. See [schedule 2 evidence](deployments/schedule-2.check.json). These checks found the contractor holding 1.628333333333333333 MUSD in total and the payment contract holding zero MUSD.
+Your second, cancelled schedule has also settled. Its recipient earned and claimed 0.628333333333333333 MUSD, and its cancellation refunded 0.371666666666666667 MUSD to the sender. Zero remains claimable. See [schedule 2 evidence](../deployments/schedule-2.check.json). These checks found the contractor holding 1.628333333333333333 MUSD in total and the payment contract holding zero MUSD.
 
 ## 11. What happens if the sender cancels?
 
@@ -267,7 +267,7 @@ Working in this version: wallet connection, MUSD approval, fully funded schedule
 
 Still outside this version: borrowing or repayment inside Runway, lending or yield, automatic claims, and a verified borrowing-position dashboard. Public frontend hosting, full-payment settlement, and cancellation settlement have now been completed. Broader security testing remains work to finish. Passing tests does not make this an audited production financial product.
 
-The payment rules are in [contracts/src/RunwayPayments.sol](contracts/src/RunwayPayments.sol), and the intended scope is in [docs/product-scope.md](docs/product-scope.md).
+The payment rules are in [contracts/src/RunwayPayments.sol](../contracts/src/RunwayPayments.sol), and the intended scope is in [docs/product-scope.md](product-scope.md).
 
 ## 14. The three balances to keep separate
 

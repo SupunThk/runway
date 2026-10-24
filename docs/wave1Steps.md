@@ -8,7 +8,7 @@
 
 ## Scope revision — October 13, 2026
 
-The user approved the MongoDB backend and moved the original Wave 2 integrations into Wave 1. [Current workflow](docs/development-workflow.md) and [backend setup](docs/backend.md) govern new work. Earlier numbered steps and deferrals below are the historical payment-release checklist, not the complete expanded scope.
+The user approved the MongoDB backend and moved the original Wave 2 integrations into Wave 1. [Current workflow](development-workflow.md) and [backend setup](backend.md) govern new work. Earlier numbered steps and deferrals below are the historical payment-release checklist, not the complete expanded scope.
 
 - [x] Implement a local TypeScript API and MongoDB persistence layer.
 - [x] Add wallet-message login and owner-private workspaces.
