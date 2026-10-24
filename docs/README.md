@@ -4,6 +4,8 @@ Start with the [repository overview](../README.md) or the [user guide](user-guid
 
 ## Product and implementation
 
+- [High-level app overview](app-high-level.md)
+- [Low-level app design](app-low-level.md)
 - [Product scope](product-scope.md)
 - [Design guidelines](DESIGN.md)
 - [Beginner explanation](explanation.md)

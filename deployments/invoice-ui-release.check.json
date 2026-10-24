@@ -1,0 +1,42 @@
+{
+  "date": "2026-10-23",
+  "commit": "ca3e62377105cfb92c0f5ddd0e6774071211f02d",
+  "target": "production",
+  "status": "READY",
+  "url": "https://mezo-runway-testnet.vercel.app",
+  "deploymentUrl": "https://mezo-runway-testnet-67lycsmk2-supunthks-projects.vercel.app",
+  "deploymentId": "dpl_DA5oxq2CUVE8t6PGDqrGgTng4kmb",
+  "changes": [
+    "Show invoice linking progress, rejection and confirmation beside the invoice",
+    "Center the Ask Runway welcome logo",
+    "Dismiss the wallet picker on outside pointer interaction"
+  ],
+  "validation": {
+    "unitApiTestsPassed": 66,
+    "localBrowserTestsPassed": 12,
+    "hostedSimulatedWalletTestsPassed": 10,
+    "logoCenteredAtWidths": [1440, 390],
+    "productionWorkspaceContainsInlineFeedback": true,
+    "typecheck": "passed for API and frontend",
+    "frontendBuild": "passed",
+    "formatAndWhitespace": "passed",
+    "backendHealth": "ready; database connected through direct and Vercel URLs",
+    "unsignedSession": "401 as expected",
+    "hostedPageErrors": [],
+    "deploymentErrorLogs": "none found",
+    "ci": "https://github.com/SupunThk/runway/actions/runs/39933988381",
+    "ciConclusion": "success"
+  },
+  "indexRecovery": {
+    "action": "Caught up confirmed payment events using the existing indexer",
+    "schedule3Indexed": true,
+    "matchingInvoiceCount": 1,
+    "invoiceLinkWrittenByAgent": false
+  },
+  "notes": [
+    "No backend or contract source changes, migrations or transactions",
+    "Browser wallet checks use simulated providers",
+    "Existing unrelated documentation and submission files were excluded from the release commit",
+    "Monitoring and drains were not reassessed"
+  ]
+}

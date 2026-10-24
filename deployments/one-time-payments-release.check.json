@@ -1,0 +1,73 @@
+{
+  "checkedAt": "2026-10-23T14:16:19.031Z",
+  "status": "passed",
+  "commit": "267e2f9adb2fc9e4496e1ab2525c015b38601873",
+  "frontend": {
+    "url": "https://mezo-runway-testnet.vercel.app",
+    "deployment": "dpl_iy1UkHpgxiLySB9txETY8mUfdoDU",
+    "status": "READY"
+  },
+  "backend": {
+    "url": "https://runway-api-rw61.onrender.com",
+    "service": "srv-db75jus9v7es73ai4g00",
+    "deployment": "dep-dbdmipou01pc73ctf9vg",
+    "status": "live",
+    "commit": "267e2f9adb2fc9e4496e1ab2525c015b38601873"
+  },
+  "checks": {
+    "unitApiTests": 86,
+    "localBrowserTests": 88,
+    "hostedBrowserTests": 25,
+    "typecheck": true,
+    "build": true,
+    "formatting": true,
+    "credentialScan": true,
+    "health": [
+      {
+        "url": "https://runway-api-rw61.onrender.com/api/health",
+        "status": 200,
+        "body": {
+          "status": "ready",
+          "database": "connected"
+        }
+      },
+      {
+        "url": "https://mezo-runway-testnet.vercel.app/api/health",
+        "status": 200,
+        "body": {
+          "status": "ready",
+          "database": "connected"
+        }
+      },
+      {
+        "url": "https://mezo-runway-testnet.vercel.app/api/auth/session",
+        "status": 401,
+        "body": {
+          "error": "Sign in with your wallet to continue."
+        }
+      }
+    ],
+    "ci": [
+      {
+        "id": 39966520108,
+        "name": "Checks",
+        "sha": "267e2f9adb2fc9e4496e1ab2525c015b38601873",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/SupunThk/runway/actions/runs/39966520108"
+      },
+      {
+        "id": 39966520044,
+        "name": "Checks",
+        "sha": "267e2f9adb2fc9e4496e1ab2525c015b38601873",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/SupunThk/runway/actions/runs/39966520044"
+      }
+    ],
+    "vercelErrorLogs": 0,
+    "renderErrorLogs": 0,
+    "drains": 0
+  },
+  "verification": "Hosted browser checks use simulated wallets and isolated temporary MongoDB. No blockchain transaction or production workspace write was performed."
+}

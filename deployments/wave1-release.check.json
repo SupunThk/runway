@@ -1,0 +1,54 @@
+{
+  "releaseDate": "2026-10-20",
+  "sourceCommit": "553fc9f980769450c74583dd50d6e5eddceb3497",
+  "frontend": "https://mezo-runway-testnet.vercel.app",
+  "deploymentUrl": "https://mezo-runway-testnet-pw5csk402-supunthks-projects.vercel.app",
+  "vercelDeploy": "dpl_46taFhQNPL9CCZjJ5k75vh5FY3xi",
+  "projectId": "prj_xVu0NEGFRc47pJFYnZI87erHvqoX",
+  "target": "production",
+  "status": "READY",
+  "buildDurationSeconds": 17,
+  "backendSourceUnchanged": "547dc7de30096763aeafe9b92c6b592bb38e6b29",
+  "checks": {
+    "typecheck": "passed",
+    "unitApiFrontendTests": 66,
+    "localBrowserCases": 81,
+    "foundryTests": 24,
+    "hostedSimulatedWalletPlannerColdStartCases": 32,
+    "hostedRouteWidthReloadChecks": 18,
+    "widths": [
+      1440,
+      390,
+      320
+    ],
+    "pageErrors": 0,
+    "consoleErrors": 0,
+    "guideMatches": true,
+    "cssMatches": true,
+    "cssSha256": "1bf7fa89ac3b75fea454674334bada1579228d99506c2cae7dd61f886986b96e",
+    "directHealthStatus": 200,
+    "proxiedHealthStatus": 200,
+    "database": "connected",
+    "unsignedSessionStatus": 401,
+    "ci": {
+      "id": 39409245310,
+      "name": "Checks",
+      "sha": "553fc9f980769450c74583dd50d6e5eddceb3497",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/SupunThk/runway/actions/runs/39409245310"
+    },
+    "vercelErrorLogsLastHour": "no entries",
+    "drains": 0,
+    "monitoring": "not reassessed"
+  },
+  "blockchainTransactionsSubmitted": false,
+  "userWorkspaceRecordsModified": false,
+  "backendRedeployed": false,
+  "wave1TagCreated": false,
+  "limitations": [
+    "Real installed-wallet setup/login remains pending",
+    "Organizer timezone and actual shared Render free-hours usage remain external follow-ups before the intended judging windows",
+    "Render free hosting can sleep; the assistant knowledge planner entry still requires a separate backend release"
+  ]
+}
