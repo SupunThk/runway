@@ -180,7 +180,7 @@ Runway receipts are downloadable records of blockchain events. They are not invo
 
 Open Borrowing in the sidebar to read an existing Mezo testnet position for your connected wallet or an entered public address. The dedicated /borrowing page shows collateral, interest-inclusive debt, the position’s annual rate, and dated loan health when the price and freshness checks pass. A wallet’s MUSD balance is not its loan debt.
 
-Loan management opens in Mezo. Runway currently does not originate loans, add collateral, or repay debt. Funding or claiming a contractor payment does not repay a Mezo loan.
+When borrowing writes are enabled on the deployment, the connected wallet can review, simulate, and sign trove opening, additional borrowing, collateral addition, and partial repayment directly on /borrowing; otherwise loan management opens in Mezo. Funding or claiming a contractor payment does not repay a Mezo loan.
 
 BTC price-drop scenarios are hypothetical. The slider holds snapshot debt and collateral fixed while changing the BTC price to estimate the collateral ratio and threshold price. It does not predict future prices or include future interest, and moving it submits no transaction.
 
@@ -238,7 +238,7 @@ Sign out of workspace to revoke your login session. Disconnecting the wallet hid
 
 ## Team approvals, payroll and recurring plans
 
-Team operations are available in the local November 4 build; hosted releases may predate these features. Managers prepare records, approvers review payment terms, viewers read shared records and the owner funds payments. Workspace policies govern Runway preparation and linking; they cannot restrict transactions initiated outside the app. Submitted invoices require an independent reviewer. Policy changes invalidate earlier reviews, and revoked approvers no longer count toward the quorum.
+Managers prepare records, approvers review payment terms, viewers read shared records and the owner funds payments. Workspace policies govern Runway preparation and linking; they cannot restrict transactions initiated outside the app. Submitted invoices require an independent reviewer. Policy changes invalidate earlier reviews, and revoked approvers no longer count toward the quorum.
 
 A payroll run groups 1–50 distinct existing invoices and shows an exact MUSD total. Approve both invoices and the run as required, then review and sign each payment separately. An invoice belongs to one run. Current server approvals are checked again before wallet prompts and payment linking. Confirmed payment evidence drives progress; a prepared run is not funded and funded escrow is not yet paid to a recipient.
 

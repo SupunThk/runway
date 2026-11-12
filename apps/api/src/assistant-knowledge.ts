@@ -1,10 +1,13 @@
 import { readFileSync } from 'node:fs';
 
-export const knowledgeVersion = '2026-11-04';
 const document = readFileSync(
   new URL('../../../docs/assistant-knowledge.md', import.meta.url),
   'utf8',
 );
+const versionMatch = /^Version:\s*(\d{4}-\d{2}-\d{2})\./m.exec(document);
+if (!versionMatch)
+  throw new Error('Missing Version header in assistant-knowledge.md');
+export const knowledgeVersion = versionMatch[1];
 export const knowledge = document
   .split(/^## /m)
   .slice(1)
@@ -32,4 +35,15 @@ export const assistantLinks = {
   workspace: { title: 'Open Workspace', url: '/workspace' },
   borrowing: { title: 'Open Borrowing', url: '/borrowing' },
   docs: { title: 'Read the guide', url: '/docs' },
+  payLinks: {
+    title: 'Client payment links guide',
+    url: '/docs#client-payment-links',
+  },
+  fundingProof: {
+    title: 'Public funding proof guide',
+    url: '/docs#public-funding-proof',
+  },
+  teamOps: { title: 'Team operations guide', url: '/docs#team-operations' },
+  planner: { title: 'Runway planner guide', url: '/docs#runway-planner' },
 } as const;
+export type AssistantLinkKey = keyof typeof assistantLinks;

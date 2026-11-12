@@ -12,9 +12,17 @@ import { MongoClient, type Db } from 'mongodb';
 import {
   answerQuestion,
   questionSchema,
+  scopeInstructions,
   type AssistantModel,
 } from './assistant.ts';
-import { knowledge } from './assistant-knowledge.ts';
+import {
+  assistantLinks,
+  knowledge,
+  knowledgeVersion,
+  type AssistantLinkKey,
+} from './assistant-knowledge.ts';
+import { guideSections } from '../../web/src/guide.ts';
+import evalCases from '../../../tests/fixtures/assistant-eval.json' with { type: 'json' };
 import { createApp } from './app.ts';
 import { initializeDatabase } from './db.ts';
 
@@ -50,6 +58,74 @@ describe('assistant context and source boundaries', () => {
     ]);
     expect(reply.links[0].url).toBe('/workspace');
     expect(knowledge.length).toBeGreaterThan(10);
+  });
+  it('covers every public guide section and stays free of stale pre-Wave-2 claims', () => {
+    expect(knowledgeVersion).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    const coveredUrls = new Set(knowledge.map((source) => source.url));
+    for (const section of guideSections) {
+      expect(
+        coveredUrls.has(`/docs#${section.id}`),
+        `guide section "${section.id}" is missing from assistant-knowledge.md`,
+      ).toBe(true);
+    }
+    const combined = knowledge.map((source) => source.content).join('\n');
+    expect(combined).not.toContain('local November 3 build');
+    expect(combined).not.toContain('local November 4 build');
+    expect(combined).not.toContain(
+      'Team access, contractor-submitted invoices, payroll batches and autonomous AI actions are not available',
+    );
+  });
+  it('validates the evaluation dataset against knowledge facts and answer pipeline', async () => {
+    expect(evalCases.length).toBeGreaterThanOrEqual(15);
+    const byId = new Map(knowledge.map((source) => [source.id, source]));
+    for (const item of evalCases) {
+      for (const id of item.requiredSources) {
+        expect(
+          byId.has(id),
+          `eval case "${item.id}" references missing source "${id}"`,
+        ).toBe(true);
+        expect(scopeInstructions).toContain(`${id}:`);
+      }
+      const sourceText = item.requiredSources
+        .map((id) => byId.get(id)?.content ?? '')
+        .join('\n');
+      for (const fact of item.expectedSourceFacts ?? []) {
+        expect(
+          sourceText,
+          `eval case "${item.id}" missing fact "${fact}" in sources [${item.requiredSources.join(', ')}]`,
+        ).toContain(fact);
+      }
+      const linkKey = (item.suggestedLink ?? 'docs') as AssistantLinkKey;
+      const fake: AssistantModel = {
+        scope: vi.fn().mockResolvedValue({
+          scope: item.expectedScope,
+          sourceIds: item.requiredSources,
+        }),
+        answer: vi.fn().mockResolvedValue({
+          supported: true,
+          paragraphs: [
+            (item.expectedSourceFacts ?? ['Supported product explanation.'])
+              .join(' ')
+              .replace(/https?:\/\//g, ''),
+          ],
+          sourceIds: item.requiredSources,
+          links: [linkKey],
+        }),
+      };
+      const reply = await answerQuestion(
+        { question: item.question, history: [] },
+        fake,
+        signal,
+      );
+      if (item.expectedScope === 'knowledge') {
+        expect(reply.kind).toBe('answer');
+        expect(reply.sources.map((s) => s.id)).toEqual(item.requiredSources);
+        expect(reply.links).toEqual([assistantLinks[linkKey]]);
+      } else {
+        expect(reply.kind).toBe(item.expectedScope);
+        expect(fake.answer).not.toHaveBeenCalled();
+      }
+    }
   });
   it.each(['out_of_scope', 'live_data', 'unsupported'] as const)(
     'uses a fixed reply for %s without answer generation',

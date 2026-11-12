@@ -38,6 +38,16 @@ const suggestions = [
     detail: 'What gets refunded, and to whom',
     question: 'What happens when I cancel a payment schedule?',
   },
+  {
+    title: 'Client payment links',
+    detail: 'Share a /pay checkout link',
+    question: 'How do client payment links work in Runway?',
+  },
+  {
+    title: 'Team & payroll runs',
+    detail: 'Roles, approvals, and funding proofs',
+    question: 'How do team roles, approval quorums, and payroll runs work?',
+  },
 ];
 
 export function Assistant() {
