@@ -107,6 +107,33 @@ export async function requestMetrics(db: Db, now: Date) {
       break;
     }
   }
+  const byFamily: Record<
+    string,
+    {
+      requests: number;
+      serverErrors: number;
+      clientErrors: number;
+      averageMs: number | null;
+    }
+  > = {};
+  for (const family of [
+    'workspace',
+    'payment-link',
+    'authentication',
+    'assistant',
+  ]) {
+    const familyRecords = records.filter((r) => r._id.endsWith(`:${family}`));
+    const reqs = familyRecords.reduce((sum, r) => sum + r.requests, 0);
+    const sErr = familyRecords.reduce((sum, r) => sum + r.serverErrors, 0);
+    const cErr = familyRecords.reduce((sum, r) => sum + r.clientErrors, 0);
+    const tMs = familyRecords.reduce((sum, r) => sum + r.totalMs, 0);
+    byFamily[family] = {
+      requests: reqs,
+      serverErrors: sErr,
+      clientErrors: cErr,
+      averageMs: reqs ? Math.round(tMs / reqs) : null,
+    };
+  }
   return {
     available: true,
     from: from.toISOString(),
@@ -120,6 +147,7 @@ export async function requestMetrics(db: Db, now: Date) {
     averageMs: sums.requests ? Math.round(sums.totalMs / sums.requests) : null,
     p95UpperBoundMs,
     maxMs: Math.max(...records.map((r) => r.maxMs)),
+    byFamily,
     note: 'Observed API requests in 24 UTC hour buckets; current hour is partial. Excludes health checks, admin refreshes and requests that cannot reach the database. Collection failures may undercount. p95 is a histogram upper bound; null means over 60 seconds.',
   };
 }

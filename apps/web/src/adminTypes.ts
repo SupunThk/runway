@@ -8,6 +8,11 @@ export type AdminOverview = {
     contractors: number;
     invoices: number;
     linkedDirectInvoices: number;
+    teamMembers?: number;
+    payrollRuns?: number;
+    recurringPlans?: number;
+    paymentRequests?: number;
+    settledPaymentRequests?: number;
     activeWallets: number | null;
     returningWallets: number | null;
     trackingSince: string | null;
@@ -55,6 +60,15 @@ export type AdminOverview = {
       averageMs: number | null;
       p95UpperBoundMs: number | null;
       maxMs: number;
+      byFamily?: Record<
+        string,
+        {
+          requests: number;
+          serverErrors: number;
+          clientErrors: number;
+          averageMs: number | null;
+        }
+      >;
       note: string;
     };
     operatingCost: null | {

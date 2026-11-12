@@ -40,6 +40,12 @@ describe('bounded operational evidence', () => {
       observedSince: now.toISOString(),
       p95UpperBoundMs: 5000,
     });
+    expect(result?.byFamily['payment-link']).toEqual({
+      requests: 30,
+      serverErrors: 3,
+      clientErrors: 2,
+      averageMs: 1450,
+    });
     const raw = await db.collection('requestMetrics').find().toArray();
     expect(raw).toHaveLength(1);
     expect(JSON.stringify(raw)).not.toContain('PRIVATE');

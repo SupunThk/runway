@@ -37,9 +37,12 @@ For a later reviewed release, configure server-only `RUNWAY_ADMIN_WALLETS` as co
 | Workspace activity | Distinct wallets making successful authenticated workspace requests in a selected 7/30/90-day UTC range. Returning means activity on at least two distinct days. |
 | Daily activity | Observed wallet/day buckets and successful request counts. Dates before tracking began are **Not tracked**. These are request observations, not page views or completed financial actions. |
 | Contractor and invoice counts | All-time record counts only, without private record contents. |
+| Wave 2 team & checkout adoption | All-time aggregate counts for accepted team members, prepared payroll runs, active recurring plans, and client `/pay` payment links (total and linked). |
+| Business model & projected run-rate | Displays the Solo (0 MUSD/mo, 0 bps) and Team Operations (49 MUSD/mo + 25 bps capped at 25 MUSD) fee schedule, monthly subscription equivalent, and 25 bps volume fee equivalent alongside the 100% Mezo Testnet pilot waiver (`0 MUSD` collected). |
 | Payment activity | Exact bigint accounting from a fresh, published canonical schedule-index generation. Funding, recipient claims, sender refunds and remaining commitments are separate. This is contract-wide activity, independent of the date filter. |
 | One-time invoice links | Number of invoice records with a linked direct transfer. This is not a live paid verdict or aggregate one-time payment volume. |
-| Service health | The dashboard's successful database read and reconciliation availability. API error counts and operating costs are explicitly uninstrumented/unconfigured. |
+| Service health | The dashboard's successful database read, reconciliation availability, 24-hour API request/error/latency metrics broken down by service family (`workspace`, `payment-link`, `authentication`, `assistant`), and operator-supplied actual operating cost record (`RUNWAY_COST_RECORD_JSON`). |
+| Snapshot export | One-click `Download JSON snapshot` button in the report toolbar for exporting the timestamped admin overview. |
 
 Payment amounts are strings in MUSD base units in the API. Decimal formatting preserves 18 decimals. Stale, inconsistent or missing index data yields unavailable totals. Unpublished generations are excluded. A changed generation pointer invalidates the read. A maximum of 5,000 rows is aggregated; a larger generation is prominently labelled partial. Source block and check time are displayed. Database health alone does not prove index freshness or RPC uptime.
 

@@ -124,6 +124,11 @@ describe('admin authorization and truthful aggregate metrics', () => {
     expect(data.usage.ownerWallets).toBe(1);
     expect(data.usage.contractors).toBe(1);
     expect(data.usage.linkedDirectInvoices).toBe(1);
+    expect(data.usage.teamMembers).toBe(0);
+    expect(data.usage.payrollRuns).toBe(0);
+    expect(data.usage.recurringPlans).toBe(0);
+    expect(data.usage.paymentRequests).toBe(0);
+    expect(data.usage.settledPaymentRequests).toBe(0);
     expect(data.usage.activeWallets).toBeNull();
     expect(data.usage.daily.every((d: any) => d.wallets === null)).toBe(true);
     expect(data.revenue.netBaseUnits).toBeNull();
@@ -133,9 +138,9 @@ describe('admin authorization and truthful aggregate metrics', () => {
       data.revenue.pricingModel.monthlySubscriptionEquivalentBaseUnits,
     ).toBe((49n * 10n ** 18n).toString());
     expect(data.revenue.pricingModel.scheduleFeeBps).toBe(25);
-    expect(data.revenue.pricingModel.monthlySubscriptionEquivalentBaseUnits).toBe(
-      (49n * 10n ** 18n).toString(),
-    );
+    expect(
+      data.revenue.pricingModel.monthlySubscriptionEquivalentBaseUnits,
+    ).toBe((49n * 10n ** 18n).toString());
     expect(data.payments.fundedBaseUnits).toBeNull();
     const serialized = JSON.stringify(data);
     for (const secret of [

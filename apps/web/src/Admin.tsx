@@ -230,6 +230,26 @@ function AdminContent({ address }: { address?: string }) {
                 >
                   Refresh dashboard
                 </button>
+                {overview.data && !overview.error ? (
+                  <button
+                    type="button"
+                    className="button secondary"
+                    onClick={() => {
+                      const blob = new Blob(
+                        [JSON.stringify(overview.data, null, 2)],
+                        { type: 'application/json' },
+                      );
+                      const url = URL.createObjectURL(blob);
+                      const link = document.createElement('a');
+                      link.href = url;
+                      link.download = `runway-admin-overview-${overview.data.generatedAt.slice(0, 10)}.json`;
+                      link.click();
+                      URL.revokeObjectURL(url);
+                    }}
+                  >
+                    Download JSON snapshot
+                  </button>
+                ) : null}
                 <p className="hint">
                   {overview.data && !overview.error
                     ? `Snapshot ${overview.data.generatedAt} · UTC`

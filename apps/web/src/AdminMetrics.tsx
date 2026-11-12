@@ -57,6 +57,25 @@ export function AdminMetrics({ data }: { data: AdminOverview }) {
               <dt>Invoices · all time</dt>
               <dd>{count(usage.invoices)}</dd>
             </div>
+            <div>
+              <dt>Accepted team members</dt>
+              <dd>{count(usage.teamMembers ?? 0)}</dd>
+            </div>
+            <div>
+              <dt>Payroll runs · all time</dt>
+              <dd>{count(usage.payrollRuns ?? 0)}</dd>
+            </div>
+            <div>
+              <dt>Active recurring plans</dt>
+              <dd>{count(usage.recurringPlans ?? 0)}</dd>
+            </div>
+            <div>
+              <dt>Client /pay links</dt>
+              <dd>
+                {count(usage.paymentRequests ?? 0)} (
+                {count(usage.settledPaymentRequests ?? 0)} linked)
+              </dd>
+            </div>
           </dl>
           <p className="hint">
             Returning means activity on at least two distinct UTC days. Tracking
@@ -157,6 +176,39 @@ export function AdminMetrics({ data }: { data: AdminOverview }) {
                 Observed since {data.health.requests.observedSince}.{' '}
                 {data.health.requests.note}
               </p>
+              {data.health.requests.byFamily ? (
+                <div className="admin-table-scroll">
+                  <table>
+                    <caption>24-hour API requests by service family</caption>
+                    <thead>
+                      <tr>
+                        <th scope="col">Family</th>
+                        <th scope="col">Reqs</th>
+                        <th scope="col">4xx</th>
+                        <th scope="col">5xx</th>
+                        <th scope="col">Avg ms</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Object.entries(data.health.requests.byFamily).map(
+                        ([family, stats]) => (
+                          <tr key={family}>
+                            <th scope="row">{family}</th>
+                            <td>{count(stats.requests)}</td>
+                            <td>{count(stats.clientErrors)}</td>
+                            <td>{count(stats.serverErrors)}</td>
+                            <td>
+                              {stats.averageMs !== null
+                                ? `${stats.averageMs} ms`
+                                : '—'}
+                            </td>
+                          </tr>
+                        ),
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              ) : null}
             </details>
           ) : null}
           {data.health.operatingCost ? (
@@ -228,6 +280,57 @@ export function AdminMetrics({ data }: { data: AdminOverview }) {
           paid verdict; one-time transfer volume is not aggregated.
         </p>
       </section>
+      {data.revenue.pricingModel ? (
+        <section
+          className="panel"
+          aria-label="Business model and fee projections"
+        >
+          <span className="eyebrow">MONETIZATION &amp; FEE SCHEDULE</span>
+          <h2>Business model &amp; projected run-rate</h2>
+          <p>
+            Solo direct schedules and one-time transfers remain 0 bps open
+            infrastructure. Multi-wallet Team Operations workspaces carry a 49
+            MUSD/month subscription plus a 25 bps (0.25%) coordination fee
+            capped at 25 MUSD per payment. All fees are 100% waived during the
+            Mezo Testnet pilot.
+          </p>
+          <dl className="borrowing-values">
+            <div>
+              <dt>Solo &amp; Open Protocol</dt>
+              <dd>0 MUSD/mo · 0 bps</dd>
+            </div>
+            <div>
+              <dt>Team Operations tier</dt>
+              <dd>
+                {musd(data.revenue.pricingModel.workspaceMonthlyFeeBaseUnits)}
+                /mo · {data.revenue.pricingModel.scheduleFeeBps} bps (max{' '}
+                {musd(data.revenue.pricingModel.scheduleFeeCapBaseUnits)})
+              </dd>
+            </div>
+            <div>
+              <dt>Subscription equivalent</dt>
+              <dd>
+                {musd(
+                  data.revenue.pricingModel
+                    .monthlySubscriptionEquivalentBaseUnits,
+                )}
+                /mo
+              </dd>
+            </div>
+            <div>
+              <dt>25 bps volume equivalent</dt>
+              <dd>
+                {musd(data.revenue.pricingModel.volumeFeeEquivalentBaseUnits)}
+              </dd>
+            </div>
+          </dl>
+          <p className="hint">
+            Collected on Mezo Testnet: 0 MUSD (100% pilot waiver). Equivalents
+            reflect the standard fee schedule applied to stored workspaces and
+            indexed schedule volume.
+          </p>
+        </section>
+      ) : null}
       <section
         className="callout admin-privacy"
         aria-label="Admin access boundaries"

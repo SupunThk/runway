@@ -152,6 +152,11 @@ export async function adminOverview(db: Db, now: Date, days: number) {
     contractors,
     invoices,
     linkedDirectInvoices,
+    teamMembers,
+    payrollRuns,
+    recurringPlans,
+    paymentRequests,
+    settledPaymentRequests,
     owners,
     active,
     series,
@@ -165,6 +170,13 @@ export async function adminOverview(db: Db, now: Date, days: number) {
       paymentType: 'one-time',
       transactionHash: { $exists: true },
     }),
+    db.collection('workspaceMembers').countDocuments({ status: 'accepted' }),
+    db.collection('payrollRuns').countDocuments(),
+    db.collection('recurringPlans').countDocuments({ paused: { $ne: true } }),
+    db.collection('paymentRequests').countDocuments(),
+    db
+      .collection('paymentRequests')
+      .countDocuments({ transactionHash: { $exists: true } }),
     db
       .collection('workspaces')
       .aggregate<{ count: number }>([
@@ -223,6 +235,11 @@ export async function adminOverview(db: Db, now: Date, days: number) {
       contractors,
       invoices,
       linkedDirectInvoices,
+      teamMembers,
+      payrollRuns,
+      recurringPlans,
+      paymentRequests,
+      settledPaymentRequests,
       activeWallets: tracking ? (active[0]?.count ?? 0) : null,
       returningWallets: tracking ? (active[0]?.returning ?? 0) : null,
       trackingSince: tracking?.startedAt?.toISOString() ?? null,
