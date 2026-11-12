@@ -13,6 +13,7 @@ export type PendingTransaction = {
   action: 'Approval' | 'Funding' | 'Claim' | 'Cancellation' | 'Payment';
   scheduleId?: string;
   submittedAt: string;
+  fundingIntentId?: string;
 };
 export function pendingKey(contract: Address) {
   return `runway:pending:v1:${TESTNET_CHAIN_ID}:${contract.toLowerCase()}`;
@@ -41,7 +42,9 @@ function readPending(contract: Address): PendingTransaction | undefined {
     ) ||
     (value.scheduleId !== undefined && !/^[1-9]\d*$/.test(value.scheduleId)) ||
     typeof value.submittedAt !== 'string' ||
-    !Number.isFinite(Date.parse(value.submittedAt))
+    !Number.isFinite(Date.parse(value.submittedAt)) ||
+    (value.fundingIntentId !== undefined &&
+      !/^[0-9a-f-]{36}$/.test(value.fundingIntentId))
   )
     throw new Error(
       'Saved transaction data could not be read. Check this site’s stored transaction before submitting again.',

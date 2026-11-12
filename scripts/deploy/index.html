@@ -88,7 +88,14 @@
   <body>
     <main>
       <p>MEZO TESTNET ONLY · CHAIN 31611</p>
-      <h1>Deploy Runway payments</h1>
+      <h1>Deploy a Runway testnet contract</h1>
+      <label for="contract">Contract to deploy</label><br />
+      <select id="contract">
+        <option value="payments">RunwayPayments — time-based schedules</option>
+        <option value="milestones">
+          RunwayMilestones — approved milestones
+        </option>
+      </select>
       <p>
         This creates a new payment contract using the founder wallet. Deployment
         spends test BTC for gas. It does not approve or transfer your MUSD.
@@ -96,6 +103,8 @@
       <dl>
         <dt>Required founder</dt>
         <dd><code id="founder"></code></dd>
+        <dt>Selected contract</dt>
+        <dd><code id="contract-name"></code></dd>
         <dt>Official MUSD contract</dt>
         <dd><code id="musd"></code></dd>
         <dt>Contract build</dt>

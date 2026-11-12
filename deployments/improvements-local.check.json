@@ -1,0 +1,65 @@
+{
+  "checkedAt": "2026-11-03T17:05:50Z",
+  "status": "implemented-and-verified-locally-not-deployed",
+  "baseCommit": "b27b109c52b963f1f38d7f0cbca89b285e2d0226",
+  "sourceState": "Uncommitted working tree; prior Wave 2 implementation and planning files preserved",
+  "checks": {
+    "unitApiFrontend": { "passed": 152, "failed": 0, "files": 20 },
+    "browser": { "passed": 116, "failed": 0, "fullFinalRun": true, "duration": "1.2 minutes", "configuration": "playwright.local.config.ts" },
+    "contracts": { "passed": 24, "failed": 0, "optionalForkCaseSkippedInOfflineSuite": 1, "fuzzRuns": 256, "invariantCampaigns": 2, "callsPerCampaign": 16384 },
+    "isolatedFork": {
+      "passed": 1,
+      "blockNumber": "16550812",
+      "blockHash": "0x5fd8e9ffc1eab355062fc7bb85d5a4bf5ff2a021b64a9ffb25e3d8aeb0a65bd0",
+      "operations": ["open trove", "top up without minting or resetting capacity", "borrow", "repay without approval", "fund founder-owned schedule", "claim to immutable recipient"],
+      "limitations": "Local EVM with synthetic BTC; authentic native-oracle response bytes replayed from the exact pinned block because Forge lacks Mezo precompiles; no real wallet or broadcast transaction",
+      "report": ".tools/loan-fork.check.json"
+    },
+    "apiTypecheck": "passed",
+    "frontendTypecheck": "passed",
+    "isolatedProductionBuild": "passed; public example settings only; dotenv disabled; loan-write controls remain production opt-in",
+    "formatting": "passed",
+    "whitespace": "passed",
+    "visualReview": "Fresh mobile proof, payer, workspace and admin screenshots reviewed; 320px overflow assertions and existing responsive regressions passed",
+    "guide": "In-app guide updated and docs/user-guide.md regenerated",
+    "finalBundleReview": "Proof imports only the deployment bytecode hash; unused public deployer metadata omitted. Designated admin address absent from frontend source and built assets. Typecheck/build and all 3 proof browser cases passed after the import refinement."
+  },
+  "implemented": [
+    "Saved owner/chain/deployment-scoped payment terms, reviewed loan debt and later observed debt/balance snapshot",
+    "Exact canonical loan/allowance/funding/transfer recovery, original recipient link and duplicate-submission guards",
+    "Protocol-aware planning with fee/mode/cap/minimum-debt rules and repayment reserve",
+    "Task checklist, transaction progress, contextual recovery and expandable details",
+    "Private client requests and whitelisted public payer pages with balance/gas/simulation checks, expiry and explicit reverted-transfer recovery",
+    "Shared atomic settlement claims across invoices and requests, idempotent crash recovery and conflict-checked backfill",
+    "Public sender-only pinned funding proof, exact claim/refund math and partial-state disclosure",
+    "Bounded request/error/latency metrics, reconciliation age and dated actual-cost record input",
+    "Per-wallet workspace selection survives reload",
+    "Installed-wallet validation and independent pilot runbook"
+  ],
+  "localPreview": {
+    "origin": "http://127.0.0.1:5300",
+    "admin": "http://127.0.0.1:5300/admin",
+    "database": "Temporary MongoDB, discarded on shutdown",
+    "adminWalletConfigured": true,
+    "adminSettings": "User-designated public wallet in ignored .runway-local.json; runner restarted; no frontend embedding or hosted configuration change",
+    "health": "200 ready/database connected",
+    "unsignedAuthSession": 401,
+    "unsignedAdminSession": 401,
+    "unsignedAdminOverview": 401,
+    "malformedPublicPaymentToken": 404
+  },
+  "publicHostedDiagnosticsCompletedBeforeFurtherInspectionWasSkipped": {
+    "checkedAt": "2026-11-03T16:18:49.553Z",
+    "directBackend": { "healthStatus": 200, "initialMilliseconds": 63809, "warmMilliseconds": 163, "database": "connected" },
+    "frontendProxy": { "healthStatus": 200, "initialMilliseconds": 64081, "warmMilliseconds": 206, "database": "connected" },
+    "unsignedSessions": "401 from both origins",
+    "interpretation": "Timing consistent with a cold start; earlier 45-second timeout did not establish an outage. User skipped further hosted inspection; no private logs or cloud settings inspected afterwards."
+  },
+  "remainingManualWork": [
+    "User signs local admin login message with designated installed wallet",
+    "Installed-wallet financial validation and independent sessions using docs/pilot-runbook.md",
+    "Dated actual cost record if operating-cost totals are desired",
+    "Separately authorized backend-first/frontend release"
+  ],
+  "boundaries": { "deployed": false, "committedOrPushed": false, "tagCreated": false, "productionDatabaseWritten": false, "hostingSettingsChanged": false, "realFinancialTransactionSignedOrBroadcast": false, "outreachSent": false, "paymentContractOrManifestChanged": false, "feeCollectionImplemented": false, "testnetActivityCountedAsRevenue": false }
+}

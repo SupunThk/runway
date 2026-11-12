@@ -25,7 +25,9 @@ Fund contractor payments upfront in MUSD on Mezo testnet. Contractors earn their
 3. Share `/schedules/<id>` with the contractor. Anyone may trigger a claim, but MUSD always goes to the stored recipient.
 4. The sender may cancel before the end. Cancellation returns only unvested funds; already claimed funds stay paid, and earned but unclaimed funds remain claimable.
 
-Funding a schedule is distinct from paying the recipient: payment occurs when MUSD is claimed. Schedule addresses, amounts and timing are public. Workspace business records are owner-private, but linked onchain payments remain public.
+Funding a schedule is distinct from paying the recipient: payment occurs when MUSD is claimed. Schedule addresses, amounts and timing are public. Workspace business records are private to the owner and accepted team roles; contractors see only their own submissions. Linked onchain payments remain public.
+
+The **November 4 local build** adds wallet invitations/roles, contractor invoice submission and approval quorums, payroll runs, recurring plans, dated cash forecasts, opt-in in-app reminders, reports/audit records and ERC-1271 contract-wallet login. These changes are uncommitted and undeployed. The new milestone contract and offline deployment package are prepared; app/proof integration remains behind its user-signed deployment gate. See [remaining-work status](docs/wave2-remaining-work.md) and [demo/release checklist](docs/wave2-demo-and-release.md).
 
 You can read the [documentation](https://mezo-runway-testnet.vercel.app/docs) and individual schedule pages without connecting a wallet. The guide includes [manual network setup](https://mezo-runway-testnet.vercel.app/docs#manual-network-setup), [MUSD import](https://mezo-runway-testnet.vercel.app/docs#manual-musd-import) and a Markdown download.
 
@@ -42,6 +44,14 @@ You can read the [documentation](https://mezo-runway-testnet.vercel.app/docs) an
 The payment contract has no owner/admin, upgrade or arbitrary withdrawal function. MUSD has separate privileged roles that can affect escrow balances; see the [trust assumptions](SECURITY.md#trust-assumptions).
 
 ## Run locally
+
+**November 3 local improvements:** saved Borrow → Fund plans with receipt recovery, protocol-aware planning and repayment reserves, client payment links in Workspace, public `/proof/<address>` funding evidence, and measured admin request/error/latency data. These changes remain local and undeployed. See the [implementation record](docs/improvements-implementation.md) and [pilot/wallet validation runbook](docs/pilot-runbook.md). `pnpm check:health` checks public service readiness; `pnpm test:fork` executes a disclosed, isolated protocol fork without a wallet or transaction broadcast.
+
+The isolated runner can read an ignored `.runway-local.json` containing `{"version":1,"adminWallet":"YOUR_PUBLIC_0x_ADDRESS"}`. An explicit `--admin-wallet` overrides it. This is local configuration; hosted access still requires the separate server-only allowlist.
+
+**Wave 2 local preview:** `node scripts/dev-local.mjs` starts an isolated frontend/API with a temporary database at `http://127.0.0.1:5300`. It uses public example settings and does not load `.env`. Open Borrowing → Open loan controls to review the new testnet actions. This increment is not deployed; see [local build details](docs/wave2-local-build.md).
+
+The local [admin dashboard](docs/admin-dashboard.md) is at `/admin`. Start with `node scripts/dev-local.mjs --admin-wallet YOUR_PUBLIC_0x_ADDRESS` to allow your designated wallet; otherwise admin access is denied. It shows aggregate usage, payment evidence and service health. Revenue remains explicitly unavailable until fee collection is implemented.
 
 Use **Node.js 24** and **pnpm 10.34.6**. The npm wrapper below works when pnpm is not installed globally.
 

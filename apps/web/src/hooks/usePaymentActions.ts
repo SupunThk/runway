@@ -11,9 +11,18 @@ import {
   type Hash,
   type Address,
 } from 'viem';
-import { paymentsAbi, TESTNET_CHAIN_ID } from '@runway/mezo';
+import { paymentsAbi, TESTNET_CHAIN_ID, type TeamInvoice } from '@runway/mezo';
+import { teamRequest } from '../teamApi';
 import { musdAddress, paymentAddress } from '../config';
 import { errorText } from '../format';
+import { readPendingLoan, withWalletLock } from '../loanPending';
+import {
+  findFundingIntent,
+  inspectIntentEvidence,
+  saveIntentEvidence,
+  type FundingIntent,
+  type IntentStep,
+} from '../fundingIntent';
 import { paymentDurationMinutes } from '../paymentOptions';
 import { apiFetch, readJson } from '../api';
 import type { usePendingTransaction, PendingTransaction } from '../pending';
@@ -57,6 +66,16 @@ export function usePaymentActions({
     !recovery.error &&
     !busy,
   );
+  async function checkWallet() {
+    if (
+      !wallet ||
+      (await wallet.getChainId()) !== TESTNET_CHAIN_ID ||
+      (await wallet.getAddresses())[0]?.toLowerCase() !== address?.toLowerCase()
+    )
+      throw new Error(
+        'Wallet account or network changed. Review the payment again.',
+      );
+  }
 
   async function transaction(action: () => Promise<void>) {
     setBusy(true);
@@ -68,7 +87,14 @@ export function usePaymentActions({
           'Connect to Mezo testnet and verify the payment deployment first.',
         );
       recovery.checkStorage();
-      await action();
+      await withWalletLock(address!, async () => {
+        recovery.checkStorage();
+        if (readPendingLoan(address!))
+          throw new Error(
+            'Check the saved loan transaction before submitting a payment.',
+          );
+        await action();
+      });
       setHistoryRevision((value) => value + 1);
       await Promise.all([balances.refetch(), schedules.refetch()]);
     } catch (error) {
@@ -83,6 +109,7 @@ export function usePaymentActions({
     target: Address,
     data: `0x${string}`,
     id?: bigint,
+    intent?: FundingIntent,
   ) {
     let tracked: PendingTransaction = {
       version: 1,
@@ -95,24 +122,67 @@ export function usePaymentActions({
       action,
       scheduleId: id?.toString(),
       submittedAt: new Date().toISOString(),
+      ...(intent ? { fundingIntentId: intent.id } : {}),
     };
     recovery.save(tracked);
     setHash(tx);
+    const step: IntentStep = action === 'Approval' ? 'approval' : 'funding';
+    const saveIntent = (
+      state: 'submitted' | 'confirmed' | 'reverted',
+      replacesHash?: Hash,
+    ) => {
+      if (intent)
+        saveIntentEvidence(
+          address!,
+          intent.id,
+          step,
+          {
+            hash: tracked.hash,
+            target: tracked.target,
+            data: tracked.data,
+            value: '0',
+            submittedAt: tracked.submittedAt,
+            state,
+          },
+          undefined,
+          replacesHash,
+        );
+    };
+    saveIntent('submitted');
     let changedAction = false;
     const receipt = await client!.waitForTransactionReceipt({
       hash: tx,
       timeout: 120000,
+      ...(intent ? { confirmations: 13 } : {}),
       onReplaced: (replacement) => {
         changedAction = replacement.reason !== 'repriced';
+        const previous = tracked.hash;
         tracked = { ...tracked, hash: replacement.transaction.hash };
         recovery.save(tracked);
         setHash(tracked.hash);
+        if (!changedAction) saveIntent('submitted', previous);
       },
     });
     if (changedAction)
       throw new Error(
         'Transaction was replaced. Check the saved transaction before continuing.',
       );
+    if (intent) {
+      const saved = findFundingIntent(address!, intent.id);
+      const result = await inspectIntentEvidence(
+        client!,
+        saved,
+        saved.evidence[step]!,
+      );
+      saveIntentEvidence(address!, intent.id, step, {
+        ...saved.evidence[step]!,
+        ...result,
+      });
+      if (result.state === 'submitted')
+        throw new Error(
+          'Waiting for 12 block confirmations. Resume this plan after checking the saved transaction.',
+        );
+    }
     recovery.clear(tracked.hash);
     return receipt;
   }
@@ -125,6 +195,7 @@ export function usePaymentActions({
         functionName: cancel ? 'cancel' : 'claim',
         args: [id],
       });
+      await checkWallet();
       const tx = await wallet!.writeContract(request);
       setHash(tx);
       setNotice('Transaction submitted. Waiting for confirmation…');
@@ -180,9 +251,28 @@ export function usePaymentActions({
       const params = new URLSearchParams(window.location.search);
       const invoiceId = params.get('invoiceId');
       const workspaceId = params.get('workspaceId');
+      async function checkInvoice() {
+        if (!invoiceId && !workspaceId) return;
+        if (!invoiceId || !workspaceId)
+          throw new Error('Reopen this invoice from your workspace.');
+        const reviewed = await teamRequest<TeamInvoice>(
+          `/workspaces/${encodeURIComponent(workspaceId)}/invoices/${encodeURIComponent(invoiceId)}/payment-plan`,
+        );
+        if (
+          reviewed.recipient.toLowerCase() !== recipient.toLowerCase() ||
+          reviewed.amountBaseUnits !== total.toString() ||
+          (reviewed.paymentType ?? 'schedule') !== paymentType ||
+          reviewed.paymentReference?.toLowerCase() !==
+            referenceHash.toLowerCase()
+        )
+          throw new Error(
+            'Payment terms differ from the approved invoice. Reopen it from your workspace.',
+          );
+      }
+      await checkInvoice();
       if (
         paymentType === 'one-time' &&
-        reference &&
+        referenceHash !== zeroHash &&
         (!invoiceId || !workspaceId)
       )
         throw new Error(
@@ -195,6 +285,58 @@ export function usePaymentActions({
               String(data.get('durationUnit') ?? 'minutes'),
             )
           : 0;
+      const intentId = params.get('intent');
+      const intent = intentId
+        ? findFundingIntent(address!, intentId)
+        : undefined;
+      if (intent) {
+        if (
+          intent.recipient.toLowerCase() !== recipient.toLowerCase() ||
+          intent.amountBaseUnits !== total.toString() ||
+          intent.paymentType !== paymentType ||
+          intent.durationMinutes !== durationMinutes ||
+          intent.reference.toLowerCase() !== referenceHash.toLowerCase() ||
+          (intent.invoiceId ?? null) !== invoiceId ||
+          (intent.workspaceId ?? null) !== workspaceId
+        )
+          throw new Error(
+            'Payment terms differ from this saved plan. Reopen the plan before signing.',
+          );
+        if (
+          intent.evidence.loan &&
+          (await inspectIntentEvidence(client!, intent, intent.evidence.loan))
+            .state !== 'confirmed'
+        )
+          throw new Error(
+            'Check and confirm the saved borrowing transaction before funding.',
+          );
+        if (
+          intent.evidence.funding &&
+          (
+            await inspectIntentEvidence(
+              client!,
+              intent,
+              intent.evidence.funding,
+            )
+          ).state !== 'reverted'
+        )
+          throw new Error(
+            'This plan already has a payment transaction. Check its receipt; do not fund it again.',
+          );
+        if (
+          intent.evidence.approval &&
+          (
+            await inspectIntentEvidence(
+              client!,
+              intent,
+              intent.evidence.approval,
+            )
+          ).state === 'submitted'
+        )
+          throw new Error(
+            'Approval is still awaiting confirmations. Resume this plan after checking its receipt.',
+          );
+      }
       const balance = await client!.readContract({
         address: musdAddress!,
         abi: erc20Abi,
@@ -218,6 +360,8 @@ export function usePaymentActions({
             'The token rejected this payment. No transaction was submitted.',
           );
         recovery.checkStorage();
+        await checkWallet();
+        await checkInvoice();
         const tx = await wallet!.writeContract(request);
         setNotice('Payment submitted. Waiting for confirmation…');
         const receipt = await waitTracked(
@@ -225,6 +369,8 @@ export function usePaymentActions({
           'Payment',
           musdAddress!,
           encodeFunctionData({ abi: erc20Abi, functionName: 'transfer', args }),
+          undefined,
+          intent,
         );
         if (receipt.status !== 'success')
           throw new Error(
@@ -258,8 +404,10 @@ export function usePaymentActions({
             );
           }
         }
-        onCreated();
-        window.history.replaceState(null, '', '/');
+        if (!intent) {
+          onCreated();
+          window.history.replaceState(null, '', '/');
+        }
         return;
       }
       const allowance = await client!.readContract({
@@ -277,6 +425,8 @@ export function usePaymentActions({
           functionName: 'approve',
           args: [paymentAddress!, total],
         });
+        await checkWallet();
+        await checkInvoice();
         const approval = await wallet!.writeContract(request);
         setHash(approval);
         const receipt = await waitTracked(
@@ -288,6 +438,8 @@ export function usePaymentActions({
             functionName: 'approve',
             args: [paymentAddress!, total],
           }),
+          undefined,
+          intent,
         );
         if (receipt.status !== 'success')
           throw new Error('Approval reverted; no schedule was funded.');
@@ -307,6 +459,8 @@ export function usePaymentActions({
         args: [getAddress(recipient), total, start, end, referenceHash],
       });
       recovery.checkStorage();
+      await checkWallet();
+      await checkInvoice();
       const tx = await wallet!.writeContract(request);
       setHash(tx);
       setNotice('Schedule submitted. Waiting for confirmation…');
@@ -319,6 +473,8 @@ export function usePaymentActions({
           functionName: 'createSchedule',
           args: [getAddress(recipient), total, start, end, referenceHash],
         }),
+        undefined,
+        intent,
       );
       if (receipt.status !== 'success')
         throw new Error(
@@ -335,8 +491,10 @@ export function usePaymentActions({
           ? `Schedule #${id} confirmed. Share its recipient link below.`
           : 'Schedule confirmed. Refresh to view it.',
       );
-      onCreated();
-      window.history.replaceState(null, '', '/');
+      if (!intent) {
+        onCreated();
+        window.history.replaceState(null, '', '/');
+      }
     });
   }
 

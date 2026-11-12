@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 
-export const knowledgeVersion = '2026-10-23';
+export const knowledgeVersion = '2026-11-04';
 const document = readFileSync(
   new URL('../../../docs/assistant-knowledge.md', import.meta.url),
   'utf8',

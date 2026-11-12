@@ -32,12 +32,15 @@ for (const scenario of [
   'payment',
   'payment-submitted',
   'payment-confirmed',
+  'payment-unapproved',
 ] as const) {
   test(`recovers ${scenario} transaction after reload without signing`, async ({
     page,
   }) => {
     const submitted =
-      scenario.endsWith('-submitted') || scenario === 'payment-confirmed';
+      scenario.endsWith('-submitted') ||
+      scenario === 'payment-confirmed' ||
+      scenario === 'payment-unapproved';
     const action = scenario.startsWith('payment')
       ? 'Payment'
       : scenario.startsWith('approval')
@@ -94,6 +97,7 @@ for (const scenario of [
         if (
           !scenario.endsWith('-submitted') &&
           scenario !== 'payment-confirmed' &&
+          scenario !== 'payment-unapproved' &&
           !sessionStorage.getItem('recovery-seeded')
         ) {
           localStorage.setItem(
@@ -136,7 +140,28 @@ for (const scenario of [
       scenario === 'payment-confirmed' ||
       (!submitted && scenario !== 'pending' && scenario !== 'rpc-error');
     let invoicePayment: unknown;
-    if (scenario === 'payment-confirmed') {
+    if (scenario === 'payment-confirmed' || scenario === 'payment-unapproved') {
+      await page.route(
+        '**/api/workspaces/test-workspace/invoices/test-invoice/payment-plan',
+        (route) =>
+          route.fulfill({
+            status: scenario === 'payment-unapproved' ? 409 : 200,
+            json:
+              scenario === 'payment-unapproved'
+                ? {
+                    error:
+                      'This invoice requires current independent workspace approvals.',
+                  }
+                : {
+                    _id: 'test-invoice',
+                    recipient: sender,
+                    amountBaseUnits: '1000000000000000000',
+                    paymentType: 'one-time',
+                    paymentReference: `0x${'2'.repeat(64)}`,
+                    approval: { ready: true },
+                  },
+          }),
+      );
       await page.route(
         '**/api/workspaces/test-workspace/invoices/test-invoice/payment',
         async (route) => {
@@ -295,7 +320,7 @@ for (const scenario of [
       });
     });
     await page.goto(
-      scenario === 'payment-confirmed'
+      scenario === 'payment-confirmed' || scenario === 'payment-unapproved'
         ? `/?create=1&paymentType=one-time&workspaceId=test-workspace&invoiceId=test-invoice&reference=0x${'2'.repeat(64)}`
         : scenario === 'approval-submitted' || scenario === 'payment-submitted'
           ? '/?create=1'
@@ -312,7 +337,8 @@ for (const scenario of [
       }
       if (
         scenario === 'payment-submitted' ||
-        scenario === 'payment-confirmed'
+        scenario === 'payment-confirmed' ||
+        scenario === 'payment-unapproved'
       ) {
         if (scenario === 'payment-submitted')
           await page.getByLabel('Payment type').selectOption('one-time');
@@ -338,6 +364,23 @@ for (const scenario of [
           page.getByRole('button', { name: 'Claim MUSD' }),
         ).toBeEnabled();
         await page.getByRole('button', { name: 'Claim MUSD' }).click();
+      }
+      if (scenario === 'payment-unapproved') {
+        await expect(
+          page.getByText(
+            'This invoice requires current independent workspace approvals.',
+          ),
+        ).toBeVisible();
+        expect(
+          await page.evaluate(
+            () =>
+              (window as any).recoveryWalletCalls.filter(
+                (method: string) => method === 'eth_sendTransaction',
+              ).length,
+          ),
+        ).toBe(0);
+        expect(invoicePayment).toBeUndefined();
+        return;
       }
       if (scenario === 'payment-confirmed') {
         await expect(

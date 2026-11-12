@@ -32,6 +32,8 @@ Scope addition, October 17: **Assistant Phase 1** is implemented locally, uncomm
 
 Payroll runs; recurring payment management; contractor invoice submission and approval; treasury forecasting; team roles and multisig; notifications and consolidated reports. Delivery dates need replanning around the expanded scope; original calendar entries are historical planning assumptions.
 
+November 4 local delivery: those team-operation workflows now have implemented API/UI flows, role checks, invoice/run approval quorums, evidence-derived progress, explicit recurrence preparation, dated assumption-based cash planning and opt-in in-app reminders/reports/audit. ERC-1271 authentication is implemented with test fixtures; installed-wallet compatibility remains manual. Milestone escrow has a separate tested contract and deployment preparation, with app integration gated on a user-signed deployment. Pilot sessions, installed-wallet validation and release/submission evidence remain unfinished. See [the dated implementation checklist](wave2-remaining-work.md); these changes are not deployed.
+
 ## Local workflow
 
 1. Preserve the existing root `.env`. Add the backend settings documented in [backend setup](backend.md).

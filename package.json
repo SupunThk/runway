@@ -9,6 +9,12 @@
   },
   "scripts": {
     "dev": "node scripts/dev.mjs",
+    "dev:local": "node scripts/dev-local.mjs",
+    "build:local": "node scripts/local-web.mjs --build",
+    "test:browser:local": "playwright test --config playwright.local.config.ts",
+    "check:health": "node scripts/check-service-health.mjs",
+    "test:fork": "node scripts/verify-loan-fork.mjs",
+    "prepare:milestones": "node scripts/prepare-milestones.mjs",
     "dev:web": "pnpm --filter @runway/web dev",
     "dev:api": "pnpm --filter @runway/api dev",
     "build": "pnpm --filter @runway/api build && pnpm --filter @runway/web build",

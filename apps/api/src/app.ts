@@ -14,9 +14,36 @@ import {
 } from 'viem';
 import { createSiweMessage } from 'viem/siwe';
 import { database } from './db.ts';
+import { createAdminRoutes, parseAdminWallets } from './admin.ts';
+import { recordWorkspaceActivity } from './admin-metrics.ts';
+import { recordRequestMetric, requestFamily } from './operations.ts';
+import { reserveSettlement } from './settlements.ts';
+import {
+  contractSignatureVerifier,
+  type ContractSignatureVerifier,
+  type ContractLoginProof,
+} from './contract-auth.ts';
+import {
+  createParticipationRoutes,
+  createTeamOperations,
+} from './team-operations.ts';
+import {
+  workspaceAccess,
+  requireRole,
+  invoiceApproval,
+  requireInvoiceApproval,
+  type Member,
+  type WorkspaceAccess,
+} from './workspace-access.ts';
+import {
+  createOwnerPaymentRoutes,
+  createPublicPaymentRoutes,
+} from './payment-requests.ts';
 import {
   directPaymentVerifier,
+  paymentRequestVerifier,
   type DirectVerifier,
+  type TransferVerifier,
 } from './direct-payments.ts';
 import type { Hash } from 'viem';
 import {
@@ -38,8 +65,13 @@ type Challenge = RecordBase & {
   address: string;
   message: string;
   expiresAt: Date;
+  kind?: 'contract';
 };
-type Session = RecordBase & { address: string; expiresAt: Date };
+type Session = RecordBase & {
+  address: string;
+  expiresAt: Date;
+  contractProof?: ContractLoginProof;
+};
 type Workspace = RecordBase & {
   owner: string;
   name: string;
@@ -66,9 +98,11 @@ type Invoice = RecordBase & {
   transactionHash?: Hash;
   scheduleId?: string;
   createdAt: string;
+  submittedBy?: string;
+  reviewRejected?: string;
 };
 type RateLimit = RecordBase & { count: number; expiresAt: Date };
-type Variables = { db: Db; address: string };
+type Variables = { db: Db; address: string; workspaceAccess: WorkspaceAccess };
 const COOKIE = 'runway_session';
 const SESSION_SECONDS = 60 * 60 * 24;
 const digest = (token: string) =>
@@ -189,13 +223,23 @@ export function createApp(
     assistantEnabled?: boolean;
     assistantDailyLimit?: number;
     verifyDirectPayment?: DirectVerifier;
+    verifyPaymentRequest?: TransferVerifier;
+    adminWallets?: string[];
+    verifyContractSignature?: ContractSignatureVerifier;
   } = {},
 ) {
   const app = new Hono<{ Variables: Variables }>();
   const getDb = options.getDb ?? database;
   const now = options.now ?? (() => new Date());
+  const verifyContractSignature =
+    options.verifyContractSignature ?? contractSignatureVerifier();
   const verifyDirectPayment =
     options.verifyDirectPayment ?? directPaymentVerifier();
+  const paymentOptions = {
+    now,
+    rateLimit,
+    verify: options.verifyPaymentRequest ?? paymentRequestVerifier(),
+  };
   let activeAssistantRequests = 0;
   const configuredOrigin =
     options.origin ??
@@ -213,6 +257,36 @@ export function createApp(
   };
 
   app.use('*', secureHeaders());
+  app.use('*', async (c, next) => {
+    const started = performance.now();
+    c.header('X-Request-Id', randomUUID());
+    await next();
+    const family = requestFamily(c.req.path);
+    const db = c.get('db');
+    if (family && c.res.status >= 500)
+      console.warn(
+        JSON.stringify({
+          event: 'request_failed',
+          family,
+          status: c.res.status,
+          durationMs: Math.round(performance.now() - started),
+          requestId: c.res.headers.get('X-Request-Id'),
+        }),
+      );
+    if (family && db) {
+      try {
+        await recordRequestMetric(
+          db,
+          family,
+          c.res.status,
+          performance.now() - started,
+          now(),
+        );
+      } catch {
+        console.warn('Request metrics could not be recorded.');
+      }
+    }
+  });
   app.use(
     '*',
     bodyLimit({
@@ -347,7 +421,10 @@ export function createApp(
     }
   });
   app.post('/api/auth/challenge', async (c) => {
-    const address = walletAddress((await json(c.req.raw)).address);
+    const input = await json(c.req.raw);
+    const address = walletAddress(input.address);
+    if (input.kind !== undefined && input.kind !== 'contract')
+      return fail(400, 'Choose a valid wallet login kind.');
     const db = c.get('db');
     const issuedAt = now();
     await rateLimit(db, 'auth-global', 300, issuedAt);
@@ -366,20 +443,24 @@ export function createApp(
       statement:
         'Sign in to Runway. This does not authorize any payment or blockchain transaction.',
     });
-    await db
-      .collection<Challenge>('challenges')
-      .insertOne({ _id: nonce, address, message, expiresAt });
+    await db.collection<Challenge>('challenges').insertOne({
+      _id: nonce,
+      address,
+      message,
+      expiresAt,
+      ...(input.kind === 'contract' ? { kind: 'contract' as const } : {}),
+    });
     return c.json({ nonce, message, expiresAt: expiresAt.toISOString() });
   });
   app.post('/api/auth/verify', async (c) => {
     const body = await json(c.req.raw);
     const nonce = text(body.nonce, 'Nonce', 32);
-    const signature = text(body.signature, 'Signature', 132);
+    const signature = text(body.signature, 'Signature', 8194);
     if (
       !/^[a-f0-9]{32}$/.test(nonce) ||
-      !/^0x[a-fA-F0-9]{130}$/.test(signature)
+      !/^0x(?:[a-fA-F0-9]{2}){1,4096}$/.test(signature)
     )
-      return fail(400, 'Invalid nonce or EOA signature.');
+      return fail(400, 'Invalid nonce or wallet signature.');
     const db = c.get('db');
     await rateLimit(db, 'auth-global', 300, now());
     const challenge = await db
@@ -389,13 +470,22 @@ export function createApp(
       return fail(401, 'Login request expired or already used. Sign again.');
     await rateLimit(db, `verify:${challenge.address}`, 20, now());
     let valid = false;
+    const proof: ContractLoginProof = {
+      address: getAddress(challenge.address),
+      message: challenge.message,
+      signature: signature as `0x${string}`,
+    };
     try {
-      valid = await verifyMessage({
-        address: getAddress(challenge.address),
-        message: challenge.message,
-        signature: signature as `0x${string}`,
-      });
+      valid =
+        challenge.kind === 'contract'
+          ? await verifyContractSignature(proof)
+          : signature.length === 132 && (await verifyMessage(proof));
     } catch {
+      if (challenge.kind === 'contract')
+        return fail(
+          503,
+          'Contract-wallet verification unavailable. The challenge was not consumed; retry when Mezo RPC is current.',
+        );
       /* Malformed signatures are authentication failures. */
     }
     if (!valid)
@@ -416,10 +506,12 @@ export function createApp(
       _id: digest(token),
       address: challenge.address,
       expiresAt: new Date(now().getTime() + SESSION_SECONDS * 1000),
+      ...(challenge.kind === 'contract' ? { contractProof: proof } : {}),
     });
     setCookie(c, COOKIE, token, cookieOptions);
     return c.json({ address: challenge.address });
   });
+  app.route('/api/pay', createPublicPaymentRoutes(paymentOptions));
   app.use('/api/*', async (c, next) => {
     const token = getCookie(c, COOKIE);
     const session =
@@ -431,12 +523,55 @@ export function createApp(
         : null;
     if (!session)
       return c.json({ error: 'Sign in with your wallet to continue.' }, 401);
+    if (session.contractProof) {
+      let valid: boolean;
+      try {
+        valid = await verifyContractSignature(session.contractProof);
+      } catch {
+        return fail(
+          503,
+          'Contract-wallet session verification is unavailable. No workspace action was authorized.',
+        );
+      }
+      if (!valid) {
+        await c
+          .get('db')
+          .collection<Session>('sessions')
+          .deleteOne({ _id: session._id });
+        return fail(
+          401,
+          'Contract-wallet signature is no longer valid. Sign in again.',
+        );
+      }
+    }
     c.set('address', session.address);
     if (c.req.method !== 'GET')
       await rateLimit(c.get('db'), `write:${session.address}`, 60, now());
     await next();
   });
   app.get('/api/auth/session', (c) => c.json({ address: c.get('address') }));
+  app.route(
+    '/api/admin',
+    createAdminRoutes({
+      now,
+      wallets: () =>
+        parseAdminWallets(
+          options.adminWallets?.join(',') ?? process.env.RUNWAY_ADMIN_WALLETS,
+        ),
+      throttle: (db, address, instant) =>
+        rateLimit(db, `admin:${address}`, 30, instant),
+    }),
+  );
+  app.use('/api/workspaces*', async (c, next) => {
+    await next();
+    if (c.res.status < 400) {
+      try {
+        await recordWorkspaceActivity(c.get('db'), c.get('address'), now());
+      } catch {
+        console.warn('Workspace activity could not be recorded.');
+      }
+    }
+  });
   app.post('/api/auth/logout', async (c) => {
     await c
       .get('db')
@@ -445,16 +580,43 @@ export function createApp(
     setCookie(c, COOKIE, '', { ...cookieOptions, maxAge: 0 });
     return c.json({ ok: true });
   });
-  app.get('/api/workspaces', async (c) =>
-    c.json(
-      await page<Workspace>(
-        c.get('db'),
-        'workspaces',
-        { owner: c.get('address') },
-        c.req.query('after'),
-      ),
-    ),
-  );
+  app.route('/api/participation', createParticipationRoutes(now));
+  app.get('/api/workspaces', async (c) => {
+    const memberships = await c
+      .get('db')
+      .collection<Member>('workspaceMembers')
+      .find({
+        address: c.get('address'),
+        status: 'active',
+        role: { $ne: 'contractor' },
+      })
+      .limit(1001)
+      .toArray();
+    const result = await page<Workspace>(
+      c.get('db'),
+      'workspaces',
+      {
+        $or: [
+          { owner: c.get('address') },
+          {
+            _id: { $in: memberships.slice(0, 1000).map((m) => m.workspaceId) },
+          },
+        ],
+      },
+      c.req.query('after'),
+    );
+    return c.json({
+      ...result,
+      partial: memberships.length > 1000,
+      items: result.items.map((w) => ({
+        ...w,
+        role:
+          w.owner === c.get('address')
+            ? 'owner'
+            : memberships.find((m) => m.workspaceId === w._id)!.role,
+      })),
+    });
+  });
   app.post('/api/workspaces', async (c) => {
     const name = text((await json(c.req.raw)).name, 'Workspace name', 80);
     const row: Workspace = {
@@ -467,16 +629,56 @@ export function createApp(
     return c.json(row, 201);
   });
   app.use('/api/workspaces/:workspaceId/*', async (c, next) => {
-    const workspace = await c
-      .get('db')
-      .collection<Workspace>('workspaces')
-      .findOne({
-        _id: id(c.req.param('workspaceId')),
-        owner: c.get('address'),
+    const access = await workspaceAccess(
+      c.get('db'),
+      id(c.req.param('workspaceId')),
+      c.get('address'),
+    );
+    c.set('workspaceAccess', access);
+    if (c.req.method !== 'GET') {
+      const path = c.req.path;
+      if (
+        /\/(?:contractors|invoices|payment-requests)$/.test(path) ||
+        /\/payment-requests\/[^/]+\/cancel$/.test(path)
+      )
+        requireRole(access, ['owner', 'manager']);
+      if (/\/invoices\/[^/]+\/payment$/.test(path))
+        requireRole(access, ['owner']);
+      const event = randomUUID();
+      const audit = c.get('db').collection<{
+        _id: string;
+        workspaceId: string;
+        actor: string;
+        action: string;
+        outcome: string;
+        createdAt: string;
+        expiresAt: Date;
+      }>('workspaceAudit');
+      await audit.insertOne({
+        _id: event,
+        workspaceId: access.workspace._id,
+        actor: c.get('address'),
+        action: path
+          .slice(`/api/workspaces/${access.workspace._id}/`.length)
+          .slice(0, 240),
+        outcome: 'started',
+        createdAt: now().toISOString(),
+        expiresAt: new Date(now().getTime() + 365 * 86400000),
       });
-    if (!workspace) return fail(404, 'Workspace not found.');
-    await next();
+      try {
+        await next();
+      } finally {
+        await audit.updateOne(
+          { _id: event },
+          { $set: { outcome: c.res.status < 400 ? 'completed' : 'rejected' } },
+        );
+      }
+    } else await next();
   });
+  app.route(
+    '/api/workspaces/:workspaceId',
+    createTeamOperations({ now, verify: verifyDirectPayment }),
+  );
   app.get('/api/workspaces/:workspaceId/contractors', async (c) =>
     c.json(
       await page<Contractor>(
@@ -486,6 +688,10 @@ export function createApp(
         c.req.query('after'),
       ),
     ),
+  );
+  app.route(
+    '/api/workspaces/:workspaceId/payment-requests',
+    createOwnerPaymentRoutes(paymentOptions),
   );
   app.post('/api/workspaces/:workspaceId/contractors', async (c) => {
     const body = await json(c.req.raw);
@@ -506,15 +712,27 @@ export function createApp(
       { workspaceId: c.req.param('workspaceId') },
       c.req.query('after'),
     );
+    const result = await reconcileInvoices(
+      c.get('db'),
+      rows.items,
+      c.get('workspaceAccess').workspace.owner,
+      now(),
+      verifyDirectPayment,
+    );
     return c.json({
       ...rows,
-      ...(await reconcileInvoices(
-        c.get('db'),
-        rows.items,
-        c.get('address'),
-        now(),
-        verifyDirectPayment,
-      )),
+      ...result,
+      items: await Promise.all(
+        result.items.map(async (invoice, index) => ({
+          ...rows.items[index],
+          payment: invoice.payment,
+          approval: await invoiceApproval(
+            c.get('db'),
+            c.get('workspaceAccess'),
+            rows.items[index],
+          ),
+        })),
+      ),
     });
   });
   app.post(
@@ -526,6 +744,7 @@ export function createApp(
         workspaceId: c.req.param('workspaceId'),
       });
       if (!invoice) return fail(404, 'Invoice not found.');
+      await requireInvoiceApproval(db, c.get('workspaceAccess'), invoice);
       const body = await json(c.req.raw);
       if (invoice.paymentType === 'one-time') {
         if (
@@ -555,6 +774,16 @@ export function createApp(
             503,
             'Could not verify the payment. Retry linking this transaction; do not send another payment.',
           );
+        await reserveSettlement(
+          db,
+          `${paymentDeployment.chainId}:${paymentDeployment.token}:${transactionHash}`,
+          {
+            targetType: 'invoice',
+            targetId: invoice._id,
+            workspaceId: invoice.workspaceId,
+          },
+          now(),
+        );
         try {
           const result = await db.collection<Invoice>('invoices').updateOne(
             {
@@ -619,6 +848,16 @@ export function createApp(
         schedule.referenceHash !== invoice.paymentReference
       )
         return fail(409, 'Schedule references another payment.');
+      await reserveSettlement(
+        db,
+        `${indexKey}:${body.scheduleId}`,
+        {
+          targetType: 'invoice',
+          targetId: invoice._id,
+          workspaceId: invoice.workspaceId,
+        },
+        now(),
+      );
       try {
         const result = await db.collection<Invoice>('invoices').updateOne(
           {

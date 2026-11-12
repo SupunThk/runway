@@ -1,0 +1,116 @@
+{
+  "checkedAt": "2026-11-04T01:45:50.643Z",
+  "status": "team-operations-implemented-locally-milestones-prepared-not-deployed",
+  "baseCommit": "b27b109c52b963f1f38d7f0cbca89b285e2d0226",
+  "baseline": {
+    "unitApiFrontend": 152,
+    "files": 20,
+    "apiTypecheck": "passed",
+    "frontendTypecheck": "passed",
+    "preExistingStatus": ".tools/wave2-start-status.txt"
+  },
+  "checks": {
+    "unitApiFrontend": {
+      "passed": 172,
+      "failed": 0,
+      "files": 23
+    },
+    "browser": {
+      "passed": 119,
+      "failed": 0,
+      "fullRun": true,
+      "duration": "58.5 seconds",
+      "config": "playwright.local.config.ts",
+      "afterFinalContractorRevocationGuard": "Both team-operation browser stories passed again (12.9 seconds); full unit/API suite passed after the guard."
+    },
+    "contracts": {
+      "passed": 39,
+      "failed": 0,
+      "optionalForkSkipped": 1,
+      "existingPassed": 24,
+      "newMilestonePassed": 15,
+      "fuzzRuns": 256,
+      "invariantCampaigns": 4,
+      "runsPerCampaign": 128,
+      "callsPerCampaign": 16384,
+      "skipped": "Opt-in Mezo fork; no fresh fork evidence is claimed for this increment."
+    },
+    "apiTypecheck": "passed",
+    "frontendTypecheck": "passed",
+    "isolatedProductionBuild": "passed after final CSS refinement; public example settings; no dotenv",
+    "deploymentUiBuild": "passed offline with a public fixture deployer and both artifacts; no wallet connection or broadcast",
+    "deploymentPreparation": "passed offline; source dependency hashes and compiler settings match the artifact; standard JSON generated",
+    "formatting": "passed",
+    "whitespace": "passed",
+    "originalPaymentContractAndManifest": "unchanged",
+    "localAdminSettings": "ignored; not embedded in public bundle",
+    "visual": "320px team-flow screenshot reviewed; overflow assertion passed; checkbox sizing refined and mobile story passed again",
+    "guide": "In-app guide updated and docs/user-guide.md regenerated; assistant knowledge version 2026-11-04"
+  },
+  "implemented": [
+    "Accepted wallet invitations, manager/approver/viewer/contractor roles, revocation and reinvitation safeguards",
+    "Private contractor submissions with independent invoice review and policy-versioned quorum",
+    "Owner-only fresh invoice-term checks before wallet prompts and evidence linking",
+    "Payroll runs with unique invoice assignment, exact bigint totals, separate approvals and confirmation-derived progress",
+    "Weekly/monthly plans with explicit reviewed-date preparation, deterministic duplicate/crash recovery, missed dates and pause/resume",
+    "Dated cash forecasts with reserve, optional expected-revenue assumptions and bounded/partial-source disclosure",
+    "Opt-in per-wallet/workspace in-app reminders, scoped formula-safe CSV and one-year private audit records",
+    "ERC-1271 contract login with fresh/canonical Mezo reads and session revalidation; simulated tests only",
+    "Separate immutable RunwayMilestones with unit/adversarial/fuzz/invariant tests and offline deployment/explorer tooling",
+    "Guide/security updates, expanded pilot cases and demo/changelog/release worksheet"
+  ],
+  "localPreview": {
+    "origin": "http://127.0.0.1:5301",
+    "workspace": "/workspace",
+    "admin": "/admin",
+    "database": "New temporary MongoDB; discarded on shutdown",
+    "previousPreview": "Port 5300 left untouched to preserve existing demo records",
+    "adminWalletConfigured": true,
+    "assistant": "disabled",
+    "dotenv": "disabled",
+    "lastHealth": {
+      "checkedAt": "2026-11-04T01:45:50.645Z",
+      "status": 200,
+      "database": "connected",
+      "unsignedSession": 401,
+      "unsignedAdmin": 401
+    }
+  },
+  "milestoneGate": {
+    "preparation": "deployments/milestones-preparation.check.json",
+    "creationBytecodeHash": "0x48f23c7b27199148bf4c857526e8633ab08ffdfc1c219a31fa6ae85717e86948",
+    "deployed": false,
+    "appIntegrated": false,
+    "combinedProof": false,
+    "instruction": "docs/wave2-extensions-implementation-plan.md Phase 5: Do not begin Phase 6 until this gate is satisfied.",
+    "next": "User signs deployment using prepared browser tooling; actual address/receipt must be independently verified before app/invoice/proof integration."
+  },
+  "remaining": [
+    "User-signed milestone deployment, verified manifest and gated app/invoice/proof integration",
+    "Installed-wallet admin/financial/multisig compatibility validation",
+    "Independent participant sessions and actual feedback",
+    "Dated actual costs if desired",
+    "Recorded demo, confirmed Wave 1 submission identity, authorized release and actual submission"
+  ],
+  "limits": [
+    "Offchain policies do not constrain external wallet transactions; in-flight requests may already have authorization",
+    "Reports show latest 100 invoices and disclose unknown/partial evidence",
+    "Forecast cash/revenue assumptions stay in the page session; no gas, interest, price or intraday prediction",
+    "In-app reminders require an open/refreshed page; no email/push/background transaction service",
+    "Contract-wallet authentication tests do not establish installed multisig connector/transaction compatibility"
+  ],
+  "boundaries": {
+    "committedOrPushed": false,
+    "tagCreated": false,
+    "deployed": false,
+    "broadcast": false,
+    "realFinancialTransactionSigned": false,
+    "productionDatabaseWritten": false,
+    "hostingSettingsChanged": false,
+    "privateHostedInspection": false,
+    "outreachSent": false,
+    "originalPaymentContractOrManifestChanged": false,
+    "billingOrAtomicRoutingAdded": false,
+    "independentPilotsClaimed": false
+  }
+}

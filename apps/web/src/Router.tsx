@@ -14,6 +14,9 @@ const Borrowing = lazy(() =>
 const Assistant = lazy(() =>
   import('./Assistant').then((m) => ({ default: m.Assistant })),
 );
+const Admin = lazy(() => import('./Admin').then((m) => ({ default: m.Admin })));
+const Pay = lazy(() => import('./Pay').then((m) => ({ default: m.Pay })));
+const Proof = lazy(() => import('./Proof').then((m) => ({ default: m.Proof })));
 
 const currentRoute = () => window.location.pathname + window.location.search;
 
@@ -47,7 +50,7 @@ export function Router() {
     if (
       url.origin !== window.location.origin ||
       url.hash ||
-      !/^\/(?:docs\/?|workspace\/?|borrowing\/?|assistant\/?|schedules\/[^/]+\/?)?$/.test(
+      !/^\/(?:admin\/?|docs\/?|workspace\/?|borrowing\/?|assistant\/?|pay\/[^/]+\/?|proof\/[^/]+\/?|schedules\/[^/]+\/?)?$/.test(
         url.pathname,
       )
     )
@@ -64,7 +67,13 @@ export function Router() {
   return (
     <div className="router" onClick={navigate}>
       <Suspense fallback={<RouteFallback />}>
-        {/^\/assistant\/?$/.test(pathname) ? (
+        {/^\/pay\/[^/]+\/?$/.test(pathname) ? (
+          <Pay key={pathname} />
+        ) : /^\/proof\/[^/]+\/?$/.test(pathname) ? (
+          <Proof key={pathname} />
+        ) : /^\/admin\/?$/.test(pathname) ? (
+          <Admin />
+        ) : /^\/assistant\/?$/.test(pathname) ? (
           <Assistant />
         ) : /^\/docs\/?$/.test(pathname) ? (
           <Documentation />

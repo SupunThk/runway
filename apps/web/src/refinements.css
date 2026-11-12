@@ -492,3 +492,287 @@
     overflow-wrap: anywhere;
   }
 }
+/* Local loan controls retain the existing typography, surfaces and mobile layout. */
+.loan-controls {
+  margin-top: 24px;
+}
+.loan-controls form {
+  max-width: 760px;
+}
+.loan-controls fieldset {
+  display: grid;
+  gap: 20px;
+  min-width: 0;
+  border: 0;
+  padding: 0;
+  margin: 24px 0;
+}
+.loan-controls label {
+  display: grid;
+  gap: 8px;
+}
+.loan-controls .button {
+  margin: 8px 8px 0 0;
+}
+.loan-controls .mono {
+  overflow-wrap: anywhere;
+}
+.loan-review {
+  margin-top: 24px;
+}
+.admin-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: 24px;
+}
+.admin-metrics {
+  display: grid;
+  gap: 24px;
+}
+.admin-status-value {
+  font-size: clamp(1.2rem, 2vw, 1.8rem);
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.admin-toolbar {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.admin-toolbar label {
+  display: grid;
+  gap: 8px;
+}
+.admin-toolbar .hint {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.admin-status-list {
+  margin: 20px 0;
+}
+.admin-status-list > div {
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border, #dfe1e4);
+}
+.admin-status-list dd {
+  margin: 6px 0 0;
+  font-weight: 600;
+}
+.admin-daily summary {
+  cursor: pointer;
+  min-height: 44px;
+  padding: 12px 0;
+}
+.admin-table-scroll {
+  overflow-x: auto;
+}
+.admin-table-scroll table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+.admin-table-scroll caption {
+  text-align: left;
+  padding: 12px 0;
+  color: #60646b;
+}
+.admin-table-scroll th,
+.admin-table-scroll td {
+  text-align: left;
+  padding: 12px 8px;
+  border-bottom: 1px solid #dfe1e4;
+}
+.admin-content .borrowing-values dd {
+  overflow-wrap: anywhere;
+}
+.admin-privacy p {
+  margin-bottom: 0;
+}
+@media (max-width: 1000px) {
+  .admin-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.admin-toolbar select {
+  min-height: 48px;
+  min-width: 180px;
+  padding: 10px 14px;
+  border: 1px solid #dfe1e4;
+  border-radius: 10px;
+  background: #fff;
+  font: inherit;
+}
+.funding-plan,
+.receivables,
+.public-payment {
+  min-width: 0;
+}
+.proof-content .mono {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.funding-plan .mono,
+.receivable-row .mono,
+.public-payment .mono {
+  overflow-wrap: anywhere;
+}
+.transaction-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+  gap: 12px;
+  padding: 0;
+  list-style-position: inside;
+}
+.transaction-steps li {
+  background: var(--surface, #f3f6f4);
+  padding: 12px;
+  border-radius: 8px;
+}
+.payment-checklist {
+  margin: 0 0 24px;
+  padding: 20px;
+  background: #eef5f1;
+  border: 1px solid #dce8e1;
+  border-radius: 12px;
+}
+.payment-checklist h2 {
+  margin: 0 0 16px;
+  font-size: 17px;
+}
+.payment-checklist ol {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  list-style: none;
+  padding: 0;
+}
+.payment-checklist li {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: baseline;
+  font-size: 13px;
+}
+.payment-checklist small {
+  display: block;
+  flex-basis: 100%;
+}
+.payment-checklist li > span {
+  font-weight: 700;
+}
+.receivable-row {
+  border-top: 1px solid #e0e7e2;
+  padding: 20px 0;
+}
+.receivables details {
+  margin: 20px 0;
+}
+.receivables summary,
+.funding-plan summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.receivables form {
+  margin: 20px 0;
+}
+.receivables fieldset {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.receivables textarea {
+  width: 100%;
+  min-height: 80px;
+  padding: 12px;
+  font: inherit;
+  border: 1px solid #d7dfd9;
+  border-radius: 6px;
+  resize: vertical;
+}
+.planner-reserve {
+  display: grid;
+  gap: 8px;
+  margin: 20px 0;
+  max-width: 480px;
+}
+.public-payment {
+  max-width: 900px;
+}
+@media (max-width: 700px) {
+  .payment-checklist ol,
+  .receivables fieldset {
+    grid-template-columns: 1fr;
+  }
+  .transaction-steps {
+    grid-template-columns: 1fr;
+  }
+}
+/* Team operations keep exact amounts and wallet evidence readable on narrow screens. */
+.team-operations details {
+  margin-block: 1rem;
+}
+.team-operations summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding-block: 0.65rem;
+}
+.team-operations fieldset,
+.workspace-form fieldset {
+  border: 0;
+  padding: 0;
+  min-width: 0;
+  display: contents;
+}
+.team-operations .schedule-card {
+  margin-block: 0.75rem;
+  overflow-wrap: anywhere;
+}
+.team-checklist {
+  display: grid;
+  gap: 0.65rem;
+}
+.team-checklist label {
+  display: flex;
+  gap: 0.6rem;
+  align-items: baseline;
+}
+.team-checklist input[type='checkbox'] {
+  width: auto;
+}
+.workspace-form input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  min-height: 0;
+  margin-right: 0.5rem;
+  vertical-align: middle;
+}
+.team-table {
+  max-width: 100%;
+  overflow: auto;
+  margin-block: 1rem;
+}
+.team-table table {
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  width: 100%;
+}
+.team-table th,
+.team-table td {
+  text-align: left;
+  padding: 0.7rem;
+  border-bottom: 1px solid var(--border, #ddd);
+  overflow-wrap: anywhere;
+}
+.team-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+  gap: 1rem;
+}
+.team-metrics strong {
+  display: block;
+  overflow-wrap: anywhere;
+  margin-top: 0.4rem;
+}

@@ -2,6 +2,10 @@
 
 Runway's backend stores business records. Wallets and the existing payment contract authorize and settle financial transactions.
 
+## Local admin increment — November 1, 2026
+
+The local `/admin` dashboard adds read-only `/api/admin/session` and `/api/admin/overview?days=7|30|90` routes after session authentication. Server-only `RUNWAY_ADMIN_WALLETS` controls authorization and defaults to no access. Aggregate metrics omit private customer contents; fees are not collected yet, so revenue is unavailable. Successful authenticated workspace requests now produce private wallet/day operational activity records retained for 90 days; failed requests and admin refreshes are excluded. This increment is not deployed. See [admin setup, metric definitions and privacy](admin-dashboard.md).
+
 ## Configuration
 
 Add these entries to the existing root `.env`:
@@ -49,7 +53,13 @@ Collections: `challenges`, `sessions`, `rateLimits`, `workspaces`, `contractors`
 
 One MongoClient pool is reused per process, with bounded connection timeouts and retry after failed initialization. Auth throttles use shared MongoDB counters: ten challenges per wallet/minute, twenty verification attempts per wallet/minute, a 300-request global auth budget/minute, and sixty authenticated mutations per wallet/minute. These are application limits; production abuse controls and monitoring need release review.
 
-Initial authentication supports EOA personal wallets, not smart-contract wallet signatures. Disconnecting a wallet does not revoke a server session; the page hides workspace access when the connected account does not match, and **Sign out of workspace** revokes the session. Sessions can also be revoked by removing their hashed records; expired sessions never authenticate.
+The November 4 local build supports EOA signatures and an explicit contract-wallet login kind. Contract login validates the full signature through ERC-1271 on a fresh, canonical Mezo testnet block; no counterfactual deployment is attempted. Its private session record retains the login proof for revalidation on every authenticated request. RPC failure denies the request without authorizing changes; invalid signatures revoke that session. Actual installed multisig compatibility and transaction execution still require manual validation. Disconnecting a wallet does not revoke a server session; the page hides workspace access when the connected account does not match, and **Sign out of workspace** revokes the session. Sessions can also be revoked by removing their hashed records; expired sessions never authenticate.
+
+### Team operations — local November 4 increment
+
+Accepted `workspaceMembers` grant manager, approver or viewer access; contractors use `/api/participation` for their own records. The owner remains implicit and cannot be replaced by a membership. Invitations bind a specific wallet; revocation is checked on subsequent requests. Legacy record writes require owner/manager; payment preparation/linking require the owner. Configurable review policies use versioned `workspaceReviews`; unique active approvers count, while a submitter cannot approve their own submission. An invoice assigned to a payroll run also requires the run's current quorum. Financial terms are immutable after creation. These offchain controls do not constrain external wallet transactions.
+
+`payrollRuns` group 1–50 invoice IDs with exact integer totals and a unique per-workspace invoice assignment. `recurringPlans` prepare one reviewed due date at a time. A unique sparse invoice recurrence key and deterministic ID/reference recover concurrent or interrupted preparation; no scheduler signs transactions. `notificationPreferences` are wallet/workspace-specific and disabled by default. `/operations` and `/report.csv` are capped to recent records and disclose partial/unknown payment state; amounts use verified reconciliation, not a user-entered paid flag. Exports neutralize spreadsheet formulas. `workspaceAudit` records started/completed/rejected requests without request bodies, session tokens or signatures. A started event alone does not prove success. The new records persist in MongoDB; the isolated runner still discards its temporary database on shutdown.
 
 ## Assistant configuration (local implementation)
 

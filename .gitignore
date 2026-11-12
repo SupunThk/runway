@@ -12,3 +12,6 @@ test-results/
 *.log
 .publish/
 .vercel/
+.runway-local.json
+
+.vercel

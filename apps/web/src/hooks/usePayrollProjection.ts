@@ -5,6 +5,7 @@ import {
   paymentRatePerSecond,
   payrollCoveredUntil,
   TESTNET_CHAIN_ID,
+  freeCash,
 } from '@runway/mezo';
 import type { Address } from 'viem';
 import { errorText } from '../format';
@@ -46,7 +47,8 @@ export function usePayrollProjection({
   schedules,
   scheduleRows,
   scheduleSnapshot,
-}: PayrollInputs) {
+  repaymentReserve = 0n,
+}: PayrollInputs & { repaymentReserve?: bigint }) {
   const [now, setNow] = useState(Date.now);
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 10000);
@@ -100,7 +102,8 @@ export function usePayrollProjection({
   ).length;
   const rate = paymentRatePerSecond(active);
   const funded = fundedThrough(active);
-  const covered = payrollCoveredUntil(active, balances.data!.musd!);
+  const usable = freeCash(balances.data!.musd!, repaymentReserve);
+  const covered = payrollCoveredUntil(active, usable);
   return {
     reason: undefined,
     active,
@@ -109,5 +112,7 @@ export function usePayrollProjection({
     funded,
     covered,
     walletMusd: balances.data!.musd!,
+    usableWalletMusd: usable,
+    repaymentReserve,
   };
 }

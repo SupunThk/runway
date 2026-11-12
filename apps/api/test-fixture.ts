@@ -5,6 +5,7 @@ import { createApp } from './src/app.ts';
 import { initializeDatabase } from './src/db.ts';
 import type { AssistantModel } from './src/assistant.ts';
 import type { DirectVerifier } from './src/direct-payments.ts';
+import type { TransferVerifier } from './src/direct-payments.ts';
 
 // Temporary local database only; never reads MONGODB_URI or the user's data.
 export async function startTestBackend(
@@ -12,6 +13,8 @@ export async function startTestBackend(
     assistantModel?: AssistantModel;
     origin?: string;
     verifyDirectPayment?: DirectVerifier;
+    verifyPaymentRequest?: TransferVerifier;
+    adminWallets?: string[];
   } = {},
 ) {
   const mongo = await MongoMemoryServer.create({
@@ -23,9 +26,14 @@ export async function startTestBackend(
     await initializeDatabase(db);
     const app = createApp({
       getDb: async () => db,
-      origin: options.origin ?? 'http://127.0.0.1:5173',
+      origin:
+        options.origin ??
+        process.env.RUNWAY_TEST_ORIGIN ??
+        'http://127.0.0.1:5173',
       assistantModel: options.assistantModel,
       verifyDirectPayment: options.verifyDirectPayment,
+      verifyPaymentRequest: options.verifyPaymentRequest,
+      adminWallets: options.adminWallets ?? [],
     });
     const server = serve({ fetch: app.fetch, hostname: '127.0.0.1', port: 0 });
     await new Promise<void>((resolve) =>

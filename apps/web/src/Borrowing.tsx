@@ -3,9 +3,16 @@ import { Sidebar } from './Sidebar';
 import { WalletConnection } from './WalletConnection';
 import { BorrowingPosition } from './BorrowingPosition';
 import { RunwayPlanner } from './RunwayPlanner';
+import { BorrowingActions } from './BorrowingActions';
+import { useFundingIntent } from './hooks/useFundingIntent';
+import { FundingIntentPanel } from './FundingIntentPanel';
 
 export function Borrowing() {
   const [notice, setNotice] = useState('');
+  const plan = useFundingIntent();
+  const loanControlsEnabled =
+    import.meta.env.DEV ||
+    import.meta.env.VITE_RUNWAY_BORROWING_ENABLED === 'true';
   return (
     <div className="shell">
       <Sidebar active="borrowing" />
@@ -30,7 +37,14 @@ export function Borrowing() {
             </p>
           )}
           <div className="borrowing-layout">
+            {plan.error ? (
+              <p className="callout warning" role="alert">
+                {plan.error}
+              </p>
+            ) : null}
+            {plan.intent ? <FundingIntentPanel intent={plan.intent} /> : null}
             <BorrowingPosition />
+            {loanControlsEnabled ? <BorrowingActions /> : null}
             <RunwayPlanner />
             <details
               className="info-card borrowing-explainer"
@@ -56,8 +70,10 @@ export function Borrowing() {
                 </p>
                 <p>
                   This page reads your testnet position and explores
-                  hypothetical price changes. Open Mezo to borrow, add
-                  collateral or repay.
+                  hypothetical price changes.{' '}
+                  {loanControlsEnabled
+                    ? 'Open loan controls to review borrowing, collateral additions or partial repayment. Full closure remains in Mezo.'
+                    : 'Open Mezo to borrow, add collateral or repay.'}
                 </p>
                 <a
                   href="https://mezo.org/docs/users/resources/faqs"

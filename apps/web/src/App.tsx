@@ -21,6 +21,7 @@ import { NewSchedule } from './routes/NewSchedule';
 import { Overview } from './routes/Overview';
 import { ScheduleDetail } from './routes/ScheduleDetail';
 import { useBackendPrewarm } from './hooks/useBackendPrewarm';
+import { PaymentChecklist } from './PaymentChecklist';
 export function App() {
   const { address, chainId } = useAccount();
   const { switchChainAsync } = useSwitchChain();
@@ -205,7 +206,27 @@ export function App() {
           ) : scheduleId ? (
             <ScheduleDetail {...routeProps} />
           ) : (
-            <Overview {...routeProps} />
+            <>
+              <PaymentChecklist
+                address={address}
+                chainId={chainId}
+                walletFunded={Boolean(
+                  !balances.error &&
+                  balances.data &&
+                  balances.data.musd &&
+                  balances.data.btc > 0n,
+                )}
+                scheduleId={
+                  !schedules.error
+                    ? scheduleRows?.find(
+                        (r) =>
+                          r.sender.toLowerCase() === address?.toLowerCase(),
+                      )?.id
+                    : undefined
+                }
+              />
+              <Overview {...routeProps} />
+            </>
           )}
           <footer>
             <span>Runway · Built on Mezo</span>

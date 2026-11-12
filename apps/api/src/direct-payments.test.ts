@@ -8,7 +8,11 @@ import {
   type Log,
   type Hash,
 } from 'viem';
-import { directPaymentVerifier, type DirectSource } from './direct-payments.ts';
+import {
+  directPaymentVerifier,
+  paymentRequestVerifier,
+  type DirectSource,
+} from './direct-payments.ts';
 import { paymentDeployment } from './reconciliation.ts';
 
 const owner = '0x0000000000000000000000000000000000000011';
@@ -67,10 +71,57 @@ function fixture() {
     tx,
     receipt,
     state,
+    source,
     verify: () => directPaymentVerifier(source)(zeroHash, invoice, owner, now),
   };
 }
 describe('one-time invoice payment evidence', () => {
+  it('returns canonical public-request evidence for any payer without weakening invoice sender checks', async () => {
+    const f = fixture();
+    const result = await paymentRequestVerifier(f.source)(
+      zeroHash,
+      invoice,
+      now,
+    );
+    expect(result).toMatchObject({
+      status: 'paid',
+      verified: true,
+      payer: owner,
+      blockNumber: '100',
+      confirmations: '12',
+      blockHash: zeroHash,
+    });
+    expect(
+      await directPaymentVerifier(f.source)(zeroHash, invoice, recipient, now),
+    ).toBe('invalid');
+  });
+  it('uses transfer block time for expiry, including attachment after a request expires', async () => {
+    const f = fixture();
+    const payment = {
+      ...invoice,
+      expiresAt: new Date(now.getTime() + 1000).toISOString(),
+    };
+    expect(
+      (await paymentRequestVerifier(f.source)(zeroHash, payment, now)).status,
+    ).toBe('paid');
+    const expired = { ...invoice, expiresAt: now.toISOString() };
+    expect(
+      (await paymentRequestVerifier(f.source)(zeroHash, expired, now)).status,
+    ).toBe('invalid');
+    f.source.getBlock = async ({ blockNumber }) => ({
+      hash: zeroHash,
+      timestamp: blockNumber === 100n ? timestamp : timestamp + 86400n,
+    });
+    expect(
+      (
+        await paymentRequestVerifier(f.source)(
+          zeroHash,
+          payment,
+          new Date(now.getTime() + 86400000),
+        )
+      ).status,
+    ).toBe('paid');
+  });
   it('requires twelve confirmations and an exact Transfer event', async () => {
     const f = fixture();
     expect(await f.verify()).toBe('paid');
@@ -79,6 +130,13 @@ describe('one-time invoice payment evidence', () => {
     f.state.head = 112n;
     f.receipt.logs = [];
     expect(await f.verify()).toBe('invalid');
+  });
+  it('does not reserve evidence when the reported head is behind its receipt', async () => {
+    const f = fixture();
+    f.state.head = 99n;
+    expect(
+      await paymentRequestVerifier(f.source)(zeroHash, invoice, now),
+    ).toEqual({ status: 'unavailable', verified: false });
   });
   it('rejects wrong senders, tokens, recipients, amounts, and reverted transactions', async () => {
     const f = fixture();

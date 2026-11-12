@@ -1,6 +1,6 @@
 export class BackendUnavailableError extends Error {
   constructor(public reason: 'timeout' | 'network' | 'gateway' | 'non-json') {
-    super('BACKEND_WAKING');
+    super('Runway is temporarily unavailable. Please try again.');
     this.name = 'BackendUnavailableError';
   }
 }

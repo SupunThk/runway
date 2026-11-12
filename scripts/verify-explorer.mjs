@@ -11,8 +11,13 @@ import {
 } from 'viem';
 
 // No signing keys, wallet access or transactions. --submit publishes public source.
+const milestones = process.argv.includes('--milestones');
+const contractName = milestones ? 'RunwayMilestones' : 'RunwayPayments';
 const record = JSON.parse(
-  await readFile('deployments/mezo-testnet.payments.json', 'utf8'),
+  await readFile(
+    `deployments/mezo-testnet.${milestones ? 'milestones' : 'payments'}.json`,
+    'utf8',
+  ),
 );
 const artifact = JSON.parse(await readFile(record.artifact, 'utf8'));
 const api = 'https://api.explorer.test.mezo.org';
@@ -37,7 +42,7 @@ const compiler = artifact.metadata.compiler.version;
 const baseArgs = [
   'verify-contract',
   record.address,
-  'src/RunwayPayments.sol:RunwayPayments',
+  `src/${contractName}.sol:${contractName}`,
   '--root',
   'contracts',
   '--chain',
@@ -71,7 +76,7 @@ for (const [path, source] of Object.entries(input.sources)) {
     `Source differs from deployed metadata: ${path}`,
   );
 }
-const source = await readFile('contracts/src/RunwayPayments.sol');
+const source = await readFile(`contracts/src/${contractName}.sol`);
 requireMatch(
   createHash('sha256').update(source).digest('hex') === record.sourceSha256,
   'Payment source differs from original deployment.',
@@ -118,7 +123,7 @@ requireMatch(
   code && keccak256(code) === record.deployedBytecodeHash,
   'Deployed code changed.',
 );
-const inputPath = 'deployments/verification/RunwayPayments.standard-input.json';
+const inputPath = `deployments/verification/${contractName}.standard-input.json`;
 await mkdir('deployments/verification', { recursive: true });
 const inputText = JSON.stringify(input, null, 2) + '\n';
 await writeFile(inputPath, inputText);
@@ -166,12 +171,12 @@ if (verified) {
     'Explorer constructor argument mismatch.',
   );
   requireMatch(
-    status.name === 'RunwayPayments' &&
+    status.name === contractName &&
       status.compiler_version?.replace(/^v/, '') === compiler,
     'Explorer compiler or contract name mismatch.',
   );
   requireMatch(
-    status.source_code === input.sources['src/RunwayPayments.sol'].content,
+    status.source_code === input.sources[`src/${contractName}.sol`].content,
     'Explorer main source mismatch.',
   );
   for (const dependency of status.additional_sources ?? []) {
@@ -216,7 +221,9 @@ const report = {
   newTransactions: 0,
 };
 await writeFile(
-  'deployments/mezo-testnet.explorer.check.json',
+  milestones
+    ? 'deployments/mezo-testnet.milestones.explorer.check.json'
+    : 'deployments/mezo-testnet.explorer.check.json',
   JSON.stringify(report, null, 2) + '\n',
 );
 console.log(JSON.stringify(report, null, 2));

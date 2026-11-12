@@ -1,5 +1,7 @@
 import { defineConfig } from 'vitest/config';
 export default defineConfig({
+  // Tests use injected RPC/database fixtures, never local dotenv configuration.
+  envDir: false,
   test: {
     include: [
       'packages/**/*.test.ts',

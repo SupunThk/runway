@@ -10,7 +10,8 @@ import {
   keccak256,
   parseAbi,
 } from 'viem';
-import artifact from '../../contracts/out/RunwayPayments.sol/RunwayPayments.json';
+import paymentsArtifact from '../../contracts/out/RunwayPayments.sol/RunwayPayments.json';
+import milestonesArtifact from '../../contracts/out/RunwayMilestones.sol/RunwayMilestones.json';
 
 const founder = getAddress(__FOUNDER__);
 const token = getAddress(__MUSD__);
@@ -24,8 +25,15 @@ const client = createPublicClient({
   chain,
   transport: http(chain.rpcUrls.default.http[0]),
 });
-const bytecode = artifact.bytecode.object;
-const data = encodeDeployData({ abi: artifact.abi, bytecode, args: [token] });
+const artifacts = {
+  payments: paymentsArtifact,
+  milestones: milestonesArtifact,
+};
+const contractSelect = document.querySelector('#contract');
+contractSelect.value = __CONTRACT__;
+let artifact = artifacts[contractSelect.value];
+let bytecode = artifact.bytecode.object;
+let data = encodeDeployData({ abi: artifact.abi, bytecode, args: [token] });
 const wallets = new Map();
 const select = document.querySelector('#wallet');
 const connectButton = document.querySelector('#connect');
@@ -39,6 +47,22 @@ let deployed = false;
 document.querySelector('#founder').textContent = founder;
 document.querySelector('#musd').textContent = token;
 document.querySelector('#bytecode-hash').textContent = keccak256(bytecode);
+document.querySelector('#contract-name').textContent =
+  contractSelect.value === 'milestones' ? 'RunwayMilestones' : 'RunwayPayments';
+contractSelect.addEventListener('change', () => {
+  if (pending || deployed) return;
+  artifact = artifacts[contractSelect.value];
+  bytecode = artifact.bytecode.object;
+  data = encodeDeployData({ abi: artifact.abi, bytecode, args: [token] });
+  document.querySelector('#bytecode-hash').textContent = keccak256(bytecode);
+  document.querySelector('#contract-name').textContent =
+    contractSelect.value === 'milestones'
+      ? 'RunwayMilestones'
+      : 'RunwayPayments';
+  invalidate();
+  status.textContent =
+    'Contract changed. Review the selected contract and reconnect before deployment.';
+});
 
 function invalidate() {
   wallet = undefined;
@@ -147,6 +171,7 @@ deployButton.addEventListener('click', async () => {
   deployButton.disabled = true;
   connectButton.disabled = true;
   select.disabled = true;
+  contractSelect.disabled = true;
   let hash;
   try {
     const currentAccount = await validate();
@@ -185,6 +210,7 @@ deployButton.addEventListener('click', async () => {
     // Once broadcast, keep deployment disabled even if confirmation polling fails.
     connectButton.disabled = Boolean(hash) || deployed;
     select.disabled = Boolean(hash) || deployed;
+    contractSelect.disabled = Boolean(hash) || deployed;
     deployButton.disabled = true;
   }
 });

@@ -16,6 +16,12 @@ await writeFile(
       buildCommand: '',
       installCommand: '',
       rewrites: [
+        { source: '/pay/:token', destination: '/index.html' },
+        { source: '/pay/:token/', destination: '/index.html' },
+        { source: '/proof/:address', destination: '/index.html' },
+        { source: '/proof/:address/', destination: '/index.html' },
+        { source: '/admin', destination: '/index.html' },
+        { source: '/admin/', destination: '/index.html' },
         { source: '/assistant', destination: '/index.html' },
         { source: '/assistant/', destination: '/index.html' },
         { source: '/borrowing', destination: '/index.html' },

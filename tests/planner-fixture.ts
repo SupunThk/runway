@@ -1,10 +1,13 @@
 import { expect, type Page } from '@playwright/test';
+import { readFileSync } from 'node:fs';
+import { gunzipSync } from 'node:zlib';
 import {
   decodeFunctionData,
   encodeFunctionResult,
   erc20Abi,
   toHex,
   zeroHash,
+  type Abi,
 } from 'viem';
 import {
   borrowingAbi,
@@ -13,7 +16,24 @@ import {
   paymentsAbi,
   priceFeedAbi,
   priceOracleAbi,
+  borrowerOperationsAbi,
+  borrowingSystemAbi,
+  borrowingWriteDeployment,
+  governableVariablesAbi,
+  hintHelpersAbi,
+  interestManagerAbi,
+  sortedTrovesAbi,
 } from '../packages/mezo/src/index';
+const runtime = JSON.parse(
+  gunzipSync(
+    Buffer.from(
+      JSON.parse(
+        readFileSync('tests/fixtures/mezo-borrowing-runtime.json', 'utf8'),
+      ).runtime,
+      'base64',
+    ),
+  ).toString(),
+) as Record<string, string>;
 
 export const plannerAccount = '0x0000000000000000000000000000000000000011';
 export const unit = 10n ** 18n;
@@ -85,16 +105,21 @@ export async function installPlannerFixture(
           options.emptyCode &&
           request.params[0].toLowerCase() === MEZO_TESTNET_TOKEN.toLowerCase()
             ? '0x'
-            : '0x6000';
+            : (runtime[request.params[0].toLowerCase()] ?? '0x6000');
       else if (request.method === 'eth_getStorageAt') {
+        const dep = Object.values(borrowingWriteDeployment).find(
+          (d) => d.address.toLowerCase() === request.params[0].toLowerCase(),
+        );
         const impl =
-          request.params[0].toLowerCase() === deployment.manager.toLowerCase()
+          dep?.implementation ??
+          (request.params[0].toLowerCase() === deployment.manager.toLowerCase()
             ? deployment.managerImplementation
-            : deployment.priceImplementation;
+            : deployment.priceImplementation);
         result = `0x${'0'.repeat(24)}${impl.slice(2)}`;
       } else if (request.method === 'eth_getBlockByNumber')
         result = {
           number: toHex(block),
+          hash: zeroHash,
           timestamp: toHex(now - (options.stalePayments ? 130n : 0n)),
           transactions: [],
           gasLimit: '0x100',
@@ -107,20 +132,36 @@ export async function installPlannerFixture(
       else if (request.method === 'eth_call') {
         const target = request.params[0].to.toLowerCase();
         const mezo = target === MEZO_TESTNET_TOKEN.toLowerCase();
-        const abi =
-          target === deployment.manager.toLowerCase()
-            ? borrowingAbi
-            : target === deployment.priceFeed.toLowerCase()
-              ? priceFeedAbi
-              : target === deployment.oracle.toLowerCase()
-                ? priceOracleAbi
-                : target === deployment.musd.toLowerCase() || mezo
-                  ? erc20Abi
-                  : paymentsAbi;
-        const { functionName, args } = decodeFunctionData({
-          abi,
-          data: request.params[0].data,
-        });
+        let abi: Abi = paymentsAbi,
+          functionName = '',
+          args: readonly unknown[] | undefined;
+        for (const candidate of [
+          borrowingAbi,
+          priceFeedAbi,
+          priceOracleAbi,
+          erc20Abi,
+          paymentsAbi,
+          borrowerOperationsAbi,
+          borrowingSystemAbi,
+          governableVariablesAbi,
+          hintHelpersAbi,
+          interestManagerAbi,
+          sortedTrovesAbi,
+        ]) {
+          try {
+            const decoded = decodeFunctionData({
+              abi: candidate,
+              data: request.params[0].data,
+            });
+            abi = candidate;
+            functionName = decoded.functionName;
+            args = decoded.args;
+            break;
+          } catch {
+            /* Try the next verified view ABI. */
+          }
+        }
+        if (!functionName) throw new Error('Unknown fixture read');
         reads.push({ target, functionName, block: request.params[1] });
         if (mezo && options.mezoFailure && functionName === 'balanceOf')
           return failure();
@@ -179,6 +220,24 @@ export async function installPlannerFixture(
           ],
           fetchPrice: 4000n * unit,
           getCurrentICR: 4n * unit,
+          troveManager: deployment.manager,
+          borrowerOperations: borrowingWriteDeployment.operations.address,
+          borrowerOperationsAddress:
+            borrowingWriteDeployment.operations.address,
+          sortedTroves: borrowingWriteDeployment.sorted.address,
+          interestRateManager: borrowingWriteDeployment.interest.address,
+          governableVariables: borrowingWriteDeployment.governance.address,
+          getTroveMaxBorrowingCapacity: 6000n * unit,
+          interestRate: 100,
+          getAccruedInterest: 0n,
+          getEntireSystemDebt: 100000n * unit,
+          getEntireSystemColl: 100n * unit,
+          CCR: (15n * unit) / 10n,
+          minNetDebt: 1800n * unit,
+          borrowingRate: unit / 1000n,
+          isAccountFeeExempt: false,
+          getTCR: 4n * unit,
+          checkRecoveryMode: false,
         };
         result = encodeFunctionResult({
           abi,

@@ -1,0 +1,64 @@
+{
+  "verifiedAt": "2026-11-01T05:38:15.542Z",
+  "chainId": 31611,
+  "blockNumber": "16499775",
+  "blockHash": "0xb1fa86efd396dde249525fb93773d2dbf3d42cd83dffd510d00c6415fa4b736f",
+  "chainTime": "1793511480",
+  "sourceRevision": "aa25fd6defbe6c1385940e183ea7a0a3df4533d8",
+  "contracts": {
+    "BorrowerOperations": {
+      "address": "0xCdF7028ceAB81fA0C6971208e83fa7872994beE5",
+      "implementation": "0xc05Bf344BD5b58825784326dD3112fB6cC160dcC",
+      "implementationCodeHash": "0x87a175620a5e54bb59b8c80ed45631f94e2b03afbd7f062e58ce6451546862f5"
+    },
+    "HintHelpers": {
+      "address": "0x4e4cBA3779d56386ED43631b4dCD6d8EacEcBCF6",
+      "implementation": "0x8adF3f35dBE4026112bCFc078872bcb967732Ea8",
+      "implementationCodeHash": "0x49ea863431f90f85807b0662b81193bd990bfbede3dacc463cfb304509c403a9"
+    },
+    "SortedTroves": {
+      "address": "0x722E4D24FD6Ff8b0AC679450F3D91294607268fA",
+      "implementation": "0x9177DF58A9614b84C8c2F68dF27506AB9a5d0323",
+      "implementationCodeHash": "0x43bff0fd0784eda713080b177391e9099feae87e3ff48e5d0a418a07d00af9d0"
+    },
+    "InterestRateManager": {
+      "address": "0xD4D6c36A592A2c5e86035A6bca1d57747a567f37",
+      "implementation": "0xAA13B1d9CFFA3F44ab3A8BE0dC8774FB7841459C",
+      "implementationCodeHash": "0x9a5ef56ce2bbe0da3b73e9bf0e23ae0824274aa021ea57581e83df32b4275e8d"
+    },
+    "GovernableVariables": {
+      "address": "0x6552059B6eFc6aA4AE3ea45f28ED4D92acE020cD",
+      "implementation": "0x4EDC83c5C5B0C41A594371485554B95280653f94",
+      "implementationCodeHash": "0xaabf43f84a2083090ff3bbfaf792562a0c8ef963fdf9c2946fa5944ee9aae1c1"
+    }
+  },
+  "reads": {
+    "musd": "0x118917a40FAF1CD7a13dB0Ef56C86De7973Ac503",
+    "troveManager": "0xE47c80e8c23f6B4A1aE41c34837a0599D5D16bb0",
+    "priceFeed": "0x86bCF0841622a5dAC14A313a15f96A95421b9366",
+    "activePool": "0x143A063F62340DA3A8bEA1C5642d18C6D0F7FF51",
+    "defaultPool": "0x59851D252090283f9367c159f0C9036e75483300",
+    "interestRateManager": "0xD4D6c36A592A2c5e86035A6bca1d57747a567f37",
+    "governableVariables": "0x6552059B6eFc6aA4AE3ea45f28ED4D92acE020cD",
+    "sortedTroves": "0x722E4D24FD6Ff8b0AC679450F3D91294607268fA",
+    "borrowingRate": "1000000000000000",
+    "minNetDebt": "1800000000000000000000",
+    "MCR": "1100000000000000000",
+    "CCR": "1500000000000000000",
+    "MUSD_GAS_COMPENSATION": "200000000000000000000",
+    "getEntireSystemColl": "15419518624960252225098",
+    "getEntireSystemDebt": "429349612005750709919821679",
+    "borrowerOperationsSignaturesAddress": "0xD757e3646AF370b15f32EB557F0F8380Df7D639e",
+    "feeExempt": false,
+    "interestRate": 100,
+    "price": "77726878020000000000000",
+    "checkRecoveryMode": false,
+    "getTCR": "2791457147685394418",
+    "accountCapacity": "2633284005863636363636"
+  },
+  "account": "0x1ac891Ce491851AC87851D62B9184c75A76f55cF",
+  "limitations": [
+    "Read-only public RPC inspection; no transaction was signed or broadcast.",
+    "Source/artifact identity and bindings checked; not an audit or a successful write/fork test."
+  ]
+}

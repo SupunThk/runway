@@ -13,8 +13,18 @@ import { apiFetch, readJson, BackendUnavailableError } from './api';
 import { useBackendWake } from './hooks/useBackendWake';
 import { BackendWakeNotice } from './BackendWakeNotice';
 import { explorer } from './config';
+import { Receivables } from './Receivables';
+import { TeamOperations } from './TeamOperations';
+import { Participation } from './Participation';
+import { ContractWalletLogin } from './ContractWalletLogin';
+import type { Approval, WorkspaceRole } from '@runway/mezo';
 
-type WorkspaceRecord = { _id: string; name: string };
+type WorkspaceRecord = {
+  _id: string;
+  name: string;
+  owner?: string;
+  role?: WorkspaceRole;
+};
 type Contractor = { _id: string; name: string; address: string };
 type Invoice = {
   _id: string;
@@ -23,6 +33,7 @@ type Invoice = {
   recipient: string;
   dueDate: string;
   status: 'draft';
+  approval?: Approval;
   paymentReference?: string;
   paymentType?: 'schedule' | 'one-time';
   payment?: {
@@ -83,7 +94,22 @@ function WorkspaceContent({ address }: { address?: string }) {
   const [linkResults, setLinkResults] = useState<
     Record<string, { error: boolean; message: string }>
   >({});
-  const [selected, setSelected] = useState('');
+  const selectionKey = `runway:workspace:v1:31611:${address?.toLowerCase() ?? ''}`;
+  const [selected, setSelected] = useState(() => {
+    try {
+      return address ? (localStorage.getItem(selectionKey) ?? '') : '';
+    } catch {
+      return '';
+    }
+  });
+  function chooseWorkspace(id: string) {
+    setSelected(id);
+    try {
+      localStorage.setItem(selectionKey, id);
+    } catch {
+      /* A storage outage must not prevent authenticated workspace reads. */
+    }
+  }
   const [createdWorkspace, setCreatedWorkspace] = useState<WorkspaceRecord>();
   const wallet = address?.toLowerCase() ?? '';
   const session = useQuery({
@@ -107,7 +133,9 @@ function WorkspaceContent({ address }: { address?: string }) {
       return result;
     },
   });
-  const signedIn = Boolean(wallet && session.data?.address === wallet);
+  const signedIn = Boolean(
+    wallet && !session.error && session.data?.address === wallet,
+  );
   const workspaces = useRecords<WorkspaceRecord>(
     '/workspaces',
     wallet,
@@ -126,6 +154,11 @@ function WorkspaceContent({ address }: { address?: string }) {
     ? selected
     : (workspaceRows[0]?._id ?? '');
   const prefix = `/workspaces/${workspaceId}`;
+  const activeWorkspace = workspaceRows.find((w) => w._id === workspaceId);
+  const canManage =
+    !activeWorkspace?.role ||
+    ['owner', 'manager'].includes(activeWorkspace.role);
+  const canPay = !activeWorkspace?.role || activeWorkspace.role === 'owner';
   const contractors = useRecords<Contractor>(
     `${prefix}/contractors`,
     wallet,
@@ -273,6 +306,12 @@ function WorkspaceContent({ address }: { address?: string }) {
     fields: string[],
   ) {
     event.preventDefault();
+    if (path !== '/workspaces' && !canManage) {
+      setNotice(
+        'Your workspace role permits reading records. A manager or owner can prepare changes.',
+      );
+      return;
+    }
     const form = event.currentTarget;
     const data = new FormData(form);
     const body = Object.fromEntries(
@@ -285,7 +324,7 @@ function WorkspaceContent({ address }: { address?: string }) {
       });
       if (path === '/workspaces') {
         setCreatedWorkspace(record);
-        setSelected(record._id);
+        chooseWorkspace(record._id);
       }
       form.reset();
       setNotice('Saved.');
@@ -328,6 +367,9 @@ function WorkspaceContent({ address }: { address?: string }) {
                 >
                   Retry connection
                 </button>
+                <ContractWalletLogin
+                  connectedWallet={chainId === 31611 ? address : undefined}
+                />
               </div>
             )}
           {!signedIn ? (
@@ -340,8 +382,8 @@ function WorkspaceContent({ address }: { address?: string }) {
                 <h2>Sign in to your workspace</h2>
                 <p>
                   Connect your wallet, then sign a login message. Signing in
-                  does not move funds or cost gas. Workspace access currently
-                  supports personal wallets.
+                  does not move funds or cost gas. Workspace access supports
+                  personal wallets and verified contract-wallet signatures.
                 </p>
                 {!address && <p>Connect your wallet using the button above.</p>}
                 {address && chainId !== 31611 && (
@@ -403,7 +445,15 @@ function WorkspaceContent({ address }: { address?: string }) {
                   onClick={() =>
                     void action(async () => {
                       await request('/auth/logout', {});
-                      cache.removeQueries({ queryKey: ['workspace-records'] });
+                      cache.removeQueries({
+                        predicate: (query) =>
+                          [
+                            'workspace-records',
+                            'team-operations',
+                            'participation',
+                            'receivables',
+                          ].includes(String(query.queryKey[0])),
+                      });
                       await cache.invalidateQueries({
                         queryKey: ['workspace-session'],
                       });
@@ -416,8 +466,9 @@ function WorkspaceContent({ address }: { address?: string }) {
               <section className="panel">
                 <h2>Workspaces</h2>
                 <p>
-                  Each workspace is private to the wallet that created it. Team
-                  invitations and shared approvals are upcoming.
+                  Workspaces are private to their owner and accepted team
+                  members. Contractors can submit invoices without seeing other
+                  records.
                 </p>
                 {workspaces.isPending && <p>Loading workspaces…</p>}
                 {workspaces.error && (
@@ -435,7 +486,7 @@ function WorkspaceContent({ address }: { address?: string }) {
                     Active workspace
                     <select
                       value={workspaceId}
-                      onChange={(event) => setSelected(event.target.value)}
+                      onChange={(event) => chooseWorkspace(event.target.value)}
                     >
                       {workspaceRows.map((row) => (
                         <option key={row._id} value={row._id}>
@@ -466,8 +517,23 @@ function WorkspaceContent({ address }: { address?: string }) {
                   </button>
                 </form>
               </section>
+              <Participation wallet={wallet} />
               {workspaceId && (
                 <div key={workspaceId}>
+                  <Receivables
+                    workspaceId={workspaceId}
+                    workspaceName={
+                      workspaceRows.find((w) => w._id === workspaceId)?.name ??
+                      ''
+                    }
+                    owner={wallet}
+                    canManage={canManage}
+                  />
+                  <TeamOperations
+                    workspaceId={workspaceId}
+                    wallet={wallet}
+                    contractors={contractorRows}
+                  />
                   <section className="panel">
                     <h2>Contractor directory</h2>
                     {contractors.isPending && <p>Loading contractors…</p>}
@@ -528,7 +594,10 @@ function WorkspaceContent({ address }: { address?: string }) {
                           placeholder="0x…"
                         />
                       </label>
-                      <button className="button secondary" disabled={busy}>
+                      <button
+                        className="button secondary"
+                        disabled={busy || !canManage}
+                      >
                         Save contractor
                       </button>
                     </form>
@@ -638,7 +707,9 @@ function WorkspaceContent({ address }: { address?: string }) {
                               </p>
                             </>
                           )}
-                          {!row.payment?.scheduleId &&
+                          {canPay &&
+                            row.approval?.ready !== false &&
+                            !row.payment?.scheduleId &&
                             !row.payment?.transactionHash && (
                               <a
                                 href={
@@ -653,7 +724,9 @@ function WorkspaceContent({ address }: { address?: string }) {
                                 Prepare payment
                               </a>
                             )}
-                          {!row.payment?.scheduleId &&
+                          {canPay &&
+                            row.approval?.ready !== false &&
+                            !row.payment?.scheduleId &&
                             !row.payment?.transactionHash && (
                               <form
                                 className="workspace-form"
@@ -786,7 +859,9 @@ function WorkspaceContent({ address }: { address?: string }) {
                       </label>
                       <button
                         className="button secondary"
-                        disabled={busy || contractorRows.length === 0}
+                        disabled={
+                          busy || !canManage || contractorRows.length === 0
+                        }
                       >
                         Save draft invoice
                       </button>

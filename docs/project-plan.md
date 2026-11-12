@@ -133,6 +133,8 @@ Deliver these in priority order:
 
 ### Wave 2: team treasury operations
 
+**November 1 priority update:** The user added a focused improvement sequence to the [Wave 2 strategy](wave2-strategy.md#current-priorities--november-1-improvement-update). Initial borrowing controls and the admin dashboard exist locally; the next work is a persistent guided borrowing-to-payment flow, followed by protocol-aware planner integration, client payment links and public funding proof. Add measured admin request failures, reconciliation lag and infrastructure costs, with explicit stale/unavailable states. Prepare independent user pilots alongside engineering and use completion, friction and return-use evidence to prioritize fixes. Apply a task checklist, clearer transaction progress and contextual blocked-action explanations throughout. The strategy contains scope and acceptance criteria; [the handoff](HANDOFF.md) records actual implementation status. This sequence takes priority over the broader backlog below. Milestone escrow, atomic routing and billing implementation follow a working core journey and pilot feedback, with their existing decision and release gates retained. All current work remains local; this plan update does not authorize deployment.
+
 1. **Payroll runs:** Prepare multiple contractor payments, review total funding and track each confirmed result.
 2. **Recurring payment plans:** Manage cadence, upcoming funding and missed-payment states; reminders do not imply automatic execution.
 3. **Contractor invoice submission:** Add recipient access, review, approval and confirmed settlement reconciliation beyond owner-created drafts.

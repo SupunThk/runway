@@ -136,11 +136,33 @@ Funded obligations count the connected account’s sent schedules only. They rep
 
 ## Runway planner
 
-Open Borrowing to combine your connected wallet’s current sent schedules, available MUSD and verified loan snapshot. Payroll coverage assumes each current stream renews immediately at its existing rate as its escrow ends. Wallet MUSD pays for renewals; existing escrow cannot be reassigned between recipients. Future-starting schedules are excluded and disclosed separately. Rates round up conservatively.
+Open Borrowing to combine your connected wallet’s current sent schedules, available MUSD and verified loan snapshot. Payroll coverage assumes each current stream renews immediately at its existing rate as its escrow ends. Set a repayment reserve to keep that wallet MUSD out of renewal spending. Existing escrow cannot be reassigned between recipients. Future-starting schedules are excluded and disclosed separately. Rates round up conservatively.
 
 Planning months are 30 days. Choose 1–24 months, a BTC price drop and a target collateral ratio to compare the full current payment rate with additional borrowing capacity alone. This estimate is separate from the wallet coverage date. Load every schedule on Overview before planning; missing or stale payment data hides coverage, while missing loan health hides only borrowing estimates.
 
-The planner never borrows for you. Open Mezo to manage your loan, or fund a Runway schedule yourself. Estimates exclude borrowing fees, minimum debt, gas compensation on new debt, future interest and system-wide recovery conditions. They use protocol debt accounting of 1 MUSD = 1 USD and are not borrowing quotes.
+The planner never borrows for you. Its protocol-aware scenarios use the loan review engine for issuance fees, fee exemptions, minimum debt, opening reserve, system mode and the stored trove borrowing limit. Price stress holds other snapshot inputs fixed. Future interest, future revenue and BTC gas spending are not predicted. Fresh reads, simulation and a new wallet confirmation are required for an executable action. Estimates use the protocol’s USD debt-accounting assumption for MUSD.
+
+## Saved borrowing and payment plans
+
+On New payment, enter the recipient, exact amount and payment period, then choose Save payment plan & review funding options. The plan retains these terms for the connected wallet in this browser. Review borrowing for any funding gap; a new trove still needs to meet the protocol minimum, and the app never enlarges a small loan automatically.
+
+After borrowing, the plan can say Borrowed; payment not yet funded. Acknowledge the confirmed loan result and continue payment funding without borrowing again. It retains reviewed debt, a later observed debt snapshot, allowance and funding hashes. Schedule confirmation exposes the recipient link. A saved one-time plan instead verifies a direct MUSD transfer.
+
+Borrowing and funding remain separate transactions. Rejected funding does not undo the loan. Reloading checks saved hashes, and unknown or pending transactions block repeated submissions. Confirmation uses the 12-block application buffer. Recovery starts only when the wallet returns a hash; clearing browser storage, closing before that response or changing browsers can lose this record. Current balances and canonical receipts are checked again before continuing.
+
+## Client payment links
+
+In your signed-in Workspace, expand Client payment links to create a request. Choose its public business name, memo, payee, exact MUSD amount and expiry. Client labels and private notes stay in your workspace. Anyone with the link can view its public fields, so share it deliberately.
+
+A payer opens the link without signing in, connects an intended wallet and reviews a direct MUSD transfer to the displayed payee. The app checks the network, balance, estimated BTC gas reserve and simulation before opening a wallet prompt. It saves the resulting hash and checks verification across reloads without automatically sending again.
+
+A matching canonical transfer is paid after the 12-block buffer. One transfer can settle at most one invoice or request. Expiry blocks new transfers; a qualifying transfer mined before expiry may still be linked afterwards. Use Recover a transfer already sent if needed. Unknown status is a reason to recheck the hash, not to send another transfer. A canonical reverted transfer needs explicit acknowledgement before retrying. Collecting payment does not repay a loan automatically; a repayment prefill still needs review and wallet confirmation.
+
+## Public funding proof
+
+Open /proof/<sender-wallet-address> or choose View public funding proof on Overview. No wallet or backend login is needed. The page reads sender schedules and contract-wide balances at one pinned confirmed block, including pagination. Source block and time are displayed.
+
+Committed MUSD is remaining recipient entitlement: original funding minus refunds and claims. Cancelled schedules retain earned but unclaimed entitlement. Failed rows and unloaded pages are labelled partial subtotals. The contract balance check covers all senders at that snapshot. None of these figures establishes a founder’s overall solvency, future funding, loan safety or revenue.
 
 ## History, receipts, and CSV exports
 
@@ -202,9 +224,9 @@ The deployed payment contract’s source is exact-match verified on the Mezo tes
 
 ## Workspaces, contractors and draft invoices
 
-Workspace is an additional service that must be configured by the operator. Connect a personal EVM wallet on Mezo testnet, open Workspace and sign the login message. Signing in costs no gas and does not authorize a payment.
+Workspace is an additional service that must be configured by the operator. Connect a personal EVM wallet on Mezo testnet, open Workspace and sign the login message. Contract wallets can use the separate ERC-1271 login flow with their fully approved signature. Signing in costs no gas and does not authorize a payment. Actual multisig transaction execution depends on its wallet connector and still needs installed-wallet validation.
 
-Create a workspace, save a contractor name and wallet, then prepare a draft invoice with a MUSD amount, due date and payment type: One-time payment or Payment over time. Workspaces are private to their owner wallet; shared team access and contractor invoice submission are upcoming.
+Create a workspace, save a contractor name and wallet, then prepare a draft invoice with a MUSD amount, due date and payment type: One-time payment or Payment over time. The owner can invite a specific wallet as manager, approver, viewer or contractor. Access starts after that wallet accepts; revocation takes effect on subsequent server requests. Registered contractors can submit their own invoices without reading other workspace records.
 
 Create payment or Prepare payment opens the funding form with the recipient and, for invoices, amount and an opaque payment reference filled in. Review the recipient and amount before signing. Invoice matches require the original sender, recipient, amount and reference. Repeated funding can create duplicate payments.
 
@@ -213,3 +235,17 @@ When payment indexing is enabled and current, invoices show committed, claimed, 
 Use Link existing schedule for older payments. Only a confirmed schedule with the same sender, recipient and exact amount can be linked, and a legacy schedule can belong to one invoice. Refresh payment status to check updates. Unavailable means indexing is behind, stale or recovering; check the public schedule before funding again.
 
 Sign out of workspace to revoke your login session. Disconnecting the wallet hides workspace access but does not revoke the server session. Public recipient pages and onchain payment rights do not depend on workspace login.
+
+## Team approvals, payroll and recurring plans
+
+Team operations are available in the local November 4 build; hosted releases may predate these features. Managers prepare records, approvers review payment terms, viewers read shared records and the owner funds payments. Workspace policies govern Runway preparation and linking; they cannot restrict transactions initiated outside the app. Submitted invoices require an independent reviewer. Policy changes invalidate earlier reviews, and revoked approvers no longer count toward the quorum.
+
+A payroll run groups 1–50 distinct existing invoices and shows an exact MUSD total. Approve both invoices and the run as required, then review and sign each payment separately. An invoice belongs to one run. Current server approvals are checked again before wallet prompts and payment linking. Confirmed payment evidence drives progress; a prepared run is not funded and funded escrow is not yet paid to a recipient.
+
+Weekly or monthly recurring plans prepare a single dated invoice when requested. Retrying the same reviewed date recovers that occurrence. Month-end plans preserve their original day across shorter months. Missed dates stay visible; pause stops new preparation. These are planning records, not automatic wallet payments.
+
+Dated treasury forecasts use an explicitly entered wallet balance, one repayment reserve and dated unpaid obligations. Expected receipts are optional session-local assumptions, never confirmed income or borrowing eligibility. Already funded escrow and receipts already in your balance are not added again. Incomplete payment evidence, record limits and limited recurrence projection produce a partial forecast. Daily totals do not predict intraday liquidity, gas, interest or BTC prices.
+
+Enable in-app reminders separately for each wallet and workspace. Reminders refresh while the workspace is open; no email, push service or background transaction agent is configured. Reports summarize up to 100 recent invoices, disclose unknown payment results and export CSV with spreadsheet formulas neutralized. Private audit entries show actor, action, time and result; a started entry alone is not evidence of success.
+
+The separate RunwayMilestones contract is implemented and tested locally, with deployment tooling prepared. It is not deployed or integrated into app payment/proof pages. The scope requires a user-signed deployment and verified address before that integration. An optional deadline makes remaining funds claimable; it does not automatically send them. Before the deadline, cancellation can refund unapproved work. No dispute resolution or independent audit is provided.

@@ -77,6 +77,9 @@ beforeEach(async () => {
     'paymentIndex',
     'paymentSchedules',
     'paymentEvents',
+    'settlementClaims',
+    'paymentRequests',
+    'requestMetrics',
   ])
     await db.collection(name).deleteMany({});
   instant = new Date('2026-10-13T12:00:00Z');

@@ -80,6 +80,51 @@ async function connect(page: Page) {
     .click();
 }
 
+test('owner creates and cancels a client link while public fields exclude private notes', async ({
+  page,
+}) => {
+  await wallet(page);
+  await page.goto('/workspace');
+  await connect(page);
+  await page.getByRole('button', { name: 'Sign in with wallet' }).click();
+  await page.getByLabel('New workspace name').fill('Receivables studio');
+  await page
+    .getByRole('button', { name: 'Create workspace', exact: true })
+    .click();
+  const links = page.getByRole('region', { name: 'Client payment links' });
+  await expect(page.getByLabel('Active workspace')).toContainText(
+    'Receivables studio',
+  );
+  await links
+    .getByText('Create a client payment link', { exact: true })
+    .click();
+  await links.getByLabel('Public business name').fill('Public studio name');
+  await links.getByLabel('Client payment amount').fill('25.000000000000000001');
+  await links.getByLabel('Public payment memo').fill('Public delivery');
+  await links.getByLabel('Private client label').fill('PRIVATE CLIENT');
+  await links.getByLabel('Private payment note').fill('PRIVATE NOTE');
+  await links
+    .getByRole('button', { name: 'Create payment link', exact: true })
+    .click();
+  const row = links.locator('article').filter({ hasText: 'PRIVATE CLIENT' });
+  await expect(row).toContainText('25.000000000000000001 MUSD');
+  const href = await row
+    .getByRole('link', { name: 'Open public payment page' })
+    .getAttribute('href');
+  page.once('dialog', (dialog) => void dialog.accept());
+  await row.getByRole('button', { name: 'Cancel payment request' }).click();
+  await expect(row).toContainText('cancelled');
+  await page.goto(href!);
+  const details = page.getByRole('region', { name: 'Client payment details' });
+  await expect(details).toContainText('Public studio name');
+  await expect(details).toContainText('Public delivery');
+  await expect(details).toContainText('cancelled');
+  await expect(page.locator('main')).not.toContainText('PRIVATE');
+  await expect(
+    page.getByRole('button', { name: 'Pay exact MUSD amount' }),
+  ).toBeDisabled();
+});
+
 test('wallet login → MongoDB workspace/contractor/invoice → reload → prefilled payment', async ({
   page,
 }) => {

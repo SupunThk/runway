@@ -1,5 +1,9 @@
 # Mezo Runway — product scope
 
+## Local delivery — November 4, 2026
+
+The remaining team-operations backlog now has a local implementation: wallet-bound invitations and roles, contractor submissions, versioned invoice/run approval quorums, payroll runs, weekly/monthly recurring plans, dated cash forecasts, opt-in in-app reminders, private audit records and CSV reports. ERC-1271 login is covered by simulated verification; installed multisig transaction compatibility remains manual. These changes are uncommitted and undeployed. The milestone contract and deployment package are ready locally; its app integration and combined funding proof still require the user-signed deployment gate from [the extension brief](scope_update.md). See [current delivery/evidence](wave2-remaining-work.md). Older scope paragraphs below are historical.
+
 ## Scope revision — October 13, 2026
 
 The user approved MongoDB and an expanded Wave 1. The local increment adds a wallet-authenticated TypeScript API, owner-private workspaces, contractors and draft invoices, with links into the existing funding form. Live database configuration and hosted verification remain pending. See [backend setup](backend.md) and [current development workflow](development-workflow.md).

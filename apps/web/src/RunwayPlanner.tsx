@@ -1,6 +1,7 @@
 import { useAccount } from 'wagmi';
 import { DAY_SECONDS, TESTNET_CHAIN_ID } from '@runway/mezo';
-import { formatUnits } from 'viem';
+import { formatUnits, parseUnits } from 'viem';
+import { useState } from 'react';
 import { useDeploymentReadiness } from './hooks/useDeploymentReadiness';
 import { useBalances } from './hooks/useBalances';
 import { useSchedules } from './hooks/useSchedules';
@@ -14,7 +15,14 @@ import {
 import { RunwayScenario } from './RunwayScenario';
 
 export function RunwayPlanner() {
+  const { address } = useAccount();
+  return <PlannerContent key={address ?? 'disconnected'} />;
+}
+function PlannerContent() {
   const { address, chainId } = useAccount();
+  const [reserveText, setReserveText] = useState('0');
+  const reserveValid = /^\d{1,60}(\.\d{1,18})?$/.test(reserveText);
+  const repaymentReserve = reserveValid ? parseUnits(reserveText, 18) : 0n;
   const readiness = useDeploymentReadiness();
   const balances = useBalances({ address, chainId, readiness });
   const {
@@ -33,6 +41,7 @@ export function RunwayPlanner() {
     schedules,
     scheduleRows,
     scheduleSnapshot,
+    repaymentReserve,
   });
   const dayRate =
     payroll.rate === undefined ? undefined : payroll.rate * DAY_SECONDS;
@@ -58,9 +67,22 @@ export function RunwayPlanner() {
       <p className="hint">
         The planner uses your connected wallet's schedules and loan.
       </p>
-      {payroll.reason ? (
+      <label className="planner-reserve">
+        Repayment reserve · MUSD
+        <input
+          inputMode="decimal"
+          value={reserveText}
+          onChange={(e) => setReserveText(e.target.value)}
+        />
+        <span className="hint">
+          Planning assumption: retain this amount in your wallet rather than
+          counting it toward renewed payments.
+        </span>
+      </label>
+      {payroll.reason || !reserveValid ? (
         <div role="status" className="callout">
-          {payroll.reason}
+          {payroll.reason ??
+            'Enter a nonnegative repayment reserve with up to 18 decimals.'}
           {schedules.hasNextPage && (
             <>
               {' '}
@@ -122,6 +144,11 @@ export function RunwayPlanner() {
               )}
               <p className="mono">
                 Wallet MUSD: {formatUnits(payroll.walletMusd!, 18)}
+              </p>
+              <p className="hint">
+                Usable wallet cash after repayment reserve:{' '}
+                {formatUnits(payroll.usableWalletMusd!, 18)} MUSD.
+                Already-funded escrow is committed to recipients.
               </p>
               <p className="hint">{projectionAssumptions}</p>
               {Boolean(payroll.future) && (

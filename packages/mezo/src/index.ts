@@ -2,6 +2,12 @@ import { defineChain, getAddress, isAddress, parseAbi } from 'viem';
 export * from './borrowing';
 export * from './stress';
 export * from './planner';
+export * from './borrowing-quotes';
+export * from './borrowing-write-config';
+export * from './borrowing-write';
+export * from './protocol-planner';
+export * from './proof';
+export * from './team-operations';
 
 export const TESTNET_CHAIN_ID = 31611;
 // RPC metadata verified on chain 31611, block 16260076, 2026-10-20.
@@ -47,6 +53,8 @@ export function freeCash(balance: bigint, reserve: bigint) {
 export const paymentsAbi = parseAbi([
   'struct Schedule { address sender; address recipient; uint256 total; uint64 start; uint64 end; uint256 claimed; bool cancelled; uint256 vestedAtCancellation; bytes32 referenceHash; }',
   'function musd() view returns (address)',
+  'function outstandingObligations() view returns (uint256)',
+  'function scheduleCount() view returns (uint256)',
   'function getSchedule(uint256 id) view returns (Schedule)',
   'function getSenderScheduleIds(address sender, uint256 offset, uint256 limit) view returns (uint256[])',
   'function getRecipientScheduleIds(address recipient, uint256 offset, uint256 limit) view returns (uint256[])',

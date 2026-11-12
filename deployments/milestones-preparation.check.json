@@ -1,0 +1,18 @@
+{
+  "preparedAt": "2026-11-04T14:36:46.139Z",
+  "status": "prepared-not-deployed",
+  "contract": "RunwayMilestones",
+  "chainId": 31611,
+  "musd": "0x118917a40FAF1CD7a13dB0Ef56C86De7973Ac503",
+  "artifact": "contracts/out/RunwayMilestones.sol/RunwayMilestones.json",
+  "sourceSha256": "059fe74df26a5e686363d3f0f159e118b067c3ddf2c113d84bdafcc0e4518f73",
+  "creationBytecodeHash": "0x48f23c7b27199148bf4c857526e8633ab08ffdfc1c219a31fa6ae85717e86948",
+  "creationDataHash": "0x48261678c52034c2e560b0012b4c27bc845daaba6c1140c0a0fb664945c0b0b0",
+  "compiler": "0.8.28+commit.7893614a",
+  "evmVersion": "london",
+  "optimizerRuns": 200,
+  "verificationInput": "deployments/verification/RunwayMilestones.standard-input.json",
+  "deployed": false,
+  "broadcast": false,
+  "next": "User reviews the contract/tests, runs node scripts/deploy-browser.mjs --contract milestones --founder <public-address>, selects RunwayMilestones and signs. Provide the deployment address/hash for independent verification before app integration. This file is preparation evidence, not a deployment manifest."
+}

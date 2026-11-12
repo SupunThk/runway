@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import {
-  borrowingHeadroom,
   monthsCovered,
+  protocolBorrowingScenario,
   requiredForMonths,
 } from '@runway/mezo';
-import { formatUnits } from 'viem';
+import { formatUnits, parseUnits } from 'viem';
 import type { useBorrowingPosition } from './hooks/useBorrowingPosition';
-
+import { useProtocolSnapshot } from './hooks/useProtocolSnapshot';
 type Position = ReturnType<typeof useBorrowingPosition>;
 export function RunwayScenario({
   position,
@@ -15,20 +15,24 @@ export function RunwayScenario({
   position: Position;
   rate: bigint;
 }) {
-  const [months, setMonths] = useState('3');
-  const [drop, setDrop] = useState(20);
-  const [target, setTarget] = useState(200);
+  const [months, setMonths] = useState('3'),
+    [drop, setDrop] = useState(20),
+    [target, setTarget] = useState(200),
+    [collateral, setCollateral] = useState('0');
   const { query, data, stale, price } = position;
-  const presets = [150, 200, 250];
-  const enabled = presets.filter(
-    (r) =>
-      data?.active && BigInt(r) * 10n ** 16n > data.minimumRatio + 10n ** 17n,
+  const protocol = useProtocolSnapshot(
+    Boolean(data?.active && price && !stale && !query.error),
   );
+  const presets = [150, 200, 250],
+    enabled = presets.filter(
+      (r) =>
+        data?.active && BigInt(r) * 10n ** 16n > data.minimumRatio + 10n ** 17n,
+    );
   const selected = enabled.includes(target) ? target : enabled[0];
   let reason: string | undefined;
   if (query.isPending) reason = 'Reading borrowing position…';
   else if (query.error)
-    reason = `Loan health unknown: ${query.error.message.split('\n')[0]}`;
+    reason = 'Loan health unknown: ' + query.error.message.split('\n')[0];
   else if (!data) reason = 'Loan health unknown: borrowing data unavailable.';
   else if (!data.active)
     reason = [
@@ -39,36 +43,58 @@ export function RunwayScenario({
       'Position closed by redemption.',
     ][data.status];
   else if (!price)
-    reason = `Loan health unknown: ${stale ? 'the snapshot is stale.' : (data.priceError ?? 'protocol price unavailable.')}`;
+    reason =
+      'Loan health unknown: ' +
+      (stale
+        ? 'the snapshot is stale.'
+        : (data.priceError ?? 'protocol price unavailable.'));
   else if (selected === undefined)
     reason =
       'No target collateral ratio preset meets the protocol threshold plus 10 percentage points.';
+  else if (protocol.isPending)
+    reason = 'Checking protocol fees, mode and borrowing limits…';
+  else if (protocol.error)
+    reason =
+      'Protocol-aware planning unavailable: ' +
+      protocol.error.message.split('\n')[0];
+  else if (
+    !protocol.data ||
+    Date.now() / 1000 - Number(protocol.data.chainTime) > 60 ||
+    Date.now() / 1000 - Number(protocol.data.chainTime) < -30
+  )
+    reason = 'Protocol-aware planning unavailable: the snapshot is stale.';
   const validMonths =
-    /^\d+$/.test(months) &&
-    Number.isInteger(Number(months)) &&
-    Number(months) >= 1 &&
-    Number(months) <= 24;
-  const scenario =
-    !reason && data?.active && price && selected !== undefined
-      ? borrowingHeadroom({
-          collateral: data.collateral,
-          debt: data.debt,
-          price: price.value,
-          dropPercent: drop,
-          targetRatio: BigInt(selected) * 10n ** 16n,
-          minimumRatio: data.minimumRatio,
-        })
-      : undefined;
+    /^\d+$/.test(months) && Number(months) >= 1 && Number(months) <= 24;
   const needed =
     rate > 0n && validMonths
       ? requiredForMonths(rate, Number(months))
       : undefined;
+  let scenario: ReturnType<typeof protocolBorrowingScenario> | undefined,
+    inputError: string | undefined;
+  if (!reason && protocol.data && selected !== undefined) {
+    try {
+      if (!/^\d{1,60}(\.\d{1,18})?$/.test(collateral))
+        throw new Error(
+          'Enter nonnegative BTC collateral with up to 18 decimals.',
+        );
+      scenario = protocolBorrowingScenario(
+        protocol.data,
+        drop,
+        BigInt(selected) * 10n ** 16n,
+        parseUnits(collateral, 18),
+        needed,
+      );
+    } catch (error) {
+      inputError =
+        error instanceof Error ? error.message : 'Invalid scenario inputs.';
+    }
+  }
   return (
     <div>
       <h3>Can you fund another N months?</h3>
       <p className="hint">
-        Additional borrowing alone funds all current streams for N more 30-day
-        months. This scenario does not extend the coverage date above.
+        Additional borrowing alone funds current streams for N more 30-day
+        months. Hypothetical proceeds do not extend your current coverage date.
       </p>
       {reason ? (
         <p role="status">{reason}</p>
@@ -99,15 +125,15 @@ export function RunwayScenario({
               />
             </label>
             <div className="actions">
-              {[0, 10, 20, 30, 50].map((value) => (
+              {[0, 10, 20, 30, 50].map((v) => (
                 <button
-                  key={value}
-                  type="button"
+                  key={v}
                   className="button secondary"
-                  aria-pressed={drop === value}
-                  onClick={() => setDrop(value)}
+                  type="button"
+                  aria-pressed={drop === v}
+                  onClick={() => setDrop(v)}
                 >
-                  {value}%
+                  {v}%
                 </button>
               ))}
             </div>
@@ -117,56 +143,114 @@ export function RunwayScenario({
                 value={selected}
                 onChange={(e) => setTarget(Number(e.target.value))}
               >
-                {presets.map((value) => (
-                  <option
-                    key={value}
-                    value={value}
-                    disabled={!enabled.includes(value)}
-                  >
-                    {value}%
+                {presets.map((v) => (
+                  <option key={v} value={v} disabled={!enabled.includes(v)}>
+                    {v}%
                   </option>
                 ))}
               </select>
             </label>
+            <label>
+              Additional BTC collateral · hypothetical
+              <input
+                inputMode="decimal"
+                value={collateral}
+                onChange={(e) => setCollateral(e.target.value)}
+              />
+            </label>
           </div>
-          {!validMonths && (
+          {!validMonths ? (
             <p role="alert">Choose 1–24 whole planning months.</p>
-          )}
-          <dl className="borrowing-values">
-            {needed !== undefined && (
-              <div>
-                <dt>Needed</dt>
-                <dd>{formatUnits(needed, 18)} MUSD</dd>
-              </div>
-            )}
-            <div>
-              <dt>Additional borrowing capacity at this scenario</dt>
-              <dd>{formatUnits(scenario!.headroom, 18)} MUSD</dd>
-            </div>
-          </dl>
-          {needed !== undefined && (
-            <p
-              role="status"
-              className={
-                scenario!.headroom >= needed ? 'hint' : 'callout warning'
-              }
-            >
-              {scenario!.headroom >= needed
-                ? `Covered in this scenario: borrowing ≈ ${formatUnits(needed, 18)} MUSD keeps your ratio at or above ${selected}% after a ${drop}% BTC drop.`
-                : `Not covered in this scenario: about ${formatUnits(needed - scenario!.headroom, 18)} MUSD short. Additional capacity covers about ${monthsCovered(scenario!.headroom, rate)} months.`}
-            </p>
-          )}
+          ) : null}
+          {inputError ? <p role="alert">{inputError}</p> : null}
+          {scenario ? (
+            <>
+              <dl className="borrowing-values">
+                {needed !== undefined ? (
+                  <div>
+                    <dt>Needed</dt>
+                    <dd>{formatUnits(needed, 18)} MUSD</dd>
+                  </div>
+                ) : null}
+                <div>
+                  <dt>Additional borrowing capacity at this scenario</dt>
+                  <dd>{formatUnits(scenario.proceeds, 18)} MUSD</dd>
+                </div>
+                <div>
+                  <dt>Scenario system mode</dt>
+                  <dd>{scenario.recovery ? 'Recovery Mode' : 'Normal mode'}</dd>
+                </div>
+                {scenario.quote ? (
+                  <>
+                    <div>
+                      <dt>Fee added to debt</dt>
+                      <dd>{formatUnits(scenario.quote.fee, 18)} MUSD</dd>
+                    </div>
+                    <div>
+                      <dt>Resulting debt for the requested months</dt>
+                      <dd>{formatUnits(scenario.quote.debt, 18)} MUSD</dd>
+                    </div>
+                  </>
+                ) : null}
+              </dl>
+              {needed !== undefined ? (
+                <p
+                  role="status"
+                  className={
+                    scenario.quote?.eligible ? 'hint' : 'callout warning'
+                  }
+                >
+                  {scenario.quote?.eligible
+                    ? 'Covered in this scenario: ' +
+                      formatUnits(needed, 18) +
+                      ' MUSD passes the snapshot fee, mode, target and capacity checks.'
+                    : 'Not covered in this scenario: ' +
+                      formatUnits(
+                        needed > scenario.proceeds
+                          ? needed - scenario.proceeds
+                          : 0n,
+                        18,
+                      ) +
+                      ' MUSD short. ' +
+                      (scenario.quote?.reasons.join(' ') ??
+                        scenario.reasons.join(' ')) +
+                      ' Additional eligible capacity covers about ' +
+                      monthsCovered(scenario.proceeds, rate) +
+                      ' months.'}
+                </p>
+              ) : null}
+              {!scenario.proceeds && scenario.reasons.length ? (
+                <p className="hint">{scenario.reasons.join(' ')}</p>
+              ) : null}
+              <p className="hint">
+                Verified protocol snapshot block{' '}
+                {String(protocol.data!.blockNumber)}. Minimum net debt{' '}
+                {formatUnits(protocol.data!.minNetDebt, 18)} MUSD; opening
+                reserve {formatUnits(protocol.data!.gasReserve, 18)} MUSD
+                applies only to a new trove. Stored trove capacity is enforced
+                independently of collateral value.
+              </p>
+            </>
+          ) : null}
         </>
       )}
-      <p className="hint">
-        Estimate only, not a borrowing quote. Excludes Mezo borrowing fees,
-        minimum debt, gas compensation on new debt, future interest and
-        system-wide recovery conditions. Treats 1 MUSD as 1 USD, as protocol
-        debt accounting does.
-      </p>
+      <details>
+        <summary>Planning assumptions and limits</summary>
+        <p className="hint">
+          Uses the loan review engine for issuance fees, fee exemptions, minimum
+          debt, reserve, system mode and stored issuance capacity. Price
+          scenarios hold other snapshot inputs fixed. Future interest, future
+          revenue and BTC gas spending are not predicted. This is a planning
+          estimate, not an executable quote; fresh reads and simulation are
+          required before signing. MUSD uses the protocol's USD debt-accounting
+          assumption.
+        </p>
+      </details>
       <div className="actions">
+        <a className="button" href="/borrowing">
+          Review borrowing controls
+        </a>
         <a
-          className="button"
           href="https://testnet.mezo.org/borrow"
           target="_blank"
           rel="noreferrer"

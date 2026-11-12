@@ -1,0 +1,77 @@
+{
+  "date": "2026-11-01",
+  "status": "local-first-slice-verified-not-deployed",
+  "baseCommit": "b27b109",
+  "sourceState": "uncommitted working tree; pre-existing planning documents preserved",
+  "node": "24.16.0",
+  "baseline": {
+    "unitApiTests": 86,
+    "contractTests": 24,
+    "typecheck": "passed",
+    "browser": "Initial 88 cases ran, but the managed Vite process did not finish teardown. The runner was stopped; a later isolated-server full run passed all original cases plus new coverage."
+  },
+  "verification": {
+    "unitApiFrontend": {
+      "command": "node node_modules/vitest/vitest.mjs run",
+      "files": 13,
+      "passed": 118,
+      "failed": 0,
+      "dotenv": "explicitly disabled in final Vitest configuration"
+    },
+    "browser": {
+      "command": "node node_modules/@playwright/test/cli.js test --config playwright.local.config.ts",
+      "passed": 100,
+      "failed": 0,
+      "seconds": 47.7,
+      "wallets": "simulated EIP-1193 providers; deterministic RPC fixtures",
+      "finalFocusedLoanRerun": "12 passed after the last signing-term guards"
+    },
+    "contracts": {
+      "command": "node scripts/forge.mjs test --root contracts",
+      "passed": 24,
+      "failed": 0,
+      "fuzzRuns": 256,
+      "invariantCampaigns": 2,
+      "callsPerCampaign": 16384,
+      "productionContractChanges": false
+    },
+    "apiTypecheck": "passed",
+    "frontendTypecheck": "passed",
+    "productionBuildUsingPublicExampleOnly": "passed; loan controls default disabled",
+    "formatting": "passed",
+    "whitespace": "passed",
+    "credentialPatternScan": "no matches in checked new source and public assets",
+    "mobile": "320px controls fit; screenshot visually reviewed",
+    "localApi": "http://127.0.0.1:5300/api/health returned 200 ready/database connected using temporary MongoDB"
+  },
+  "readOnlyProtocolEvidence": {
+    "report": "deployments/mezo-testnet.borrowing-write-verification.json",
+    "sourceRevision": "aa25fd6defbe6c1385940e183ea7a0a3df4533d8",
+    "typedReader": "passed against actual public testnet at block 16499777",
+    "runtimeFixture": "tests/fixtures/mezo-borrowing-runtime.json; actual implementation runtime bytes, compressed for offline tests"
+  },
+  "implemented": [
+    "Founder-direct open, additional borrowing, collateral addition and partial repayment controls",
+    "Fees, fee exemptions, minimum net debt, reserve-once accounting, system Recovery Mode, projected TCR and per-trove capacity",
+    "Same-block verified protocol snapshots including virtual system interest once",
+    "Review, simulation, fresh pre-sign checks, quote expiry and estimated BTC gas budget",
+    "Cross-tab wallet coordination and loan/payment pending guards",
+    "Exact calldata/value recovery, canonical receipt checks, fresh-head manual retry and 12-block confirmation policy",
+    "Confirmed borrowing handoff to an existing schedule form with prefilled amount",
+    "Isolated local frontend/API development with disposable MongoDB and disabled assistant inference"
+  ],
+  "notPerformed": [
+    "Deployment, commit, push or tag",
+    "Real signed or broadcast blockchain transaction",
+    "Production workspace write or hosting-setting change",
+    "Installed-wallet financial validation or protocol fork execution",
+    "Independent security audit"
+  ],
+  "remaining": [
+    "Unified persistent borrow-and-fund intent with original payment terms and complete before/after evidence",
+    "Protocol-aware scenarios integrated into the existing planner; its old price-only estimate retains explicit exclusions",
+    "Client receivables and shared cross-record settlement claims",
+    "Public funding proof, workspace billing experiment and independent user pilots",
+    "Gated atomic-routing and milestone-escrow expansions"
+  ]
+}

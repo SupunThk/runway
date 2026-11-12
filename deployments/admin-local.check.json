@@ -1,0 +1,53 @@
+{
+  "date": "2026-11-01",
+  "status": "implemented-and-verified-locally-not-deployed",
+  "route": "/admin",
+  "authentication": "Existing wallet-signed Runway login with revocable HTTP-only server session",
+  "authorization": "Server-only RUNWAY_ADMIN_WALLETS allowlist; empty or invalid configuration denies all wallets; checked on every admin request",
+  "adminWalletConfigured": false,
+  "data": {
+    "usage": "Aggregate workspace, owner-wallet, contractor and invoice counts; observed 7/30/90-day UTC activity and returning wallets",
+    "paymentActivity": "Exact MUSD bigint totals from a fresh published schedule generation, canonical pointer recheck, partial cap disclosure",
+    "revenue": "Not collecting fees; revenue amounts are unavailable, not inferred from payment volume or loans",
+    "health": "Database and reconciliation availability; request errors and operating costs explicitly uninstrumented",
+    "privacy": "No private customer names, descriptions, wallet lists or session tokens in overview responses",
+    "activityRetention": "90-day wallet/day server-side TTL records; no external analytics or assistant access"
+  },
+  "checks": {
+    "unitApiFrontend": { "passed": 129, "failed": 0, "files": 14, "newAdminCases": 11 },
+    "browser": { "passed": 105, "failed": 0, "seconds": 58.8, "newAdminCases": 5 },
+    "apiTypecheck": "passed",
+    "frontendTypecheck": "passed",
+    "productionBuildWithPublicExampleSettingsOnly": "passed; admin page lazy chunk 11.80 kB / 3.72 kB gzip",
+    "formatting": "passed after formatting the new API tests",
+    "whitespace": "passed",
+    "responsive": "1440px and 320px screenshots reviewed; no narrow-screen overflow",
+    "localApiHealth": "200 ready/database connected using temporary MongoDB",
+    "unsignedAdminSession": 401,
+    "unsignedAdminOverview": 401,
+    "walletTests": "Generated fixture wallets signing login messages; no financial transaction"
+  },
+  "authorizationCases": [
+    "Anonymous and ordinary-user denial, forged-header rejection and fail-closed invalid allowlist",
+    "Session logout and allowlist revocation",
+    "Account-switch hiding, rejected signatures and failed-refresh cache hiding",
+    "No-store responses, range validation and admin request throttling"
+  ],
+  "scope": {
+    "dashboard": "Read-only; no customer edits, fund movement or admin-grant endpoint",
+    "localDatabase": "Temporary and disposable; production Atlas not accessed",
+    "existingWave2Work": "Preserved; no existing test assertion removed",
+    "deployed": false,
+    "committedOrPushed": false,
+    "signedFinancialTransactions": false,
+    "hostingSettingsChanged": false
+  },
+  "remainingConfiguration": "User must designate a public admin wallet. Local command: node scripts/dev-local.mjs --admin-wallet <public-address>. No admin is automatically assigned.",
+  "limitations": [
+    "No billing or fee collection; no actual revenue measurement yet",
+    "Wallet counts include internal/test use and do not prove independent users",
+    "Activity history starts with instrumentation; no invented historical activity",
+    "One-time transfer totals, provider costs, request-error rates and live RPC uptime are not aggregated",
+    "Real installed-wallet admin login remains a user check; automated checks use simulated providers"
+  ]
+}
