@@ -20,6 +20,13 @@ export type AdminOverview = {
     refundBaseUnits: null;
     netBaseUnits: null;
     note: string;
+    pricingModel?: {
+      workspaceMonthlyFeeBaseUnits: string;
+      scheduleFeeBps: number;
+      scheduleFeeCapBaseUnits: string;
+      monthlySubscriptionEquivalentBaseUnits: string;
+      volumeFeeEquivalentBaseUnits: string | null;
+    };
   };
   payments: {
     available: boolean;

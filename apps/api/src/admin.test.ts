@@ -128,6 +128,14 @@ describe('admin authorization and truthful aggregate metrics', () => {
     expect(data.usage.daily.every((d: any) => d.wallets === null)).toBe(true);
     expect(data.revenue.netBaseUnits).toBeNull();
     expect(data.revenue.status).toBe('not_collecting_fees');
+    expect(data.revenue.pricingModel.scheduleFeeBps).toBe(25);
+    expect(
+      data.revenue.pricingModel.monthlySubscriptionEquivalentBaseUnits,
+    ).toBe((49n * 10n ** 18n).toString());
+    expect(data.revenue.pricingModel.scheduleFeeBps).toBe(25);
+    expect(data.revenue.pricingModel.monthlySubscriptionEquivalentBaseUnits).toBe(
+      (49n * 10n ** 18n).toString(),
+    );
     expect(data.payments.fundedBaseUnits).toBeNull();
     const serialized = JSON.stringify(data);
     for (const secret of [

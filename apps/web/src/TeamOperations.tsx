@@ -1,11 +1,13 @@
 import { useState, type FormEvent } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { formatUnits } from 'viem';
-import type {
-  TeamInvoice,
-  PayrollRun,
-  RecurringPlan,
-  WorkspaceRole,
+import { formatUnits, parseUnits } from 'viem';
+import {
+  calculatePayrollRunFee,
+  calculateScheduleFee,
+  type TeamInvoice,
+  type PayrollRun,
+  type RecurringPlan,
+  type WorkspaceRole,
 } from '@runway/mezo';
 import { teamRequest } from './teamApi';
 import { TeamForecast } from './TeamForecast';
@@ -152,6 +154,11 @@ export function TeamOperations({
           control preparation and payment linking in Runway. Wallet owners
           remain responsible for each transaction; these rules do not constrain
           payments made outside the app.
+        </p>
+        <p className="hint">
+          <strong>Workspace plan:</strong> Team Operations (49 MUSD/mo + 25 bps
+          schedule &amp; payroll fee capped at 25 MUSD per payment — 100% waived
+          on Mezo Testnet).
         </p>
         <button
           className="text-button"
@@ -402,6 +409,16 @@ export function TeamOperations({
                   i.payment?.status ?? 'unavailable',
                 ),
               ).length;
+            const runFee =
+              known.length === rows.length
+                ? calculatePayrollRunFee(
+                    known.map((i) => parseUnits(i.amount, 18)),
+                    { waiveOnTestnet: true },
+                  ).standardFeeBaseUnits
+                : calculateScheduleFee(BigInt(run.totalBaseUnits), {
+                    tier: 'team',
+                    waiveOnTestnet: true,
+                  }).standardFeeBaseUnits;
             return (
               <article className="schedule-card" key={run._id}>
                 <h3>{run.name}</h3>
@@ -409,6 +426,10 @@ export function TeamOperations({
                   {musd(run.totalBaseUnits)} MUSD · {run.invoiceIds.length}{' '}
                   payments · {funded} funded/paid · {paid} settled
                   {unknown ? ` · ${unknown} unverified` : ''}
+                </p>
+                <p className="hint">
+                  Standard 25 bps run fee: {musd(runFee.toString())} MUSD
+                  (waived to 0 MUSD on Mezo Testnet)
                 </p>
                 <p>
                   {run.approval?.approvedBy.length ?? 0}/
@@ -667,6 +688,18 @@ export function TeamOperations({
             <p>
               Remaining escrow entitlement
               <strong>{musd(data.report.outstandingBaseUnits)} MUSD</strong>
+            </p>
+            <p>
+              Standard 25 bps fee (waived on testnet)
+              <strong>
+                {musd(
+                  (
+                    (BigInt(data.report.fundedBaseUnits) * 25n) /
+                    10000n
+                  ).toString(),
+                )}{' '}
+                MUSD
+              </strong>
             </p>
           </div>
           <a

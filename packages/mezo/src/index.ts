@@ -8,6 +8,7 @@ export * from './borrowing-write';
 export * from './protocol-planner';
 export * from './proof';
 export * from './team-operations';
+export * from './pricing';
 
 export const TESTNET_CHAIN_ID = 31611;
 // RPC metadata verified on chain 31611, block 16260076, 2026-10-20.

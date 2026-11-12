@@ -253,6 +253,16 @@ export const guideSections: GuideSection[] = [
       'The separate RunwayMilestones contract is implemented and tested locally, with deployment tooling prepared. It is not deployed or integrated into app payment/proof pages. The scope requires a user-signed deployment and verified address before that integration. An optional deadline makes remaining funds claimable; it does not automatically send them. Before the deadline, cancellation can refund unapproved work. No dispute resolution or independent audit is provided.',
     ],
   },
+  {
+    id: 'business-model',
+    title: 'Business model & fee schedule',
+    paragraphs: [
+      'Runway uses a two-tier business model designed around open onchain escrow and team treasury operations:',
+      '1. Solo & Open Protocol Tier (0 MUSD/month, 0 bps): Direct 1-to-1 RunwayPayments streaming schedules, one-time MUSD transfers, public /proof verification, and BTC-backed borrowing remain 0 bps open infrastructure. Senders pay only native Mezo BTC gas, and 100% of funded MUSD goes to the recipient or sender cancellation refund.',
+      '2. Team Operations & Payroll Tier (49 MUSD/month per workspace + 25 bps schedule & payroll fee, capped at 25 MUSD per payment): Multi-wallet workspaces with role-based access (manager, approver, viewer, contractor), versioned approval quorums, batch payroll runs (up to 50 invoices), recurring invoice automation, client /pay/TOKEN checkout links, and 1-year private audit exports carry a 49 MUSD monthly workspace subscription plus a 25 bps (0.25%) coordination fee capped at 25 MUSD per payment.',
+      'Mezo Testnet Pilot Waiver: On Mezo Testnet (Chain ID 31611), both the 49 MUSD/month workspace subscription and the 25 bps coordination fee are 100% waived (0 MUSD charged onchain). The payment form, payroll run review, workspace reports, and /admin dashboard calculate and display the exact 25 bps standard fee and monthly subscription equivalent transparently while reporting 0 MUSD collected on testnet.',
+    ],
+  },
 ];
 
 export const guideMarkdown =

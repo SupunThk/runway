@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
+import { calculateScheduleFee } from '@runway/mezo';
 import { durationUnits, type DurationUnit } from '../paymentOptions';
 import { createFundingIntent, fundingDestination } from '../fundingIntent';
 import { useFundingIntent } from '../hooks/useFundingIntent';
 import { FundingIntentPanel } from '../FundingIntentPanel';
 import type { Address } from 'viem';
-import { formatUnits } from 'viem';
+import { formatUnits, parseUnits } from 'viem';
 
 export function NewSchedule({
   create,
@@ -38,6 +39,30 @@ export function NewSchedule({
   const selectedType = saved?.paymentType ?? paymentType;
   const selectedUnit = saved ? 'minutes' : durationUnit;
   const oneTime = selectedType === 'one-time';
+  const initialAmount =
+    (saved ? formatUnits(BigInt(saved.amountBaseUnits), 18) : undefined) ??
+    params.get('amount') ??
+    '';
+  const [amountInput, setAmountInput] = useState(initialAmount);
+  let parsedAmountBaseUnits: bigint | null = null;
+  try {
+    const raw = (saved ? initialAmount : amountInput).trim();
+    if (raw) {
+      const parsed = parseUnits(raw, 18);
+      if (parsed > 0n) parsedAmountBaseUnits = parsed;
+    }
+  } catch {
+    parsedAmountBaseUnits = null;
+  }
+  const activeTier =
+    invoicePayment || Boolean(saved?.workspaceId) ? 'team' : 'solo';
+  const feeBreakdown =
+    parsedAmountBaseUnits !== null
+      ? calculateScheduleFee(parsedAmountBaseUnits, {
+          tier: activeTier,
+          waiveOnTestnet: true,
+        })
+      : null;
   return (
     <>
       {plan.error || planNotice ? (
@@ -129,13 +154,8 @@ export function NewSchedule({
                 {oneTime ? 'Amount · MUSD' : 'Total funding · MUSD'}
                 <input
                   name="total"
-                  defaultValue={
-                    (saved
-                      ? formatUnits(BigInt(saved.amountBaseUnits), 18)
-                      : undefined) ??
-                    new URLSearchParams(window.location.search).get('amount') ??
-                    ''
-                  }
+                  defaultValue={initialAmount}
+                  onChange={(event) => setAmountInput(event.target.value)}
                   required
                   readOnly={Boolean(saved)}
                   inputMode="decimal"
@@ -215,6 +235,26 @@ export function NewSchedule({
                   </p>
                 </>
               )}
+              <p className="hint">
+                {activeTier === 'team' ? (
+                  <>
+                    <strong>Runway fee schedule (Team Operations):</strong> 25
+                    bps (0.25%, capped at 25 MUSD per payment)
+                    {feeBreakdown
+                      ? ` — ${formatUnits(feeBreakdown.standardFeeBaseUnits, 18)} MUSD standard fee waived to 0 MUSD on Mezo Testnet.`
+                      : ' — 100% waived on Mezo Testnet.'}{' '}
+                    Recipient receives 100% of the funded MUSD.
+                  </>
+                ) : (
+                  <>
+                    <strong>Runway fee schedule (Solo Direct):</strong> 0 bps (0
+                    MUSD protocol fee on direct schedules and transfers; only
+                    Mezo BTC gas applies). Team Operations workspaces are 49
+                    MUSD/mo + 25 bps (capped at 25 MUSD, waived on Mezo
+                    Testnet).
+                  </>
+                )}
+              </p>
             </div>
             <button
               className="button"

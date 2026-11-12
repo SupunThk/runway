@@ -14,8 +14,11 @@ export function AdminMetrics({ data }: { data: AdminOverview }) {
           <span>RUNWAY REVENUE</span>
           <strong className="admin-status-value">Not collecting fees</strong>
           <p>
-            Fee collection is not implemented. Testnet activity is not real
-            revenue.
+            Team tier: 49 MUSD/mo + 25 bps (max 25 MUSD), waived on Mezo
+            Testnet.
+            {data.revenue.pricingModel
+              ? ` Subscription eq: ${musd(data.revenue.pricingModel.monthlySubscriptionEquivalentBaseUnits)}/mo.`
+              : ''}
           </p>
         </div>
         <div className="metric">

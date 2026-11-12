@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { estimateWorkspaceRevenueEquivalent } from '../../../packages/mezo/src/pricing.ts';
 import { MongoServerError, type Db, type UpdateFilter } from 'mongodb';
 import { operatingCostRecord, requestMetrics } from './operations.ts';
 import {
@@ -233,7 +234,14 @@ export async function adminOverview(db: Db, now: Date, days: number) {
       grossBaseUnits: null,
       refundBaseUnits: null,
       netBaseUnits: null,
-      note: 'Runway fee collection is not implemented. Customer payments and borrowed MUSD are not Runway revenue.',
+      note: 'Runway fee collection is waived on Mezo Testnet. Customer payments and borrowed MUSD are not Runway revenue.',
+      pricingModel: estimateWorkspaceRevenueEquivalent({
+        workspaces,
+        fundedBaseUnits:
+          payment.fundedBaseUnits !== null
+            ? BigInt(payment.fundedBaseUnits)
+            : null,
+      }),
     },
     payments: payment,
     health: {

@@ -152,6 +152,20 @@
     "suggestedLink": "docs"
   },
   {
+    "id": "runway-business-model-and-fees",
+    "category": "business-model",
+    "question": "What is Runway's business model and fee schedule for Solo vs Team Operations workspaces?",
+    "expectedScope": "knowledge",
+    "requiredSources": ["business-model"],
+    "expectedSourceFacts": [
+      "49 MUSD/month",
+      "25 bps (0.25%)",
+      "capped at 25 MUSD per payment",
+      "100% waived"
+    ],
+    "suggestedLink": "workspace"
+  },
+  {
     "id": "live-wallet-balance-refusal",
     "category": "boundary-live-data",
     "question": "Check the current MUSD balance of 0x1ac891Ce491851AC87851D62B9184c75A76f55cF right now.",
