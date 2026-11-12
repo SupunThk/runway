@@ -4,7 +4,8 @@ node_modules
 !.env.example
 .tools
 contracts
-deployments
+deployments/*
+!deployments/mezo-testnet.payments.json
 test-results
 playwright-report
 *.log
