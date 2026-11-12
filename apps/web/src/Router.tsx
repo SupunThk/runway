@@ -50,7 +50,7 @@ export function Router() {
     if (
       url.origin !== window.location.origin ||
       url.hash ||
-      !/^\/(?:admin\/?|docs\/?|workspace\/?|borrowing\/?|assistant\/?|pay\/[^/]+\/?|proof\/[^/]+\/?|schedules\/[^/]+\/?)?$/.test(
+      !/^\/(?:admin\/?|docs\/?|workspace\/?|borrowing\/?|assistant\/?|pay\/[^/]+\/?|proof(?:\/[^/]+)?\/?|schedules\/[^/]+\/?)?$/.test(
         url.pathname,
       )
     )
@@ -69,7 +69,7 @@ export function Router() {
       <Suspense fallback={<RouteFallback />}>
         {/^\/pay\/[^/]+\/?$/.test(pathname) ? (
           <Pay key={pathname} />
-        ) : /^\/proof\/[^/]+\/?$/.test(pathname) ? (
+        ) : /^\/proof(?:\/[^/]+)?\/?$/.test(pathname) ? (
           <Proof key={pathname} />
         ) : /^\/admin\/?$/.test(pathname) ? (
           <Admin />

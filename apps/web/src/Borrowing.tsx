@@ -30,6 +30,12 @@ export function Borrowing() {
               <h1>Mezo borrowing</h1>
               <p>Track BTC collateral, MUSD debt and price-drop scenarios.</p>
             </div>
+            <a
+              className="button secondary"
+              href="/assistant?q=How%20does%20the%20Runway%20planner%20calculate%20payroll%20coverage%3F"
+            >
+              Ask Runway
+            </a>
           </section>
           {notice && (
             <p className="callout" role="status">

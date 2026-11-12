@@ -18,7 +18,8 @@ export function Proof() {
   const valid = isAddress(raw) && BigInt(raw) !== 0n;
   const client = usePublicClient({ chainId: TESTNET_CHAIN_ID });
   const [revision, setRevision] = useState(0),
-    [notice, setNotice] = useState('');
+    [notice, setNotice] = useState(''),
+    [lookup, setLookup] = useState(raw);
   const query = useInfiniteQuery({
     queryKey: [
       'public-funding-proof',
@@ -240,9 +241,44 @@ export function Proof() {
                 >
                   Copy proof link
                 </button>
+                <a
+                  className="button secondary"
+                  href="/assistant?q=What%20does%20the%20public%20funding%20proof%20verify%3F"
+                >
+                  Ask Runway about proof
+                </a>
               </div>
             </>
           )}
+          <form
+            className="panel"
+            onSubmit={(event) => {
+              event.preventDefault();
+              const trimmed = lookup.trim();
+              if (trimmed)
+                location.assign(`/proof/${encodeURIComponent(trimmed)}`);
+            }}
+          >
+            <label htmlFor="proof-sender-lookup">
+              Inspect another sender wallet (0x…)
+            </label>
+            <div className="actions">
+              <input
+                id="proof-sender-lookup"
+                type="text"
+                value={lookup}
+                onChange={(event) => setLookup(event.target.value)}
+                placeholder="0x…"
+              />
+              <button
+                type="submit"
+                className="button secondary"
+                disabled={!lookup.trim()}
+              >
+                Inspect sender proof
+              </button>
+            </div>
+          </form>
           {notice ? <p role="status">{notice}</p> : null}
           <p className="hint">
             This page proves displayed escrow commitments at the source block.

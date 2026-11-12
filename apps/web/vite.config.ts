@@ -10,8 +10,13 @@ export default defineConfig({
         codeSplitting: {
           groups: [
             {
-              name: 'wallet',
-              test: /node_modules[\\/](wagmi|@wagmi|viem|ox|abitype|@noble|@scure|@adraffy)[\\/]/,
+              name: 'wagmi',
+              test: /node_modules[\\/](wagmi|@wagmi)[\\/]/,
+              priority: 35,
+            },
+            {
+              name: 'viem',
+              test: /node_modules[\\/](viem|ox|abitype|@noble|@scure|@adraffy)[\\/]/,
               priority: 30,
             },
             {

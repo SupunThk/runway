@@ -14,7 +14,7 @@ jobs:
           today=$(date -u +%Y-%m-%d)
           if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]] \
              || [[ "$today" > "2026-10-25" && "$today" < "2026-11-03" ]] \
-             || [[ "$today" > "2026-11-14" && "$today" < "2026-11-24" ]]; then
+             || [[ "$today" > "2026-11-11" && "$today" < "2026-11-25" ]]; then
             curl -fsS --max-time 90 https://mezo-runway-testnet.vercel.app/api/health
           else
             echo "Outside judging windows; skipping."

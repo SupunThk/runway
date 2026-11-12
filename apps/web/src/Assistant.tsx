@@ -50,11 +50,38 @@ const suggestions = [
   },
 ];
 
+function extractQuickLinks(text: string): { title: string; url: string }[] {
+  const links: { title: string; url: string }[] = [];
+  const addressMatch = /\b(0x[a-fA-F0-9]{40})\b/.exec(text);
+  if (addressMatch && BigInt(addressMatch[1]) !== 0n) {
+    const addr = addressMatch[1];
+    const short = `${addr.slice(0, 6)}…${addr.slice(-4)}`;
+    links.push({
+      title: `View funding proof (${short})`,
+      url: `/proof/${addr}`,
+    });
+  }
+  const scheduleMatch = /\b(?:schedule|payment)\s*#?(\d{1,9})\b/i.exec(text);
+  if (scheduleMatch && Number(scheduleMatch[1]) > 0) {
+    const id = scheduleMatch[1];
+    links.push({
+      title: `Open Schedule #${id}`,
+      url: `/schedules/${id}`,
+    });
+  }
+  return links;
+}
+
 export function Assistant() {
   const [turns, setTurns] = useState<Turn[]>([]);
-  const [question, setQuestion] = useState('');
+  const [question, setQuestion] = useState(
+    () =>
+      new URLSearchParams(window.location.search).get('q')?.slice(0, 1200) ??
+      '',
+  );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [copiedId, setCopiedId] = useState<number | null>(null);
   const wake = useBackendWake();
   const controller = useRef<AbortController | null>(null);
   const input = useRef<HTMLTextAreaElement>(null);
@@ -247,15 +274,44 @@ export function Assistant() {
                             ))}
                           </nav>
                         )}
-                        {!!turn.reply.links.length && (
-                          <div className="assistant-next-links">
-                            {turn.reply.links.map((link) => (
-                              <a key={link.url} href={link.url}>
-                                {link.title} <span aria-hidden="true">→</span>
-                              </a>
-                            ))}
-                          </div>
-                        )}
+                        <div className="assistant-next-links">
+                          {[
+                            ...turn.reply.links,
+                            ...extractQuickLinks(turn.question).filter(
+                              (q) =>
+                                !turn.reply?.links.some((l) => l.url === q.url),
+                            ),
+                          ].map((link) => (
+                            <a key={link.url} href={link.url}>
+                              {link.title} <span aria-hidden="true">→</span>
+                            </a>
+                          ))}
+                          <button
+                            type="button"
+                            className="button secondary"
+                            onClick={() => {
+                              void navigator.clipboard
+                                .writeText(
+                                  turn.reply?.paragraphs.join('\n\n') ?? '',
+                                )
+                                .then(() => {
+                                  setCopiedId(turn.id);
+                                  setTimeout(
+                                    () =>
+                                      setCopiedId((c) =>
+                                        c === turn.id ? null : c,
+                                      ),
+                                    2000,
+                                  );
+                                })
+                                .catch(() => {});
+                            }}
+                          >
+                            {copiedId === turn.id
+                              ? 'Copied answer'
+                              : 'Copy answer'}
+                          </button>
+                        </div>
                       </>
                     ) : busy && index === turns.length - 1 ? (
                       <div className="assistant-thinking" role="status">
