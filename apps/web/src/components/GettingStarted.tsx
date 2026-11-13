@@ -73,12 +73,13 @@ export function GettingStarted({
   if (hidden || remaining === 0 || (state.address && !balancesLoaded))
     return null;
   const current = steps.find((s) => !s.done)!;
+  const completed = steps.length - remaining;
   return (
     <section className="panel getting-started" aria-label="Getting started">
       <div className="section-heading">
         <div>
           <span className="eyebrow">
-            GETTING STARTED · {steps.length - remaining} OF {steps.length} DONE
+            GETTING STARTED · {completed} OF {steps.length} DONE
           </span>
           <h2>Set up your first payment</h2>
         </div>
@@ -97,8 +98,11 @@ export function GettingStarted({
           Hide
         </button>
       </div>
+      <div className="setup-progress" aria-hidden="true">
+        <span style={{ width: `${(completed / steps.length) * 100}%` }} />
+      </div>
       <ol className="setup-steps">
-        {steps.map((step) => (
+        {steps.map((step, index) => (
           <li
             key={step.key}
             className={
@@ -106,7 +110,7 @@ export function GettingStarted({
             }
           >
             <span className="setup-mark" aria-hidden="true">
-              {step.done ? '✓' : ''}
+              {step.done ? '✓' : index + 1}
             </span>
             <div>
               <strong>
