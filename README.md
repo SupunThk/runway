@@ -10,14 +10,14 @@ Fund contractor payments upfront in MUSD on Mezo testnet, or send direct one-tim
 
 | Feature | Available today |
 | --- | --- |
-| Contractor payments | Deposit the full MUSD amount into a linear schedule (minutes, hours, or days up to 365 days) or send a direct one-time MUSD transfer. Cancel schedules at any time before end with unvested funds refunded to the sender. |
+| Contractor payments | Deposit the full MUSD amount into a linear schedule (minutes, hours, or days up to 365 days) or send a direct one-time MUSD transfer. Cancel schedules at any time before end with unvested funds refunded to the sender. Recipients get an earnings summary with **Claim all available** and a CSV export, and new users get a live-detected getting-started checklist. |
 | Payment tracking & proof | Browse sent/received schedules with pagination, inspect history, download JSON receipts and CSV exports, recover pending transactions, and verify any sender's onchain escrow commitments at `/proof/<address>` without logging in. |
 | Team workspace & approvals | Sign in with an EOA or ERC-1271 contract wallet, invite team members (`manager`, `approver`, `viewer`, `contractor`), collect private contractor invoice submissions, enforce versioned approval quorums, and execute owner-signed payroll runs. |
 | Recurring plans & forecasts | Prepare idempotent weekly/monthly recurring invoice occurrences, model dated cash forecasts with repayment reserves and optional revenue assumptions, enable opt-in in-app reminders, and export formula-safe CSV reports and private audit logs. |
 | Client payment links | Create public `/pay/<token>` checkout links in Workspace; payers connect on Mezo testnet and settle via verified direct MUSD transfers with 12-block confirmation tracking and crash recovery. |
 | Borrowing & Runway planner | Read an existing Mezo loan, review protocol-aware borrowing/collateral/repayment quotes, save Borrow → Fund payment plans across reloads, and stress-test payroll coverage against hypothetical BTC price drops. |
 | Ask Runway | Ask product and Mezo questions across 25 reviewed knowledge sections with validated source citations and deep links to app workflows. |
-| Admin reliability metrics | Wallet-authenticated `/admin` dashboard displaying aggregate workspace activity, indexed escrow totals, request/error/latency metrics, and reconciliation freshness without exposing private user records. |
+| Admin reliability metrics | Wallet-authenticated `/admin` dashboard with an alert banner, activity and assistant-usage charts, an invoice funnel with median time to payment, where funded MUSD now sits, indexer lag in blocks, database ping, cold-start counts and an admin access log. Exports CSV/JSON, and has one operational action (sync the payment indexer now). It never exposes private user records. |
 
 ## Business model & fee schedule
 
@@ -107,7 +107,7 @@ Contract details are in [the deployment manifest](deployments/mezo-testnet.payme
 
 - **Borrowing writes are opt-in.** Production borrowing, collateral and repayment writes on `/borrowing` require `VITE_RUNWAY_BORROWING_ENABLED=true` on the deployment; otherwise loan execution opens in the external Mezo interface. Planner months are 30 days and price scenarios are hypothetical.
 - **Milestone escrow awaits user-signed deployment.** `RunwayMilestones.sol` and its offline verification artifacts are complete and tested; app/proof integration is gated on a user-signed testnet deployment (`node scripts/deploy-browser.mjs --contract milestones --founder <address>`).
-- **Free hosting can sleep.** Backend wake-up and indexer catch-up can delay Workspace, Assistant and payment evidence after inactivity, though the GitHub keep-alive workflow pings `/api/health` during judging windows.
+- **Free hosting can sleep.** The API stays on Render's free plan. A GitHub Actions keep-alive pings `/api/health` every 5 minutes year-round, and an external free monitor is recommended as a second pinger ([setup](docs/render-hosting.md#staying-awake-on-the-free-plan)). If both lapse, the first request waits for a cold start. `/admin` counts backend starts so you can see when that happens.
 - **Assistant scope is documentation only.** Ask Runway explains product and Mezo concepts from 25 reviewed knowledge sections; it does not inspect live wallets, private workspace records, or submit transactions.
 
 ## Documentation and source

@@ -6,6 +6,7 @@ import { createApp } from './app.ts';
 import { initializeDatabase } from './db.ts';
 import { parseAdminWallets } from './admin.ts';
 import { recordWorkspaceActivity } from './admin-metrics.ts';
+import { recordAssistantMetric } from './admin-insights.ts';
 import {
   indexKey,
   type IndexState,
@@ -332,5 +333,215 @@ describe('admin authorization and truthful aggregate metrics', () => {
     ).json();
     expect(data.payments.available).toBe(false);
     expect(data.payments.fundedBaseUnits).toBeNull();
+  });
+});
+
+describe('admin insights, cache and operational actions', () => {
+  it('reports an aggregate invoice funnel, active team members and time to payment without private fields', async () => {
+    await db.collection('workspaceMembers').insertMany([
+      {
+        _id: 'm1',
+        workspaceId: 'w',
+        address: '0x1',
+        role: 'approver',
+        status: 'active',
+      },
+      {
+        _id: 'm2',
+        workspaceId: 'w',
+        address: '0x2',
+        role: 'viewer',
+        status: 'invited',
+      },
+    ] as never[]);
+    await db.collection('invoices').insertMany([
+      {
+        _id: 'i1',
+        workspaceId: 'w',
+        description: 'SECRET A',
+        createdAt: '2026-11-01T00:00:00.000Z',
+        submittedBy: '0x3',
+        scheduleId: '1',
+      },
+      {
+        _id: 'i2',
+        workspaceId: 'w',
+        description: 'SECRET B',
+        createdAt: '2026-11-01T00:00:00.000Z',
+        reviewRejected: 'x',
+      },
+      {
+        _id: 'i3',
+        workspaceId: 'w',
+        description: 'SECRET C',
+        createdAt: '2026-11-01T00:00:00.000Z',
+      },
+    ] as never[]);
+    await db.collection('workspaceReviews').insertMany([
+      { _id: 'w:invoice:i1:0', version: 0, approvals: ['0x1'] },
+      { _id: 'w:invoice:i1:1', version: 1, approvals: ['0x1'] },
+      { _id: 'w:payroll:r1:0', version: 0, approvals: ['0x1'] },
+    ] as never[]);
+    await db.collection('payrollRuns').insertOne({
+      _id: 'r1',
+      workspaceId: 'w',
+      invoiceIds: ['i1', 'i3'],
+    } as never);
+    await db.collection('settlementClaims').insertOne({
+      _id: 'k',
+      targetType: 'invoice',
+      targetId: 'i1',
+      workspaceId: 'w',
+      createdAt: new Date('2026-11-01T06:00:00Z'),
+    } as never);
+    const data = await (
+      await call('/admin/overview', undefined, await login())
+    ).json();
+    expect(data.usage.teamMembers).toBe(1);
+    expect(data.funnel).toMatchObject({
+      created: 3,
+      contractorSubmitted: 1,
+      reviewed: 1,
+      rejected: 1,
+      inPayrollRun: 2,
+      paymentLinked: 1,
+      medianHoursToPayment: 6,
+      timedSamples: 1,
+    });
+    expect(JSON.stringify(data)).not.toContain('SECRET');
+    expect(data.health.databasePingMs).toBeGreaterThanOrEqual(0);
+  });
+  it('summarises assistant usage and raises alerts for stale indexing and assistant failures', async () => {
+    await recordAssistantMetric(
+      db,
+      { kind: 'answer', sources: ['payments.claim', 'x'] },
+      900,
+      instant,
+    );
+    await recordAssistantMetric(
+      db,
+      { kind: 'out_of_scope', sources: [] },
+      100,
+      instant,
+    );
+    await recordAssistantMetric(db, { failed: true }, 50, instant);
+    await db.collection<IndexState>('paymentIndex').insertOne({
+      _id: indexKey,
+      generation: 'g',
+      ready: true,
+      checkedAt: new Date(instant.getTime() - 600000),
+      block: '100',
+      head: '400',
+      hash: `0x${'11'.repeat(32)}`,
+    });
+    const data = await (
+      await call('/admin/overview', undefined, await login())
+    ).json();
+    expect(data.assistant).toMatchObject({
+      questions: 3,
+      answered: 1,
+      declined: 1,
+      failed: 1,
+    });
+    expect(data.assistant.topSources[0].id).toBe('payments-claim');
+    expect(data.health.indexer).toMatchObject({
+      indexedBlock: '100',
+      headBlock: '400',
+      lagBlocks: 300,
+    });
+    const codes = data.alerts.map((a: any) => a.code);
+    expect(codes).toEqual(
+      expect.arrayContaining([
+        'indexer-stale',
+        'indexer-lag',
+        'assistant-failures',
+      ]),
+    );
+  });
+  it('logs admin access with shortened wallets and records backend starts', async () => {
+    const cookie = await login();
+    await call('/admin/session', undefined, cookie);
+    const data = await (
+      await call('/admin/overview', undefined, cookie)
+    ).json();
+    expect(data.health.adminAccess).toHaveLength(1);
+    expect(data.health.adminAccess[0].requests).toBe(2);
+    expect(data.health.adminAccess[0].wallet).toMatch(
+      /^0x[0-9a-f]{4}…[0-9a-f]{4}$/,
+    );
+    expect(data.health.starts.inRange).toBe(1);
+  });
+  it('serves a 30 second cache unless a fresh snapshot is requested', async () => {
+    const cookie = await login();
+    const first = await (
+      await call('/admin/overview', undefined, cookie)
+    ).json();
+    expect(first.cached).toBe(false);
+    await db
+      .collection('workspaces')
+      .insertOne({ _id: 'new', owner: '0x9' } as never);
+    const second = await (
+      await call('/admin/overview', undefined, cookie)
+    ).json();
+    expect(second.cached).toBe(true);
+    expect(second.usage.workspaces).toBe(first.usage.workspaces);
+    const fresh = await (
+      await call('/admin/overview?fresh=1', undefined, cookie)
+    ).json();
+    expect(fresh.usage.workspaces).toBe(first.usage.workspaces + 1);
+    instant = new Date(instant.getTime() + 31000);
+    expect(
+      (await (await call('/admin/overview', undefined, cookie)).json()).cached,
+    ).toBe(false);
+  });
+  it('runs the indexer only for admins, only when enabled, and throttles it', async () => {
+    let runs = 0;
+    app = createApp({
+      getDb: async () => db,
+      origin,
+      now: () => instant,
+      adminWallets: allowed,
+      runIndexer: async () => {
+        runs++;
+        return true;
+      },
+    });
+    expect(
+      (await call('/admin/actions/reindex', {}, await login(outsider))).status,
+    ).toBe(403);
+    const cookie = await login();
+    expect(
+      (await (await call('/admin/session', undefined, cookie)).json()).actions
+        .reindex,
+    ).toBe(true);
+    for (let i = 0; i < 3; i++)
+      expect((await call('/admin/actions/reindex', {}, cookie)).status).toBe(
+        200,
+      );
+    expect((await call('/admin/actions/reindex', {}, cookie)).status).toBe(429);
+    expect(runs).toBe(3);
+    app = createApp({
+      getDb: async () => db,
+      origin,
+      now: () => instant,
+      adminWallets: allowed,
+      runIndexer: null,
+    });
+    expect(
+      (await call('/admin/actions/reindex', {}, await login())).status,
+    ).toBe(503);
+    app = createApp({
+      getDb: async () => db,
+      origin,
+      now: () => instant,
+      adminWallets: allowed,
+      runIndexer: async () => {
+        throw new Error('rpc down');
+      },
+    });
+    instant = new Date(instant.getTime() + 120000);
+    expect(
+      (await call('/admin/actions/reindex', {}, await login())).status,
+    ).toBe(502);
   });
 });

@@ -60,6 +60,7 @@ export function App() {
     canTransact,
     create,
     settle,
+    claimMany,
   } = usePaymentActions({
     client,
     wallet,
@@ -84,6 +85,9 @@ export function App() {
     outstanding,
     canTransact,
     settle,
+    claimMany,
+    busy,
+    chainId,
     historyRevision,
     setView,
   };

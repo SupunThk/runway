@@ -1,14 +1,50 @@
 import { formatUnits } from 'viem';
 import type { AdminOverview } from './adminTypes';
+import { DailyBars, Funnel, SplitBar } from './AdminCharts';
 
 const count = (value: number | null) =>
   value === null ? 'Not tracked' : value.toLocaleString();
 const musd = (value: string | null) =>
   value === null ? 'Unavailable' : `${formatUnits(BigInt(value), 18)} MUSD`;
+const shortMusd = (value: string | null) => {
+  if (value === null) return 'Unavailable';
+  const [whole, fraction = ''] = formatUnits(BigInt(value), 18).split('.');
+  return `${BigInt(whole).toLocaleString()}.${fraction.slice(0, 2).padEnd(2, '0')} MUSD`;
+};
+const alertIcon = { critical: '■', warning: '▲', info: '●' } as const;
+const alertLabel = {
+  critical: 'Critical',
+  warning: 'Warning',
+  info: 'Notice',
+} as const;
+const hoursLabel = (hours: number) =>
+  hours < 48 ? `${hours} hours` : `${(hours / 24).toFixed(1)} days`;
 export function AdminMetrics({ data }: { data: AdminOverview }) {
   const { usage, payments } = data;
+  const alerts = data.alerts ?? [];
+  const { funnel, assistant } = data;
+  const { indexer, starts } = data.health;
   return (
     <div className="admin-metrics">
+      <section className="admin-alerts" aria-label="Active alerts">
+        {alerts.length ? (
+          <ul>
+            {alerts.map((alert) => (
+              <li key={alert.code} className={`admin-alert ${alert.level}`}>
+                <span aria-hidden="true">{alertIcon[alert.level]}</span>
+                <strong>{alertLabel[alert.level]}</strong>
+                <span>{alert.message}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="admin-alert ok">
+            <span aria-hidden="true">✓</span>
+            <strong>All clear</strong>
+            <span>No operational alerts for this snapshot.</span>
+          </p>
+        )}
+      </section>
       <section className="metrics" aria-label="Admin summary">
         <div className="metric">
           <span>RUNWAY REVENUE</span>
@@ -40,6 +76,14 @@ export function AdminMetrics({ data }: { data: AdminOverview }) {
             Authenticated workspace requests in the selected UTC period. Wallets
             are not a count of people or independent customers.
           </p>
+          <DailyBars
+            title="Active wallets per day"
+            unit="wallets"
+            points={usage.daily.map((d) => ({
+              label: d.date,
+              value: d.wallets,
+            }))}
+          />
           <dl className="borrowing-values">
             <div>
               <dt>Active wallets · {data.range.days} days</dt>
@@ -118,8 +162,39 @@ export function AdminMetrics({ data }: { data: AdminOverview }) {
           <dl className="admin-status-list">
             <div>
               <dt>Database</dt>
-              <dd>Connected</dd>
+              <dd>
+                Connected
+                {data.health.databasePingMs !== undefined
+                  ? ` · ${data.health.databasePingMs} ms ping`
+                  : ''}
+              </dd>
             </div>
+            {indexer ? (
+              <div>
+                <dt>Indexer position</dt>
+                <dd>
+                  {indexer.indexedBlock === null
+                    ? 'No snapshot yet'
+                    : `Block ${Number(indexer.indexedBlock).toLocaleString()}${
+                        indexer.lagBlocks === null
+                          ? ''
+                          : ` · ${indexer.lagBlocks.toLocaleString()} behind head (${indexer.confirmations} held back for confirmations)`
+                      }`}
+                </dd>
+              </div>
+            ) : null}
+            {starts ? (
+              <div>
+                <dt>Backend starts (cold starts)</dt>
+                <dd>
+                  {starts.last24Hours} in 24 h · {starts.inRange} in{' '}
+                  {data.range.days} days
+                  {starts.lastStartedAt
+                    ? ` · last ${starts.lastStartedAt.slice(0, 16).replace('T', ' ')} UTC`
+                    : ''}
+                </dd>
+              </div>
+            ) : null}
             <div>
               <dt>Payment reconciliation</dt>
               <dd>
@@ -245,6 +320,29 @@ export function AdminMetrics({ data }: { data: AdminOverview }) {
                 schedules are included.
               </p>
             ) : null}
+            <SplitBar
+              title="Where funded MUSD is now"
+              segments={[
+                {
+                  key: 'claimed',
+                  label: 'Claimed by recipients',
+                  value: BigInt(payments.claimedBaseUnits ?? '0'),
+                  display: shortMusd(payments.claimedBaseUnits),
+                },
+                {
+                  key: 'refunded',
+                  label: 'Refunded to senders',
+                  value: BigInt(payments.refundedBaseUnits ?? '0'),
+                  display: shortMusd(payments.refundedBaseUnits),
+                },
+                {
+                  key: 'committed',
+                  label: 'Still in escrow',
+                  value: BigInt(payments.committedBaseUnits ?? '0'),
+                  display: shortMusd(payments.committedBaseUnits),
+                },
+              ]}
+            />
             <dl className="borrowing-values">
               <div>
                 <dt>
@@ -280,6 +378,150 @@ export function AdminMetrics({ data }: { data: AdminOverview }) {
           paid verdict; one-time transfer volume is not aggregated.
         </p>
       </section>
+      {funnel || assistant ? (
+        <div className="admin-grid">
+          {funnel ? (
+            <section className="panel" aria-label="Invoice funnel">
+              <span className="eyebrow">TEAM WORKFLOW · ALL TIME</span>
+              <h2>Invoice funnel</h2>
+              <p>
+                How far invoices get, from creation to a linked onchain payment.
+                Counts only; no invoice contents are read.
+              </p>
+              <Funnel
+                steps={[
+                  { label: 'Created', value: funnel.created },
+                  { label: 'Approved by a reviewer', value: funnel.reviewed },
+                  {
+                    label: 'Added to a payroll run',
+                    value: funnel.inPayrollRun,
+                  },
+                  { label: 'Payment linked', value: funnel.paymentLinked },
+                ]}
+              />
+              <dl className="borrowing-values">
+                <div>
+                  <dt>Submitted by contractors</dt>
+                  <dd>{count(funnel.contractorSubmitted)}</dd>
+                </div>
+                <div>
+                  <dt>Rejected in review</dt>
+                  <dd>{count(funnel.rejected)}</dd>
+                </div>
+                <div>
+                  <dt>Median time to payment</dt>
+                  <dd>
+                    {funnel.medianHoursToPayment === null
+                      ? 'No linked payments yet'
+                      : hoursLabel(funnel.medianHoursToPayment)}
+                  </dd>
+                </div>
+              </dl>
+              <p className="hint">
+                Time to payment runs from invoice creation until its payment was
+                linked, across the latest {funnel.timedSamples.toLocaleString()}{' '}
+                linked invoices. Owners can pay without a reviewer when no
+                quorum is set, so steps are not strictly nested.
+              </p>
+            </section>
+          ) : null}
+          {assistant ? (
+            <section className="panel" aria-label="Assistant usage">
+              <span className="eyebrow">
+                ASK RUNWAY · {data.range.days} DAYS
+              </span>
+              <h2>Assistant usage</h2>
+              <DailyBars
+                title="Questions per day"
+                unit="questions"
+                points={usage.daily.map((d) => ({
+                  label: d.date,
+                  value:
+                    assistant.daily.find((a) => a.date === d.date)?.questions ??
+                    0,
+                }))}
+              />
+              <dl className="borrowing-values">
+                <div>
+                  <dt>Questions</dt>
+                  <dd>{count(assistant.questions)}</dd>
+                </div>
+                <div>
+                  <dt>Answered from sources</dt>
+                  <dd>{count(assistant.answered)}</dd>
+                </div>
+                <div>
+                  <dt>Declined (out of scope or not covered)</dt>
+                  <dd>{count(assistant.declined)}</dd>
+                </div>
+                <div>
+                  <dt>Failed</dt>
+                  <dd>
+                    {count(assistant.failed)}
+                    {assistant.averageMs !== null
+                      ? ` · avg ${(assistant.averageMs / 1000).toFixed(1)} s`
+                      : ''}
+                  </dd>
+                </div>
+              </dl>
+              {assistant.topSources.length ? (
+                <div className="admin-table-scroll">
+                  <table>
+                    <caption>Most-cited knowledge sections</caption>
+                    <thead>
+                      <tr>
+                        <th scope="col">Section</th>
+                        <th scope="col">Citations</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {assistant.topSources.map((source) => (
+                        <tr key={source.id}>
+                          <th scope="row">{source.id}</th>
+                          <td>{source.citations}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : null}
+              <p className="hint">
+                A high declined share points to questions the knowledge base
+                does not cover yet. Question text is never stored.
+              </p>
+            </section>
+          ) : null}
+        </div>
+      ) : null}
+      {data.health.adminAccess?.length ? (
+        <section className="panel" aria-label="Admin access log">
+          <span className="eyebrow">SECURITY · 90-DAY RETENTION</span>
+          <h2>Admin access log</h2>
+          <div className="admin-table-scroll">
+            <table>
+              <caption>Recent admin activity by wallet and UTC day</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Wallet</th>
+                  <th scope="col">Day</th>
+                  <th scope="col">Requests</th>
+                  <th scope="col">Last seen (UTC)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.health.adminAccess.map((row) => (
+                  <tr key={`${row.wallet}-${row.day}`}>
+                    <th scope="row">{row.wallet}</th>
+                    <td>{row.day}</td>
+                    <td>{row.requests}</td>
+                    <td>{row.lastSeenAt.slice(11, 19)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ) : null}
       {data.revenue.pricingModel ? (
         <section
           className="panel"
@@ -337,9 +579,10 @@ export function AdminMetrics({ data }: { data: AdminOverview }) {
       >
         <strong>Read-only operational access</strong>
         <p>
-          No contractor names, private invoice text, wallet lists or session
-          tokens are returned to this dashboard. This access cannot move funds,
-          change recipients or control a customer wallet.
+          No contractor names, private invoice text, customer wallet lists or
+          session tokens are returned to this dashboard. Its only action asks
+          the payment indexer to sync now; it cannot move funds, change
+          recipients or control a customer wallet.
         </p>
       </section>
     </div>

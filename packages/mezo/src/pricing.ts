@@ -147,4 +147,3 @@ export function estimateWorkspaceRevenueEquivalent(params: {
         : null,
   };
 }
-

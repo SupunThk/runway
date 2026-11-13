@@ -1,21 +1,33 @@
-name: Keep backend warm (judging windows)
+name: Keep backend warm
+# Render's free plan sleeps a web service after 15 minutes without inbound
+# traffic. A ping every 5 minutes keeps it (and the in-process payment indexer)
+# awake. One always-on free service uses at most 744 of the 750 free instance
+# hours per month, so keep any other free Render services in the workspace off.
+#
+# GitHub may delay scheduled runs and pauses them after 60 days without repo
+# activity, so pair this with an external free monitor (see docs/render-hosting.md).
 on:
   schedule:
-    - cron: '*/10 * * * *'
+    - cron: '*/5 * * * *'
   workflow_dispatch:
 permissions: {}
+concurrency:
+  group: keepalive
+  cancel-in-progress: false
 jobs:
   ping:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 4
     steps:
-      - name: Ping only inside judging windows (UTC)
+      - name: Ping the API directly, retrying through a cold start
+        env:
+          API: https://runway-api-rw61.onrender.com/api/health
         run: |
-          today=$(date -u +%Y-%m-%d)
-          if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]] \
-             || [[ "$today" > "2026-10-25" && "$today" < "2026-11-03" ]] \
-             || [[ "$today" > "2026-11-11" && "$today" < "2026-11-25" ]]; then
-            curl -fsS --max-time 90 https://mezo-runway-testnet.vercel.app/api/health
-          else
-            echo "Outside judging windows; skipping."
-          fi
+          for attempt in 1 2 3 4 5 6; do
+            status=$(curl -s -o /dev/null -w '%{http_code}' --max-time 60 "$API" || echo 000)
+            echo "attempt $attempt: HTTP $status"
+            if [ "$status" = "200" ]; then exit 0; fi
+            sleep 10
+          done
+          echo "::warning::Backend health check did not return 200"
+          exit 1

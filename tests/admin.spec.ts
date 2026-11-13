@@ -203,7 +203,7 @@ test('switching accounts immediately hides authorized dashboard data', async ({
     page.getByRole('button', { name: 'Sign in as admin' }),
   ).toBeVisible();
 });
-test('a failed refresh hides cached metrics and supports retry', async ({
+test('a failed refresh keeps the last snapshot marked stale, and denial hides it', async ({
   page,
 }) => {
   await install(page);
@@ -221,6 +221,19 @@ test('a failed refresh hides cached metrics and supports retry', async ({
   );
   await page.getByRole('button', { name: 'Refresh dashboard' }).click();
   await expect(page.getByRole('alert')).toContainText('Metrics unavailable');
+  await expect(page.getByRole('alert')).toContainText('may be stale');
+  await expect(
+    page.getByRole('region', { name: 'Admin summary' }),
+  ).toBeVisible();
+  await page.unroute('**/api/admin/overview?*');
+  await page.route('**/api/admin/overview?*', (route) =>
+    route.fulfill({
+      status: 403,
+      json: { error: 'This wallet is not authorized for the admin dashboard.' },
+    }),
+  );
+  await page.getByRole('button', { name: 'Refresh dashboard' }).click();
+  await expect(page.getByRole('alert')).toContainText('hidden');
   await expect(page.getByRole('region', { name: 'Admin summary' })).toHaveCount(
     0,
   );

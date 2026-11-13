@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAccount, useSignMessage } from 'wagmi';
 import { Sidebar } from './Sidebar';
@@ -25,8 +25,49 @@ async function request<T>(
   });
   const result = await readJson<T & { error?: string }>(response);
   if (!response.ok)
-    throw new Error(result.error ?? 'Admin request failed. Try again.');
+    throw Object.assign(
+      new Error(result.error ?? 'Admin request failed. Try again.'),
+      { status: response.status },
+    );
   return result;
+}
+const statusOf = (error: unknown) =>
+  (error as { status?: number } | null)?.status;
+
+function download(name: string, type: string, text: string) {
+  const url = URL.createObjectURL(new Blob([text], { type }));
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = name;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+/** Flattens the snapshot to metric,value rows; formula-leading cells are escaped. */
+export function overviewCsv(data: AdminOverview) {
+  const rows: [string, string][] = [];
+  const walk = (prefix: string, value: unknown) => {
+    if (value === null || value === undefined) rows.push([prefix, '']);
+    else if (Array.isArray(value))
+      value.forEach((item, i) =>
+        walk(
+          `${prefix}.${(item as { date?: string; code?: string })?.date ?? (item as { code?: string })?.code ?? i}`,
+          item,
+        ),
+      );
+    else if (typeof value === 'object')
+      for (const [key, inner] of Object.entries(value))
+        walk(prefix ? `${prefix}.${key}` : key, inner);
+    else rows.push([prefix, String(value)]);
+  };
+  walk('', data);
+  const cell = (v: string) => {
+    const safe = /^[=+\-@\t\r]/.test(v) ? `'${v}` : v;
+    return /[",\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
+  };
+  return [
+    'metric,value',
+    ...rows.map(([k, v]) => `${cell(k)},${cell(v)}`),
+  ].join('\n');
 }
 export function Admin() {
   const { address } = useAccount();
@@ -53,12 +94,18 @@ function AdminContent({ address }: { address?: string }) {
       });
       if (response.status === 401) return { state: 'signed-out' as const };
       if (response.status === 403) return { state: 'denied' as const };
-      const result = await readJson<{ address: string; error?: string }>(
-        response,
-      );
+      const result = await readJson<{
+        address: string;
+        actions?: { reindex?: boolean };
+        error?: string;
+      }>(response);
       if (!response.ok)
         throw new Error(result.error ?? 'Admin service unavailable.');
-      return { state: 'authorized' as const, address: result.address };
+      return {
+        state: 'authorized' as const,
+        address: result.address,
+        canReindex: Boolean(result.actions?.reindex),
+      };
     },
   });
   const authorized = Boolean(
@@ -67,14 +114,48 @@ function AdminContent({ address }: { address?: string }) {
     session.data?.state === 'authorized' &&
     session.data.address === wallet,
   );
+  const fresh = useRef(false);
   const overview = useQuery({
     queryKey: ['admin-overview', wallet, days],
     enabled: authorized,
     retry: false,
     refetchInterval: 60_000,
     queryFn: ({ signal }) =>
-      request<AdminOverview>(`/admin/overview?days=${days}`, undefined, signal),
+      request<AdminOverview>(
+        `/admin/overview?days=${days}${fresh.current ? '&fresh=1' : ''}`,
+        undefined,
+        signal,
+      ).finally(() => {
+        fresh.current = false;
+      }),
   });
+  // Authorization failures hide private aggregates; outages keep the last
+  // snapshot visible, clearly marked as stale.
+  const overviewDenied = [401, 403].includes(statusOf(overview.error) ?? 0);
+  const [syncNotice, setSyncNotice] = useState('');
+  async function reindex() {
+    setBusy(true);
+    setSyncNotice('');
+    try {
+      const result = await request<{ published: boolean }>(
+        '/admin/actions/reindex',
+        {},
+      );
+      setSyncNotice(
+        result.published
+          ? 'Indexer batch completed. Showing a fresh snapshot.'
+          : 'Another indexer run is in progress; it will publish shortly.',
+      );
+      fresh.current = true;
+      await overview.refetch();
+    } catch (error) {
+      setSyncNotice(
+        error instanceof Error ? error.message : 'Indexer sync failed.',
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
   async function login() {
     setBusy(true);
     setNotice('');
@@ -224,49 +305,84 @@ function AdminContent({ address }: { address?: string }) {
                   className="button secondary"
                   disabled={overview.isFetching}
                   onClick={() => {
+                    fresh.current = true;
                     void session.refetch();
                     void overview.refetch();
                   }}
                 >
                   Refresh dashboard
                 </button>
-                {overview.data && !overview.error ? (
+                {session.data?.state === 'authorized' &&
+                session.data.canReindex ? (
                   <button
                     type="button"
                     className="button secondary"
-                    onClick={() => {
-                      const blob = new Blob(
-                        [JSON.stringify(overview.data, null, 2)],
-                        { type: 'application/json' },
-                      );
-                      const url = URL.createObjectURL(blob);
-                      const link = document.createElement('a');
-                      link.href = url;
-                      link.download = `runway-admin-overview-${overview.data.generatedAt.slice(0, 10)}.json`;
-                      link.click();
-                      URL.revokeObjectURL(url);
-                    }}
+                    disabled={busy}
+                    onClick={() => void reindex()}
+                    title="Runs one payment-indexer batch now. Cannot move funds."
                   >
-                    Download JSON snapshot
+                    Sync indexer now
                   </button>
                 ) : null}
+                {overview.data && !overviewDenied ? (
+                  <>
+                    <button
+                      type="button"
+                      className="button secondary"
+                      onClick={() =>
+                        download(
+                          `runway-admin-overview-${overview.data.generatedAt.slice(0, 10)}.csv`,
+                          'text/csv',
+                          overviewCsv(overview.data),
+                        )
+                      }
+                    >
+                      Download CSV
+                    </button>
+                    <button
+                      type="button"
+                      className="button secondary"
+                      onClick={() =>
+                        download(
+                          `runway-admin-overview-${overview.data.generatedAt.slice(0, 10)}.json`,
+                          'application/json',
+                          JSON.stringify(overview.data, null, 2),
+                        )
+                      }
+                    >
+                      Download JSON snapshot
+                    </button>
+                  </>
+                ) : null}
                 <p className="hint">
-                  {overview.data && !overview.error
-                    ? `Snapshot ${overview.data.generatedAt} · UTC`
+                  {overview.data && !overviewDenied
+                    ? `Snapshot ${overview.data.generatedAt} · UTC${overview.data.cached ? ' · cached up to 30 s' : ''}`
                     : 'Waiting for a current snapshot.'}
                 </p>
               </section>
+              {syncNotice ? (
+                <p className="callout" role="status">
+                  {syncNotice}
+                </p>
+              ) : null}
               {overview.isPending ? (
                 <p role="status">Loading admin metrics…</p>
               ) : null}
               {overview.error ? (
                 <p className="callout warning" role="alert">
-                  Metrics unavailable: {overview.error.message}. Previous
-                  metrics are hidden until access and freshness can be checked.
+                  Metrics unavailable: {overview.error.message}.{' '}
+                  {overviewDenied || !overview.data
+                    ? 'Metrics are hidden until access can be checked.'
+                    : `Showing the last snapshot from ${overview.data.generatedAt} UTC, which may be stale.`}
                 </p>
               ) : null}
-              {overview.data && !overview.error ? (
-                <AdminMetrics data={overview.data} />
+              {overview.data && !overviewDenied ? (
+                <div
+                  className={overview.error ? 'admin-stale' : undefined}
+                  aria-busy={overview.isFetching}
+                >
+                  <AdminMetrics data={overview.data} />
+                </div>
               ) : null}
             </>
           )}

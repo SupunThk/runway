@@ -7,11 +7,44 @@ import {
   ScheduleList,
   type ScheduleListProps,
 } from '../components/ScheduleList';
-export type OverviewProps = TreasuryLedgerProps & ScheduleListProps;
+import { RecipientEarnings } from '../components/RecipientEarnings';
+import { GettingStarted } from '../components/GettingStarted';
+export type OverviewProps = TreasuryLedgerProps &
+  ScheduleListProps & {
+    busy: boolean;
+    claimMany: (ids: bigint[]) => Promise<void>;
+    chainId?: number;
+  };
 export function Overview(props: OverviewProps) {
   return (
     <>
+      {props.scheduleId === undefined ? (
+        <GettingStarted
+          state={{
+            address: props.address,
+            chainId: props.chainId,
+            btc: props.balances.data?.btc,
+            musd: props.balances.data?.musd,
+            hasSchedule: Boolean(props.scheduleRows?.length),
+          }}
+          balancesLoaded={
+            Boolean(props.balances.data) && !props.schedules.isPending
+          }
+          onCreate={() => props.setView('create')}
+        />
+      ) : null}
       <TreasuryLedger {...props} />
+      {props.scheduleId === undefined ? (
+        <RecipientEarnings
+          address={props.address}
+          rows={props.schedules.error ? undefined : props.scheduleRows}
+          decimals={props.decimals}
+          partial={Boolean(props.schedules.hasNextPage)}
+          canTransact={props.canTransact}
+          busy={props.busy}
+          claimMany={props.claimMany}
+        />
+      ) : null}
       <ScheduleList {...props} />{' '}
       <section className="info-grid">
         <div className="info-card">

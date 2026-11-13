@@ -3,6 +3,13 @@ import { estimateWorkspaceRevenueEquivalent } from '../../../packages/mezo/src/p
 import { MongoServerError, type Db, type UpdateFilter } from 'mongodb';
 import { operatingCostRecord, requestMetrics } from './operations.ts';
 import {
+  assistantSummary,
+  invoiceFunnel,
+  recentAdminAccess,
+  serviceStarts,
+  type AdminAlert,
+} from './admin-insights.ts';
+import {
   indexKey,
   reconciliationState,
   type IndexedSchedule,
@@ -142,6 +149,9 @@ async function payments(db: Db, now: Date) {
   };
 }
 export async function adminOverview(db: Db, now: Date, days: number) {
+  const pingStarted = performance.now();
+  await db.command({ ping: 1 });
+  const databasePingMs = Math.round(performance.now() - pingStarted);
   const operations = await requestMetrics(db, now);
   const today = now.toISOString().slice(0, 10);
   const start = new Date(`${today}T00:00:00.000Z`).getTime() - (days - 1) * DAY;
@@ -162,6 +172,11 @@ export async function adminOverview(db: Db, now: Date, days: number) {
     series,
     tracking,
     payment,
+    funnel,
+    assistant,
+    starts,
+    adminAccess,
+    indexState,
   ] = await Promise.all([
     db.collection('workspaces').countDocuments(),
     db.collection('contractors').countDocuments(),
@@ -170,7 +185,7 @@ export async function adminOverview(db: Db, now: Date, days: number) {
       paymentType: 'one-time',
       transactionHash: { $exists: true },
     }),
-    db.collection('workspaceMembers').countDocuments({ status: 'accepted' }),
+    db.collection('workspaceMembers').countDocuments({ status: 'active' }),
     db.collection('payrollRuns').countDocuments(),
     db.collection('recurringPlans').countDocuments({ paused: { $ne: true } }),
     db.collection('paymentRequests').countDocuments(),
@@ -213,7 +228,101 @@ export async function adminOverview(db: Db, now: Date, days: number) {
       .collection<{ _id: string; startedAt: Date }>('appMetrics')
       .findOne({ _id: 'workspace-activity' }),
     payments(db, now),
+    invoiceFunnel(db),
+    assistantSummary(db, firstDay, today),
+    serviceStarts(db, now, new Date(start)),
+    recentAdminAccess(db),
+    db.collection<IndexState>('paymentIndex').findOne({ _id: indexKey }),
   ]);
+  const reconciliationAgeSeconds = payment.checkedAt
+    ? Math.max(
+        0,
+        Math.floor((now.getTime() - Date.parse(payment.checkedAt)) / 1000),
+      )
+    : null;
+  const headBlock = /^\d+$/.test(indexState?.head ?? '')
+    ? BigInt(indexState!.head!)
+    : null;
+  const indexedBlock = /^\d+$/.test(indexState?.block ?? '')
+    ? BigInt(indexState!.block!)
+    : null;
+  const indexer = {
+    configured: Boolean(indexState),
+    ready: Boolean(indexState?.ready),
+    error: indexState?.error ?? null,
+    indexedBlock: indexedBlock?.toString() ?? null,
+    headBlock: headBlock?.toString() ?? null,
+    lagBlocks:
+      headBlock !== null && indexedBlock !== null && headBlock >= indexedBlock
+        ? Number(headBlock - indexedBlock)
+        : null,
+    confirmations: 12,
+    checkedAt: indexState?.checkedAt?.toISOString() ?? null,
+  };
+  const alerts: AdminAlert[] = [];
+  if (!indexState)
+    alerts.push({
+      level: 'warning',
+      code: 'indexer-missing',
+      message:
+        'The payment indexer has never run here. Set PAYMENT_INDEXER_ENABLED=true on the API host.',
+    });
+  else if (!payment.available)
+    alerts.push({
+      level: 'critical',
+      code: 'indexer-stale',
+      message: indexState.error
+        ? `Payment reconciliation is unavailable: ${indexState.error}`
+        : 'Payment reconciliation is stale. Schedule links and pay-link evidence are paused until it catches up.',
+    });
+  if (indexer.lagBlocks !== null && indexer.lagBlocks > 100)
+    alerts.push({
+      level: 'warning',
+      code: 'indexer-lag',
+      message: `The indexer is ${indexer.lagBlocks.toLocaleString()} blocks behind the chain head.`,
+    });
+  if (operations && operations.requests >= 20) {
+    const rate = operations.serverErrors / operations.requests;
+    if (rate > 0.05)
+      alerts.push({
+        level: 'critical',
+        code: 'error-rate',
+        message: `${(rate * 100).toFixed(1)}% of API requests failed with server errors in the last 24 hours.`,
+      });
+  }
+  if (
+    operations &&
+    operations.serverErrors > 0 &&
+    !alerts.some((a) => a.code === 'error-rate')
+  )
+    alerts.push({
+      level: 'warning',
+      code: 'server-errors',
+      message: `${operations.serverErrors} server error${operations.serverErrors === 1 ? '' : 's'} in the last 24 hours.`,
+    });
+  if (
+    operations?.p95UpperBoundMs === null ||
+    (operations?.p95UpperBoundMs ?? 0) > 5000
+  )
+    if (operations && operations.requests > 0)
+      alerts.push({
+        level: 'warning',
+        code: 'latency',
+        message:
+          'p95 API latency is above 5 seconds. Cold starts or slow MongoDB queries are likely.',
+      });
+  if (starts.last24Hours > 3)
+    alerts.push({
+      level: 'info',
+      code: 'cold-starts',
+      message: `The backend started ${starts.last24Hours} times in 24 hours. Keep-alive pings may be missing; check the keep-alive workflow and external monitor.`,
+    });
+  if (assistant.failed > 0)
+    alerts.push({
+      level: 'warning',
+      code: 'assistant-failures',
+      message: `${assistant.failed} assistant request${assistant.failed === 1 ? '' : 's'} failed in this period.`,
+    });
   const byDay = new Map(series.map((row) => [row._id, row]));
   const trackedDay = tracking?.startedAt?.toISOString().slice(0, 10);
   const daily = Array.from({ length: days }, (_, i) => {
@@ -245,6 +354,9 @@ export async function adminOverview(db: Db, now: Date, days: number) {
       trackingSince: tracking?.startedAt?.toISOString() ?? null,
       daily,
     },
+    funnel,
+    assistant,
+    alerts,
     revenue: {
       status: 'not_collecting_fees' as const,
       currency: 'MUSD' as const,
@@ -263,17 +375,16 @@ export async function adminOverview(db: Db, now: Date, days: number) {
     payments: payment,
     health: {
       database: 'connected' as const,
+      databasePingMs,
+      indexer,
+      starts,
+      adminAccess,
       reconciliation: payment.available
         ? ('current' as const)
         : ('unavailable' as const),
       requestErrorCount: operations?.serverErrors ?? null,
       requests: operations,
-      reconciliationAgeSeconds: payment.checkedAt
-        ? Math.max(
-            0,
-            Math.floor((now.getTime() - Date.parse(payment.checkedAt)) / 1000),
-          )
-        : null,
+      reconciliationAgeSeconds,
       operatingCost: operatingCostRecord(undefined, now),
     },
   };
