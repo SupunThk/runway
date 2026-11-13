@@ -48,7 +48,9 @@ export function AdminMetrics({ data }: { data: AdminOverview }) {
       <section className="metrics" aria-label="Admin summary">
         <div className="metric">
           <span>RUNWAY REVENUE</span>
-          <strong className="admin-status-value">Not collecting fees</strong>
+          <strong className="admin-status-value">
+            <span className="status-pill neutral">Not collecting fees</span>
+          </strong>
           <p>
             Team tier: 49 MUSD/mo + 25 bps (max 25 MUSD), waived on Mezo
             Testnet.
@@ -160,7 +162,7 @@ export function AdminMetrics({ data }: { data: AdminOverview }) {
           <span className="eyebrow">OPERATIONS</span>
           <h2>Service health</h2>
           <dl className="admin-status-list">
-            <div>
+            <div data-status="ok">
               <dt>Database</dt>
               <dd>
                 Connected
@@ -170,7 +172,11 @@ export function AdminMetrics({ data }: { data: AdminOverview }) {
               </dd>
             </div>
             {indexer ? (
-              <div>
+              <div
+                data-status={
+                  indexer.indexedBlock === null || indexer.error ? 'warn' : 'ok'
+                }
+              >
                 <dt>Indexer position</dt>
                 <dd>
                   {indexer.indexedBlock === null
@@ -184,7 +190,7 @@ export function AdminMetrics({ data }: { data: AdminOverview }) {
               </div>
             ) : null}
             {starts ? (
-              <div>
+              <div data-status="info">
                 <dt>Backend starts (cold starts)</dt>
                 <dd>
                   {starts.last24Hours} in 24 h · {starts.inRange} in{' '}
@@ -195,7 +201,11 @@ export function AdminMetrics({ data }: { data: AdminOverview }) {
                 </dd>
               </div>
             ) : null}
-            <div>
+            <div
+              data-status={
+                data.health.reconciliation === 'current' ? 'ok' : 'muted'
+              }
+            >
               <dt>Payment reconciliation</dt>
               <dd>
                 {data.health.reconciliation === 'current'
@@ -203,7 +213,15 @@ export function AdminMetrics({ data }: { data: AdminOverview }) {
                   : 'Unavailable or stale'}
               </dd>
             </div>
-            <div>
+            <div
+              data-status={
+                data.health.requestErrorCount === null
+                  ? 'muted'
+                  : data.health.requestErrorCount > 0
+                    ? 'warn'
+                    : 'ok'
+              }
+            >
               <dt>Request error count</dt>
               <dd>
                 {data.health.requestErrorCount === null
@@ -211,7 +229,7 @@ export function AdminMetrics({ data }: { data: AdminOverview }) {
                   : `${count(data.health.requestErrorCount)} server errors · observed 24-hour window`}
               </dd>
             </div>
-            <div>
+            <div data-status={data.health.operatingCost ? 'ok' : 'muted'}>
               <dt>Operating costs</dt>
               <dd>
                 {data.health.operatingCost
@@ -219,7 +237,11 @@ export function AdminMetrics({ data }: { data: AdminOverview }) {
                   : 'Not configured'}
               </dd>
             </div>
-            <div>
+            <div
+              data-status={
+                data.health.reconciliationAgeSeconds === null ? 'muted' : 'info'
+              }
+            >
               <dt>Reconciliation check age</dt>
               <dd>
                 {data.health.reconciliationAgeSeconds === null

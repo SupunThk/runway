@@ -5,6 +5,7 @@ import { Sidebar } from './Sidebar';
 import { WalletConnection } from './WalletConnection';
 import { apiFetch, readJson } from './api';
 import { AdminMetrics } from './AdminMetrics';
+import { Icon } from './Icon';
 import type { AdminOverview } from './adminTypes';
 
 async function request<T>(
@@ -229,7 +230,7 @@ function AdminContent({ address }: { address?: string }) {
                 disabled={busy}
                 onClick={() => void logout()}
               >
-                Sign out of admin
+                <Icon name="logout" /> Sign out of admin
               </button>
             ) : null}
           </section>
@@ -310,7 +311,7 @@ function AdminContent({ address }: { address?: string }) {
                     void overview.refetch();
                   }}
                 >
-                  Refresh dashboard
+                  <Icon name="refresh" /> Refresh dashboard
                 </button>
                 {session.data?.state === 'authorized' &&
                 session.data.canReindex ? (
@@ -321,7 +322,7 @@ function AdminContent({ address }: { address?: string }) {
                     onClick={() => void reindex()}
                     title="Runs one payment-indexer batch now. Cannot move funds."
                   >
-                    Sync indexer now
+                    <Icon name="sync" /> Sync indexer now
                   </button>
                 ) : null}
                 {overview.data && !overviewDenied ? (
@@ -337,7 +338,7 @@ function AdminContent({ address }: { address?: string }) {
                         )
                       }
                     >
-                      Download CSV
+                      <Icon name="download" /> Download CSV
                     </button>
                     <button
                       type="button"
@@ -350,11 +351,11 @@ function AdminContent({ address }: { address?: string }) {
                         )
                       }
                     >
-                      Download JSON snapshot
+                      <Icon name="download" /> Download JSON snapshot
                     </button>
                   </>
                 ) : null}
-                <p className="hint">
+                <p className="hint admin-snapshot">
                   {overview.data && !overviewDenied
                     ? `Snapshot ${overview.data.generatedAt} · UTC${overview.data.cached ? ' · cached up to 30 s' : ''}`
                     : 'Waiting for a current snapshot.'}

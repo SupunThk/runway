@@ -6,6 +6,7 @@ import { config } from './config';
 import { Router } from './Router';
 import './style.css';
 import './refinements.css';
+import './polish.css';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: true } },

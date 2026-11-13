@@ -9,6 +9,11 @@ const paths = {
   wallet: 'M20 8V5H6a3 3 0 0 0 0 6h15v9H6a3 3 0 0 1-3-3V8 M21 13h-5v4h5',
   arrow: 'M5 12h14 M13 6l6 6-6 6',
   lock: 'M7 10V7a5 5 0 0 1 10 0v3 M5 10h14v11H5z M12 14v3',
+  refresh: 'M20 11a8 8 0 1 0-2.3 5.7 M20 4v7h-7',
+  download: 'M12 4v11 M7 10l5 5 5-5 M4 20h16',
+  sync: 'M4 7c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3z M4 7v10c0 1.7 3.6 3 8 3s8-1.3 8-3V7 M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3',
+  logout: 'M15 4h4v16h-4 M10 8l-4 4 4 4 M6 12h10',
+  check: 'M5 12.5l4.5 4.5L19 7',
 } as const;
 
 export function Icon({ name }: { name: keyof typeof paths }) {
