@@ -9,6 +9,7 @@ import { Sidebar } from './Sidebar';
 import { apiFetch, readJson, BackendUnavailableError } from './api';
 import { useBackendWake } from './hooks/useBackendWake';
 import { BackendWakeNotice } from './BackendWakeNotice';
+import { LiveAccountCard } from './components/LiveAccountCard';
 
 type Reply = {
   kind: string;
@@ -254,6 +255,10 @@ export function Assistant() {
                         {turn.reply.paragraphs.map((paragraph, i) => (
                           <p key={i}>{paragraph}</p>
                         ))}
+                        {turn.reply.kind === 'live_data' &&
+                        index === turns.length - 1 ? (
+                          <LiveAccountCard />
+                        ) : null}
                         {!!turn.reply.sources.length && (
                           <nav
                             className="assistant-sources"

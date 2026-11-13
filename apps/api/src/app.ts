@@ -16,6 +16,7 @@ import { createSiweMessage } from 'viem/siwe';
 import { database } from './db.ts';
 import { createAdminRoutes, parseAdminWallets } from './admin.ts';
 import { recordWorkspaceActivity } from './admin-metrics.ts';
+import { recordAssistantMetric, recordServiceStart } from './admin-insights.ts';
 import { recordRequestMetric, requestFamily } from './operations.ts';
 import { reserveSettlement } from './settlements.ts';
 import {
@@ -53,6 +54,8 @@ import {
   type AssistantModel,
 } from './assistant.ts';
 import {
+  indexBatch,
+  rpcIndexSource,
   indexKey,
   paymentDeployment,
   reconcileInvoices,
@@ -226,6 +229,7 @@ export function createApp(
     verifyPaymentRequest?: TransferVerifier;
     adminWallets?: string[];
     verifyContractSignature?: ContractSignatureVerifier;
+    runIndexer?: ((db: Db) => Promise<boolean>) | null;
   } = {},
 ) {
   const app = new Hono<{ Variables: Variables }>();
@@ -317,11 +321,21 @@ export function createApp(
       );
     }
   });
+  let startRecorded = false;
   app.use('/api/*', async (c, next) => {
     try {
       c.set('db', await getDb());
     } catch {
       return c.json({ error: 'MongoDB is not configured or reachable.' }, 503);
+    }
+    if (!startRecorded) {
+      // The first request after boot marks a (cold) start for the admin view.
+      startRecorded = true;
+      try {
+        await recordServiceStart(c.get('db'), now());
+      } catch {
+        console.warn('Service start could not be recorded.');
+      }
     }
     await next();
   });
@@ -390,6 +404,16 @@ export function createApp(
         options.assistantModel ?? createGeminiModel(),
         signal,
       );
+      try {
+        await recordAssistantMetric(
+          db,
+          { kind: reply.kind, sources: reply.sources.map((s) => s.id) },
+          Date.now() - started,
+          instant,
+        );
+      } catch {
+        console.warn('Assistant metrics could not be recorded.');
+      }
       console.info(
         JSON.stringify({
           event: 'assistant',
@@ -402,6 +426,12 @@ export function createApp(
       return c.json(reply);
     } catch (failure) {
       if (failure instanceof HTTPException) throw failure;
+      await recordAssistantMetric(
+        db,
+        { failed: true },
+        Date.now() - started,
+        instant,
+      ).catch(() => {});
       console.warn(
         JSON.stringify({
           event: 'assistant_failed',
@@ -560,6 +590,22 @@ export function createApp(
         ),
       throttle: (db, address, instant) =>
         rateLimit(db, `admin:${address}`, 30, instant),
+      actionThrottle: (db, instant) =>
+        rateLimit(
+          db,
+          'admin-reindex',
+          3,
+          instant,
+          60000,
+          'Re-indexing was requested recently. Wait a minute.',
+        ),
+      runIndexer:
+        options.runIndexer === null
+          ? undefined
+          : (options.runIndexer ??
+            (process.env.PAYMENT_INDEXER_ENABLED === 'true'
+              ? (db) => indexBatch(db, rpcIndexSource())
+              : undefined)),
     }),
   );
   app.use('/api/workspaces*', async (c, next) => {

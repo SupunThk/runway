@@ -40,6 +40,17 @@ Render free web services can sleep after inactivity, causing slow first requests
 
 References: [Render web services](https://render.com/docs/web-services), [Blueprint fields](https://render.com/docs/blueprint-spec), [Node version](https://render.com/docs/node-version), [Vercel external rewrites](https://vercel.com/docs/routing/rewrites).
 
+## Staying awake on the free plan
+
+Render's free plan stops a web service after 15 minutes without inbound HTTP traffic, and the next request waits for a cold start (often 30–60 s). Because the payment indexer runs inside the API process, sleep also pauses reconciliation. Runway stays on the free plan with two independent keep-alive pingers:
+
+1. **GitHub Actions** — `.github/workflows/keepalive.yml` calls `https://runway-api-rw61.onrender.com/api/health` every 5 minutes, all year, retrying through a cold start. GitHub can delay scheduled runs at busy times, and it pauses scheduled workflows after 60 days without repository activity. Re-enable it from the Actions tab if that happens.
+2. **An external free monitor** (recommended as the primary pinger). Create a free [UptimeRobot](https://uptimerobot.com) HTTP(s) monitor or a [cron-job.org](https://cron-job.org) job for the same URL at a 5-minute interval. Either one also emails you when the backend is down.
+
+**Hour budget:** the free plan includes 750 instance hours per workspace per month. One service awake 24/7 uses at most 744, so keep this the only free web service in the Render workspace. A second always-on free service would exhaust the allowance and Render would suspend both until the month resets.
+
+The `/admin` dashboard's **Backend starts (cold starts)** row counts process starts per day, and raises a notice when there are more than three in 24 hours. That's how you can tell if the pingers have stopped working. Deploys also count as starts.
+
 ## Current hosted service
 
 Updated October 17, 2026: backend source is now `a95c4a9`, live deployment `dep-db9onn6q1p3s7391ld30`, still following `deploy/render-backend-2026-10-13`. `PAYMENT_INDEXER_ENABLED=true` is merged into service settings; initial reconciliation catch-up completed and the embedded worker maintains checkpoints. This supersedes the source commit in the historical paragraph below. Free-service sleep can pause indexing. HTTP health was verified explicitly; configured checks remain TCP.

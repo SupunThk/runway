@@ -40,6 +40,14 @@ export async function initializeDatabase(db: Db) {
     db
       .collection('workspaceActivity')
       .createIndex({ day: 1, owner: 1 }, { unique: true }),
+    ...['assistantMetrics', 'adminAccess', 'serviceStarts'].map((name) =>
+      db
+        .collection(name)
+        .createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
+    ),
+    db.collection('adminAccess').createIndex({ lastSeenAt: -1 }),
+    db.collection('serviceStarts').createIndex({ startedAt: -1 }),
+    db.collection('assistantMetrics').createIndex({ day: 1 }),
     db
       .collection('challenges')
       .createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),

@@ -186,36 +186,56 @@ export function usePaymentActions({
     recovery.clear(tracked.hash);
     return receipt;
   }
-  async function settle(id: bigint, cancel: boolean) {
-    await transaction(async () => {
-      const { request } = await client!.simulateContract({
-        account: address!,
-        address: paymentAddress!,
+  async function settleOne(id: bigint, cancel: boolean) {
+    const { request } = await client!.simulateContract({
+      account: address!,
+      address: paymentAddress!,
+      abi: paymentsAbi,
+      functionName: cancel ? 'cancel' : 'claim',
+      args: [id],
+    });
+    await checkWallet();
+    const tx = await wallet!.writeContract(request);
+    setHash(tx);
+    setNotice('Transaction submitted. Waiting for confirmation…');
+    const receipt = await waitTracked(
+      tx,
+      cancel ? 'Cancellation' : 'Claim',
+      paymentAddress!,
+      encodeFunctionData({
         abi: paymentsAbi,
         functionName: cancel ? 'cancel' : 'claim',
         args: [id],
-      });
-      await checkWallet();
-      const tx = await wallet!.writeContract(request);
-      setHash(tx);
-      setNotice('Transaction submitted. Waiting for confirmation…');
-      const receipt = await waitTracked(
-        tx,
-        cancel ? 'Cancellation' : 'Claim',
-        paymentAddress!,
-        encodeFunctionData({
-          abi: paymentsAbi,
-          functionName: cancel ? 'cancel' : 'claim',
-          args: [id],
-        }),
-        id,
-      );
-      if (receipt.status !== 'success')
-        throw new Error('Transaction reverted. Refresh state before retrying.');
+      }),
+      id,
+    );
+    if (receipt.status !== 'success')
+      throw new Error('Transaction reverted. Refresh state before retrying.');
+    setNotice(
+      cancel
+        ? 'Cancellation confirmed. Vested funds remain claimable.'
+        : 'Claim confirmed. MUSD was sent to the stored recipient.',
+    );
+  }
+  async function settle(id: bigint, cancel: boolean) {
+    await transaction(() => settleOne(id, cancel));
+  }
+  /** Claims each listed schedule in turn; stops at the first failure or rejection. */
+  async function claimMany(ids: bigint[]) {
+    let done = 0;
+    await transaction(async () => {
+      for (const id of ids) {
+        try {
+          await settleOne(id, false);
+        } catch (error) {
+          throw new Error(
+            `Claimed ${done} of ${ids.length}. Schedule #${id} stopped the batch: ${errorText(error)}`,
+          );
+        }
+        done++;
+      }
       setNotice(
-        cancel
-          ? 'Cancellation confirmed. Vested funds remain claimable.'
-          : 'Claim confirmed. MUSD was sent to the stored recipient.',
+        `Claimed ${done} schedule${done === 1 ? '' : 's'}. MUSD was sent to your wallet.`,
       );
     });
   }
@@ -508,5 +528,6 @@ export function usePaymentActions({
     canTransact,
     create,
     settle,
+    claimMany,
   };
 }

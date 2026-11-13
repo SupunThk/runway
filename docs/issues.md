@@ -1,4 +1,6 @@
-# Mezo Runway — Open Issues
+# Mezo Runway — Open Issues (archived)
+
+> **Archived November 13, 2026.** This is the pre-build checklist from October 10. Wave 1 and Wave 2 have both shipped, and these items were settled during the build (Vercel + Render hosting, Foundry via `scripts/forge.mjs`, ABI-only Mezo integration, MEZO balance shown in the treasury ledger). Unchecked boxes below are historical, not open work. Current remaining work is tracked in [wave2-remaining-work.md](wave2-remaining-work.md).
 
 **Created:** October 10, 2026  
 **Source:** Plan review of all project documents  

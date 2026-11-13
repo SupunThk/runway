@@ -145,6 +145,7 @@ export type IndexState = {
   block?: string;
   hash?: Hash;
   checkedAt?: Date;
+  head?: string;
   ready?: boolean;
   lease?: string;
   leaseUntil?: Date;
@@ -224,7 +225,7 @@ export async function indexBatch(
       await states.updateOne(
         { _id: indexKey, lease, leaseUntil: { $gt: new Date() } },
         {
-          $set: { checkedAt: now, ready: true },
+          $set: { checkedAt: now, ready: true, head: head.toString() },
           $unset: { lease: '', leaseUntil: '', error: '' },
         },
       );
@@ -323,6 +324,7 @@ export async function indexBatch(
           block: target.toString(),
           hash: checkpoint.hash,
           checkedAt: now,
+          head: head.toString(),
           ready: target === safe,
         },
         $unset: { lease: '', leaseUntil: '', error: '' },

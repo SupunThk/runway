@@ -1,6 +1,31 @@
 export type AdminOverview = {
   generatedAt: string;
+  cached?: boolean;
   environment: 'testnet';
+  alerts?: {
+    level: 'critical' | 'warning' | 'info';
+    code: string;
+    message: string;
+  }[];
+  funnel?: {
+    created: number;
+    contractorSubmitted: number;
+    reviewed: number;
+    rejected: number;
+    inPayrollRun: number;
+    paymentLinked: number;
+    medianHoursToPayment: number | null;
+    timedSamples: number;
+  };
+  assistant?: {
+    questions: number;
+    failed: number;
+    answered: number;
+    declined: number;
+    averageMs: number | null;
+    topSources: { id: string; citations: number }[];
+    daily: { date: string; questions: number }[];
+  };
   range: { days: number; from: string; to: string };
   usage: {
     workspaces: number;
@@ -46,6 +71,29 @@ export type AdminOverview = {
   };
   health: {
     database: 'connected';
+    databasePingMs?: number;
+    indexer?: {
+      configured: boolean;
+      ready: boolean;
+      error: string | null;
+      indexedBlock: string | null;
+      headBlock: string | null;
+      lagBlocks: number | null;
+      confirmations: number;
+      checkedAt: string | null;
+    };
+    starts?: {
+      inRange: number;
+      last24Hours: number;
+      lastStartedAt: string | null;
+      byDay: Record<string, number>;
+    };
+    adminAccess?: {
+      wallet: string;
+      day: string;
+      requests: number;
+      lastSeenAt: string;
+    }[];
     reconciliation: 'current' | 'unavailable';
     requestErrorCount: number | null;
     reconciliationAgeSeconds: number | null;

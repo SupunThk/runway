@@ -83,4 +83,3 @@ describe('Runway business model and fee calculator', () => {
     expect(RUNWAY_BUSINESS_MODEL.teamTier.scheduleFeeBps).toBe(25);
   });
 });
-

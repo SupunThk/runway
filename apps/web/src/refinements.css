@@ -776,3 +776,286 @@
   overflow-wrap: anywhere;
   margin-top: 0.4rem;
 }
+
+/* Admin console: alerts, charts and funnel. */
+.admin-metrics {
+  --viz-bar: #31745a;
+  --viz-bar-active: #1f5a43;
+  --viz-claimed: #2a78d6;
+  --viz-refunded: #eb6834;
+  --viz-committed: #1baf7a;
+  --viz-grid: #eceef0;
+  --viz-axis: #c9ccd1;
+}
+.admin-alerts ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.admin-alert {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: baseline;
+  margin: 0;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-left-width: 4px;
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+}
+.admin-alert.critical {
+  border-left-color: #c62828;
+  background: #fdf3f3;
+}
+.admin-alert.critical > span:first-child {
+  color: #c62828;
+}
+.admin-alert.warning {
+  border-left-color: #b26a00;
+  background: #fff8ec;
+}
+.admin-alert.warning > span:first-child {
+  color: #b26a00;
+}
+.admin-alert.info {
+  border-left-color: #2a78d6;
+}
+.admin-alert.info > span:first-child {
+  color: #2a78d6;
+}
+.admin-alert.ok {
+  border-left-color: var(--accent);
+}
+.admin-alert.ok > span:first-child {
+  color: var(--accent);
+}
+.admin-stale {
+  opacity: 0.6;
+  filter: grayscale(0.4);
+}
+.admin-chart {
+  margin: 16px 0;
+}
+.admin-chart figcaption {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.admin-chart-readout {
+  color: var(--muted);
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+.admin-chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.admin-chart-bar {
+  fill: var(--viz-bar);
+}
+.admin-chart-bar.active {
+  fill: var(--viz-bar-active);
+}
+.admin-chart-untracked {
+  fill: var(--viz-axis);
+}
+.admin-chart-axis {
+  stroke: var(--viz-axis);
+  stroke-width: 1;
+}
+.admin-chart-grid {
+  stroke: var(--viz-grid);
+  stroke-width: 1;
+}
+.admin-chart-tick {
+  fill: var(--muted);
+  font-size: 11px;
+}
+.admin-split {
+  display: flex;
+  gap: 2px;
+  height: 16px;
+}
+.admin-split-seg {
+  min-width: 4px;
+  border-radius: 4px;
+  transition: opacity 120ms var(--ease-out);
+}
+.admin-split:hover .admin-split-seg:not(.active) {
+  opacity: 0.55;
+}
+.seg-claimed {
+  background: var(--viz-claimed);
+}
+.seg-refunded {
+  background: var(--viz-refunded);
+}
+.seg-committed {
+  background: var(--viz-committed);
+}
+.admin-legend {
+  display: grid;
+  gap: 6px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+}
+.admin-legend li {
+  display: grid;
+  grid-template-columns: 12px minmax(0, 1fr) auto;
+  gap: 4px 8px;
+  align-items: center;
+}
+.admin-legend-value {
+  grid-column: 2 / -1;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.admin-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+.admin-funnel {
+  display: grid;
+  gap: 12px;
+  margin: 16px 0;
+  padding: 0;
+  list-style: none;
+}
+.admin-funnel-label {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 3.5em;
+  gap: 8px;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.admin-funnel-share {
+  color: var(--muted);
+  text-align: right;
+}
+.admin-funnel-track {
+  height: 10px;
+  margin-top: 4px;
+  border-radius: 4px;
+  background: var(--viz-grid);
+}
+.admin-funnel-track > span {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background: var(--viz-bar);
+}
+
+/* Recipient earnings */
+.earnings-values {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin: 16px 0;
+}
+.earnings-values > div {
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.earnings-values dt {
+  color: var(--muted);
+  font-size: 12px;
+}
+.earnings-values dd {
+  margin: 4px 0 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.earnings-action {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: center;
+}
+.earnings-action .hint {
+  flex: 1 1 240px;
+  margin: 0;
+}
+
+/* Getting started checklist */
+.setup-steps {
+  display: grid;
+  gap: 10px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.setup-steps li {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  color: var(--muted);
+}
+.setup-steps li.current {
+  color: var(--ink);
+}
+.setup-steps li.done strong {
+  text-decoration: line-through;
+  text-decoration-color: var(--border);
+}
+.setup-steps p {
+  margin: 4px 0 0;
+}
+.setup-mark {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 1.5px solid var(--border);
+  border-radius: 50%;
+  font-size: 13px;
+}
+.setup-steps li.done .setup-mark {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+.setup-steps li.current .setup-mark {
+  border-color: var(--accent);
+}
+
+/* Assistant live account card */
+.live-account {
+  margin: 12px 0;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  background: #fff;
+}
+.live-account dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px 16px;
+  margin: 10px 0;
+}
+.live-account dt {
+  color: var(--muted);
+  font-size: 12px;
+}
+.live-account dd {
+  margin: 2px 0 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
