@@ -71,6 +71,18 @@ No Solidity changes, wallet signing or production workspace writes are needed fo
 5. Hosted checks confirm the complete browser → proxy → API → model → cited-answer flow. Measure response time, token usage and cost on the evaluation set before choosing final limits.
 6. Update the user guide and handoff to describe only the shipped phase. Real-wallet signing remains a separate existing validation task.
 
+## November 14, 2026 update — single-call answers and first Phase 2 lookup
+
+- **One model call.** The separate router call is gone. Every reviewed section of `assistant-knowledge.md` (~25 KB) is sent in a stable system prompt, which the provider can reuse through implicit prompt caching, and one structured response carries scope, paragraphs, steps, cited section IDs and app-link keys. The server still validates scope, citations (invalid IDs are dropped; at least one valid ID is required), and rejects URLs/markup in any generated text.
+- **Progress streaming.** With `Accept: text/event-stream` the route emits `stage` events (`lookup`, `reading`, `writing`, `checking`) and then one validated `reply` (or a sanitized `error`). Generated text is never streamed before validation. Plain JSON remains supported.
+- **Follow-ups.** History entries may be `{ question, sources }`; the cited section IDs (validated against the knowledge index) are given to the model as hints. Prior answer text is still never sent. Suggested next questions come only from the reviewed `followUpQuestions` list for the cited sections.
+- **Page context.** `context` (`schedule`, `cancel`, `transaction`, `proof`, `borrowing`, `workspace`, `pay`, `overview`, `docs`) adds preferred-section hints. Ask Runway links on those screens pass it via `?from=`.
+- **Unsupported replies** list the closest guide sections (`related`), which the admin dashboard aggregates as knowledge gaps.
+- **Phase 2, first increment.** `assistant-live.ts` detects a schedule number or a non-contract sender address and reads the confirmed `paymentSchedules` snapshot (no RPC, no session). The server computes every figure and returns it as `live` with the index block; the model only explains it. Stale/unavailable indexing returns no figures. Wallet balances, transaction outcomes and private records remain out of scope.
+- **Feedback.** `POST /api/assistant/feedback` records anonymous up/down counts plus cited section IDs (thumbs-down per section) in `assistantMetrics`; no text is stored.
+- **Conversation persistence.** The page keeps completed turns in `sessionStorage` for that tab only; New chat clears it.
+- **Live evaluation.** `pnpm eval:assistant` (or `--strict` to also require cited sources) runs `tests/fixtures/assistant-eval.json` and `tests/fixtures/assistant-routing.json` against the configured model. The `Assistant evaluation` workflow runs it on pull requests touching the knowledge, prompts or fixtures when the `GEMINI_API_KEY` secret is configured.
+
 ## Later phase details
 
 Phase 2 tools should reuse existing typed chain readers, transaction receipt handling and confirmed reconciliation data. Validate addresses, hashes, chain IDs and contract identity before reads. Display source block, confirmation status and data freshness. A public address lookup does not prove wallet ownership; access to private workspace records must always use server-side session authorization. Return deterministic structured results and let the model explain them, preserving exact base-unit accounting.

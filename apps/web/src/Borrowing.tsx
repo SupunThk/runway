@@ -32,7 +32,7 @@ export function Borrowing() {
             </div>
             <a
               className="button secondary"
-              href="/assistant?q=How%20does%20the%20Runway%20planner%20calculate%20payroll%20coverage%3F"
+              href="/assistant?q=How%20does%20the%20Runway%20planner%20calculate%20payroll%20coverage%3F&from=borrowing"
             >
               Ask Runway
             </a>

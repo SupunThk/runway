@@ -10,6 +10,7 @@ import { useAccount, useSignMessage } from 'wagmi';
 import { WalletConnection } from './WalletConnection';
 import { formatUnits } from 'viem';
 import { apiFetch, readJson, BackendUnavailableError } from './api';
+import { AskRunwayLink } from './components/AskRunwayLink';
 import { useBackendWake } from './hooks/useBackendWake';
 import { BackendWakeNotice } from './BackendWakeNotice';
 import { explorer } from './config';
@@ -672,6 +673,12 @@ function WorkspaceContent({ address }: { address?: string }) {
                               sending again.
                             </p>
                           )}
+                          <AskRunwayLink
+                            question={`What does the invoice status "${(row.payment?.status ?? 'unavailable').replaceAll('_', ' ')}" mean?`}
+                            from="workspace"
+                          >
+                            What does this status mean?
+                          </AskRunwayLink>
                           {row.payment?.scheduleId && (
                             <>
                               <a href={`/schedules/${row.payment.scheduleId}`}>

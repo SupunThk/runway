@@ -4,6 +4,8 @@ import { DailyBars, Funnel, SplitBar } from './AdminCharts';
 
 const count = (value: number | null) =>
   value === null ? 'Not tracked' : value.toLocaleString();
+const percent = (value: number | null) =>
+  value === null ? '—' : `${Math.round(value * 100)}%`;
 const musd = (value: string | null) =>
   value === null ? 'Unavailable' : `${formatUnits(BigInt(value), 18)} MUSD`;
 const shortMusd = (value: string | null) => {
@@ -485,7 +487,64 @@ export function AdminMetrics({ data }: { data: AdminOverview }) {
                       : ''}
                   </dd>
                 </div>
+                {assistant.rates ? (
+                  <>
+                    <div>
+                      <dt>Not covered by the guide</dt>
+                      <dd>{percent(assistant.rates.unsupported)}</dd>
+                    </div>
+                    <div>
+                      <dt>Out of scope</dt>
+                      <dd>{percent(assistant.rates.outOfScope)}</dd>
+                    </div>
+                    <div>
+                      <dt>Asked for live data</dt>
+                      <dd>{percent(assistant.rates.liveData)}</dd>
+                    </div>
+                  </>
+                ) : null}
+                {assistant.ratings ? (
+                  <div>
+                    <dt>Answer ratings</dt>
+                    <dd>
+                      👍 {count(assistant.ratings.up)} · 👎{' '}
+                      {count(assistant.ratings.down)}
+                    </dd>
+                  </div>
+                ) : null}
+                {assistant.lookups !== undefined ? (
+                  <div>
+                    <dt>Public chain lookups</dt>
+                    <dd>{count(assistant.lookups)}</dd>
+                  </div>
+                ) : null}
               </dl>
+              {assistant.gapSources?.length ? (
+                <div className="admin-table-scroll">
+                  <table>
+                    <caption>
+                      Knowledge gaps: sections closest to unanswered questions
+                      or rated not helpful
+                    </caption>
+                    <thead>
+                      <tr>
+                        <th scope="col">Section</th>
+                        <th scope="col">Unanswered</th>
+                        <th scope="col">Not helpful</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {assistant.gapSources.map((gap) => (
+                        <tr key={gap.id}>
+                          <th scope="row">{gap.id}</th>
+                          <td>{gap.unanswered}</td>
+                          <td>{gap.downvotes}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : null}
               {assistant.topSources.length ? (
                 <div className="admin-table-scroll">
                   <table>
@@ -508,8 +567,9 @@ export function AdminMetrics({ data }: { data: AdminOverview }) {
                 </div>
               ) : null}
               <p className="hint">
-                A high declined share points to questions the knowledge base
-                does not cover yet. Question text is never stored.
+                A high share not covered by the guide, or sections in the gaps
+                table, point to where docs/assistant-knowledge.md needs work.
+                Question and answer text are never stored.
               </p>
             </section>
           ) : null}

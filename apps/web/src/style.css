@@ -1219,6 +1219,114 @@ dd {
 .assistant-next-links > a:hover {
   text-decoration: underline;
 }
+.assistant-steps {
+  margin: 14px 0;
+  padding-left: 22px;
+  color: #4d564e;
+  font-size: 15px;
+  line-height: 1.75;
+}
+.assistant-steps > li {
+  padding-left: 4px;
+  margin-bottom: 8px;
+  white-space: pre-wrap;
+}
+.assistant-steps > li::marker {
+  color: #3b624a;
+  font-weight: 600;
+}
+.assistant-live {
+  margin: 18px 0;
+  padding: 16px 18px;
+  border: 1px solid #dfe7da;
+  border-radius: 10px;
+  background: #f6f8f3;
+}
+.assistant-live-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.assistant-live-head > a {
+  color: #3b624a;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.assistant-live-head > a:hover {
+  text-decoration: underline;
+}
+.assistant-live dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px 18px;
+  margin: 0 0 10px;
+}
+.assistant-live dt {
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: #7f897d;
+  text-transform: uppercase;
+}
+.assistant-live dd {
+  margin: 2px 0 0;
+  font-size: 14px;
+  color: #2d352f;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.assistant-live .hint {
+  margin: 0;
+  font-size: 12px;
+}
+.assistant-feedback {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  font-size: 12px;
+  color: #7f897d;
+}
+.assistant-feedback > button {
+  min-width: 34px;
+  min-height: 32px;
+  border: 1px solid #e1e7dc;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 14px;
+}
+.assistant-feedback > button:hover {
+  background: #f0f3ed;
+}
+.assistant-reviewed {
+  margin-left: auto;
+  font-size: 11px;
+  color: #98a096;
+}
+.assistant-followups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 18px;
+}
+.assistant-followups > button {
+  border: 1px solid #d9e3d6;
+  border-radius: 999px;
+  background: #fff;
+  color: #38533e;
+  padding: 8px 14px;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+.assistant-followups > button:hover {
+  background: #e8efe6;
+}
 .assistant-thinking {
   display: flex;
   align-items: center;
@@ -1856,4 +1964,13 @@ footer {
     transition: none !important;
     scroll-behavior: auto !important;
   }
+}
+.ask-runway-link {
+  color: #3b624a;
+  font-size: 12px;
+  font-weight: 500;
+  text-decoration: none;
+}
+.ask-runway-link:hover {
+  text-decoration: underline;
 }

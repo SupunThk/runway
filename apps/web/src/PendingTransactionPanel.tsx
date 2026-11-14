@@ -4,6 +4,7 @@ import { parseEventLogs, TransactionReceiptNotFoundError } from 'viem';
 import { paymentsAbi, TESTNET_CHAIN_ID } from '@runway/mezo';
 import { explorer } from './config';
 import type { PendingTransaction } from './pending';
+import { AskRunwayLink } from './components/AskRunwayLink';
 
 export function PendingTransactionPanel({
   pending,
@@ -101,6 +102,22 @@ export function PendingTransactionPanel({
         </a>
       </p>
       <p className="hint">{pending.hash}</p>
+      {status.data?.state === 'reverted' ||
+      status.data?.state === 'replacement' ||
+      status.data?.state === 'unconfirmed' ? (
+        <p>
+          <AskRunwayLink
+            question={
+              status.data.state === 'reverted'
+                ? `My ${pending.action.toLowerCase()} transaction reverted. What should I check before retrying?`
+                : `My ${pending.action.toLowerCase()} transaction has no confirmed receipt. Is it pending, dropped or replaced, and what should I do?`
+            }
+            from="transaction"
+          >
+            Ask Runway what to check
+          </AskRunwayLink>
+        </p>
+      ) : null}
       {status.data?.created && (
         <a href={`/schedules/${status.data.created}`}>
           Open funded schedule #{String(status.data.created)}

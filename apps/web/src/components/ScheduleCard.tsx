@@ -3,6 +3,7 @@ import { explorer } from '../config';
 import { amount, short } from '../format';
 import { TransactionHistory } from '../TransactionHistory';
 import type { readSchedulePage } from '../schedules';
+import { AskRunwayLink } from './AskRunwayLink';
 export type ScheduleCardProps = {
   s: Awaited<ReturnType<typeof readSchedulePage>>['rows'][number];
   address?: Address;
@@ -115,6 +116,20 @@ export function ScheduleCard({
           </button>
         ) : null}
         <a href={`/schedules/${s.id}`}>Recipient link ↗</a>
+        <AskRunwayLink
+          question={`Explain the status of schedule #${s.id}.`}
+          from="schedule"
+        >
+          Explain this status
+        </AskRunwayLink>
+        {!s.cancelled && s.chainTime < s.end ? (
+          <AskRunwayLink
+            question="What happens when I cancel a payment schedule?"
+            from="cancel"
+          >
+            How cancellation works
+          </AskRunwayLink>
+        ) : null}
       </div>
       <TransactionHistory scheduleId={s.id} revision={historyRevision} />
     </article>

@@ -34,12 +34,40 @@ type AssistantDay = {
   failed: number;
   kinds: Record<string, number>;
   sources: Record<string, number>;
+  /** Sections the model found closest when it could not answer: knowledge gaps. */
+  gaps?: Record<string, number>;
+  lookups?: number;
+  ratings?: { up?: number; down?: number };
+  /** Thumbs-down counts per cited section. */
+  downSources?: Record<string, number>;
   totalMs: number;
   expiresAt: Date;
 };
+const assistantDay = (db: Db, now: Date, inc: Record<string, number>) =>
+  upsertCounter<AssistantDay>(db, 'assistantMetrics', day(now), {
+    $setOnInsert: {
+      day: day(now),
+      expiresAt: new Date(now.getTime() + 90 * DAY),
+    },
+    $inc: inc,
+  } as UpdateFilter<AssistantDay>);
+const sourceIncrements = (
+  prefix: string,
+  ids: string[] | undefined,
+  inc: Record<string, number>,
+) => {
+  for (const id of new Set((ids ?? []).slice(0, 10).map(sourceKey)))
+    if (id) inc[`${prefix}.${id}`] = 1;
+};
 export async function recordAssistantMetric(
   db: Db,
-  result: { kind?: string; sources?: string[]; failed?: boolean },
+  result: {
+    kind?: string;
+    sources?: string[];
+    gaps?: string[];
+    lookup?: boolean;
+    failed?: boolean;
+  },
   durationMs: number,
   now: Date,
 ) {
@@ -50,15 +78,21 @@ export async function recordAssistantMetric(
   };
   if (result.kind && /^[a-z_]{1,30}$/.test(result.kind))
     inc[`kinds.${result.kind}`] = 1;
-  for (const id of new Set((result.sources ?? []).slice(0, 10).map(sourceKey)))
-    if (id) inc[`sources.${id}`] = 1;
-  await upsertCounter<AssistantDay>(db, 'assistantMetrics', day(now), {
-    $setOnInsert: {
-      day: day(now),
-      expiresAt: new Date(now.getTime() + 90 * DAY),
-    },
-    $inc: inc,
-  } as UpdateFilter<AssistantDay>);
+  if (result.lookup) inc.lookups = 1;
+  sourceIncrements('sources', result.sources, inc);
+  sourceIncrements('gaps', result.gaps, inc);
+  await assistantDay(db, now, inc);
+}
+/** Anonymous answer rating: no question or answer text, only kind and cited section IDs. */
+export async function recordAssistantFeedback(
+  db: Db,
+  feedback: { rating: 'up' | 'down'; sources: string[] },
+  now: Date,
+) {
+  const inc: Record<string, number> = { [`ratings.${feedback.rating}`]: 1 };
+  if (feedback.rating === 'down')
+    sourceIncrements('downSources', feedback.sources, inc);
+  await assistantDay(db, now, inc);
 }
 
 type AdminAccess = {
@@ -113,30 +147,34 @@ export async function assistantSummary(
     .find({ day: { $gte: firstDay, $lte: today } })
     .limit(400)
     .toArray();
-  if (!rows.length)
-    return {
-      questions: 0,
-      failed: 0,
-      answered: 0,
-      declined: 0,
-      averageMs: null as number | null,
-      topSources: [] as { id: string; citations: number }[],
-      daily: [] as { date: string; questions: number }[],
-    };
   let questions = 0,
     failed = 0,
-    totalMs = 0;
+    totalMs = 0,
+    lookups = 0,
+    up = 0,
+    down = 0;
   const kinds: Record<string, number> = {};
   const sources: Record<string, number> = {};
+  const gaps: Record<string, number> = {};
+  const downSources: Record<string, number> = {};
+  const add = (into: Record<string, number>, from?: Record<string, number>) => {
+    for (const [k, v] of Object.entries(from ?? {}))
+      into[k] = (into[k] ?? 0) + v;
+  };
   for (const row of rows) {
     questions += row.questions ?? 0;
     failed += row.failed ?? 0;
     totalMs += row.totalMs ?? 0;
-    for (const [k, v] of Object.entries(row.kinds ?? {}))
-      kinds[k] = (kinds[k] ?? 0) + v;
-    for (const [k, v] of Object.entries(row.sources ?? {}))
-      sources[k] = (sources[k] ?? 0) + v;
+    lookups += row.lookups ?? 0;
+    up += row.ratings?.up ?? 0;
+    down += row.ratings?.down ?? 0;
+    add(kinds, row.kinds);
+    add(sources, row.sources);
+    add(gaps, row.gaps);
+    add(downSources, row.downSources);
   }
+  const rate = (n: number) => (questions ? n / questions : null);
+  const gapIds = new Set([...Object.keys(gaps), ...Object.keys(downSources)]);
   return {
     questions,
     failed,
@@ -146,10 +184,25 @@ export async function assistantSummary(
       (kinds.unsupported ?? 0) +
       (kinds.live_data ?? 0),
     averageMs: questions ? Math.round(totalMs / questions) : null,
+    lookups,
+    rates: {
+      unsupported: rate(kinds.unsupported ?? 0),
+      outOfScope: rate(kinds.out_of_scope ?? 0),
+      liveData: rate(kinds.live_data ?? 0),
+    },
+    ratings: { up, down },
     topSources: Object.entries(sources)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 8)
       .map(([id, citations]) => ({ id, citations })),
+    gapSources: [...gapIds]
+      .map((id) => ({
+        id,
+        unanswered: gaps[id] ?? 0,
+        downvotes: downSources[id] ?? 0,
+      }))
+      .sort((a, b) => b.unanswered + b.downvotes - (a.unanswered + a.downvotes))
+      .slice(0, 8),
     daily: rows
       .map((row) => ({ date: row.day, questions: row.questions ?? 0 }))
       .sort((a, b) => a.date.localeCompare(b.date)),
