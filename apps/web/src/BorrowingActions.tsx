@@ -27,7 +27,7 @@ export function BorrowingActions() {
     <section className="panel loan-actions" aria-label="Manage Mezo loan">
       <div className="section-heading">
         <h2>Manage your Mezo loan</h2>
-        <span className="badge">LOCAL PREVIEW</span>
+        <span className="badge">TESTNET</span>
       </div>
       <p>
         Review BTC collateral and MUSD debt changes, then confirm each
@@ -276,7 +276,7 @@ function LoanControls() {
       ) : null}
       <p className="hint">
         Testnet prototype. No automatic borrowing, repayments or claims. Full
-        trove closure is not included in this local preview.
+        trove closure is not included in this release.
       </p>
     </div>
   );

@@ -229,13 +229,17 @@ export function TeamOperations({
                       maxLength={42}
                     />
                   </label>
-                  <label htmlFor="workspace-member-role">Workspace role</label>
-                  <select id="workspace-member-role" name="role">
-                    <option value="viewer">Viewer</option>
-                    <option value="manager">Manager</option>
-                    <option value="approver">Approver</option>
-                    <option value="contractor">Contractor</option>
-                  </select>
+                  <div className="field">
+                    <label htmlFor="workspace-member-role">
+                      Workspace role
+                    </label>
+                    <select id="workspace-member-role" name="role">
+                      <option value="viewer">Viewer</option>
+                      <option value="manager">Manager</option>
+                      <option value="approver">Approver</option>
+                      <option value="contractor">Contractor</option>
+                    </select>
+                  </div>
                   <button className="button secondary">
                     Create wallet invitation
                   </button>
