@@ -836,3 +836,156 @@ footer a {
     padding: 18px;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Workspace layout: compact two-column forms, inline checkboxes, readable
+   spacing between actions, and bounded long tables.
+   --------------------------------------------------------------------------- */
+.workspace-content label {
+  margin: 0;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #44484f;
+}
+.workspace-content .workspace-form {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: 16px 20px;
+  align-items: end;
+  max-width: 760px;
+  margin-top: 20px;
+}
+/* Fields may sit directly in the form or inside a display:contents fieldset. */
+.workspace-content
+  :is(.workspace-form, .workspace-form > fieldset)
+  > :is(
+    p,
+    .hint,
+    .callout,
+    h3,
+    h4,
+    details,
+    ul,
+    ol,
+    table,
+    .team-checklist,
+    .team-table,
+    .actions,
+    div:not(.field)
+  ),
+.workspace-content
+  :is(.workspace-form, .workspace-form > fieldset)
+  > label:has(> textarea),
+.workspace-content
+  :is(.workspace-form, .workspace-form > fieldset)
+  > label:has(> input[type='checkbox']) {
+  grid-column: 1 / -1;
+}
+.workspace-content
+  :is(.workspace-form, .workspace-form > fieldset)
+  > :is(p, .hint) {
+  margin: 0;
+  max-width: 68ch;
+}
+.workspace-content :is(.workspace-form, .workspace-form > fieldset) > button {
+  grid-column: 1 / -1;
+  justify-self: start;
+  width: auto;
+  min-width: 180px;
+  padding-inline: 22px;
+}
+/* Checkbox labels read left to right instead of stacking the box above the text. */
+.workspace-content label:has(> input[type='checkbox']) {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  font-weight: 400;
+  cursor: pointer;
+}
+.workspace-content label > input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  min-height: 0;
+  margin: 0;
+  flex: none;
+  accent-color: var(--accent);
+}
+/* Client payment link form: no browser fieldset frame, button keeps its height. */
+.workspace-content .receivables fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+  align-items: end;
+}
+.workspace-content .receivables fieldset > button {
+  min-height: 48px;
+  align-self: end;
+}
+.workspace-content .receivables label {
+  margin: 0;
+}
+/* Disclosure sections get breathing room and a clear separator. */
+.workspace-content .panel details {
+  border-top: 1px solid var(--border);
+  padding-top: 4px;
+  margin-block: 16px 0;
+}
+.workspace-content .panel details[open] {
+  padding-bottom: 12px;
+}
+.workspace-content .panel details > summary {
+  padding-block: 10px;
+}
+/* Long projections scroll inside a bounded box with a sticky header. */
+.workspace-content .team-table {
+  max-height: 360px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.workspace-content .team-table thead th {
+  position: sticky;
+  top: 0;
+  background: #fff;
+}
+/* Inline actions on cards never run into each other. */
+.workspace-content .schedule-card > a,
+.workspace-content .schedule-card .ask-runway-link {
+  display: inline-block;
+  margin: 6px 18px 6px 0;
+}
+.workspace-content .text-button {
+  padding-inline: 0;
+}
+.workspace-content .panel > .text-button,
+.workspace-content .panel > p > .text-button {
+  margin-block: 4px;
+}
+
+/* Ask Runway: the composer box is the only frame around the textarea. */
+.assistant-composer textarea,
+.assistant-composer textarea:hover,
+.assistant-composer textarea:focus,
+.assistant-composer textarea:focus-visible {
+  border: 0;
+  outline: none;
+  box-shadow: none;
+  resize: none;
+}
+/* Cards size to their column, never to an inner form's preferred width. */
+.workspace-content .schedule-list {
+  grid-template-columns: minmax(0, 1fr);
+}
+.workspace-content .schedule-card {
+  min-width: 0;
+}
+.workspace-content .schedule-card .workspace-form {
+  grid-template-columns: minmax(0, 420px);
+}
+/* A label beside its control (htmlFor pairing) stays grouped as one field. */
+.workspace-content .field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
