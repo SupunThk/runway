@@ -1,0 +1,34 @@
+name: Assistant evaluation
+# Live Ask Runway evaluation, run only when the knowledge, prompts or fixtures change.
+# Requires the GEMINI_API_KEY repository secret; without it the script skips and passes.
+on:
+  pull_request:
+    paths:
+      - docs/assistant-knowledge.md
+      - apps/api/src/assistant*.ts
+      - tests/fixtures/assistant-*.json
+      - scripts/assistant-eval.mjs
+  workflow_dispatch:
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.34.6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm eval:assistant
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: assistant-eval
+          path: .tools/assistant-eval.json
+          if-no-files-found: ignore

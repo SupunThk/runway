@@ -243,7 +243,7 @@ export function Proof() {
                 </button>
                 <a
                   className="button secondary"
-                  href="/assistant?q=What%20does%20the%20public%20funding%20proof%20verify%3F"
+                  href="/assistant?q=What%20does%20the%20public%20funding%20proof%20verify%3F&from=proof"
                 >
                   Ask Runway about proof
                 </a>

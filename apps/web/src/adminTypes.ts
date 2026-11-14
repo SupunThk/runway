@@ -23,7 +23,15 @@ export type AdminOverview = {
     answered: number;
     declined: number;
     averageMs: number | null;
+    lookups?: number;
+    rates?: {
+      unsupported: number | null;
+      outOfScope: number | null;
+      liveData: number | null;
+    };
+    ratings?: { up: number; down: number };
     topSources: { id: string; citations: number }[];
+    gapSources?: { id: string; unanswered: number; downvotes: number }[];
     daily: { date: string; questions: number }[];
   };
   range: { days: number; from: string; to: string };

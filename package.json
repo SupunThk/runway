@@ -28,6 +28,7 @@
     "test:contracts": "node scripts/forge.mjs test --root contracts",
     "build:contracts": "node scripts/forge.mjs build --root contracts",
     "test:browser": "playwright test",
+    "eval:assistant": "node --env-file-if-exists=.env scripts/assistant-eval.mjs",
     "deploy:browser": "pnpm build:contracts && node --env-file-if-exists=.env scripts/deploy-browser.mjs"
   },
   "devDependencies": {

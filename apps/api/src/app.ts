@@ -4,6 +4,7 @@ import { bodyLimit } from 'hono/body-limit';
 import { getCookie, setCookie } from 'hono/cookie';
 import { HTTPException } from 'hono/http-exception';
 import { secureHeaders } from 'hono/secure-headers';
+import { streamSSE } from 'hono/streaming';
 import { type Db, type Filter, MongoServerError } from 'mongodb';
 import {
   getAddress,
@@ -16,7 +17,11 @@ import { createSiweMessage } from 'viem/siwe';
 import { database } from './db.ts';
 import { createAdminRoutes, parseAdminWallets } from './admin.ts';
 import { recordWorkspaceActivity } from './admin-metrics.ts';
-import { recordAssistantMetric, recordServiceStart } from './admin-insights.ts';
+import {
+  recordAssistantFeedback,
+  recordAssistantMetric,
+  recordServiceStart,
+} from './admin-insights.ts';
 import { recordRequestMetric, requestFamily } from './operations.ts';
 import { reserveSettlement } from './settlements.ts';
 import {
@@ -50,9 +55,13 @@ import type { Hash } from 'viem';
 import {
   answerQuestion,
   createGeminiModel,
+  feedbackSchema,
   questionSchema,
   type AssistantModel,
+  type AssistantStage,
 } from './assistant.ts';
+import { knowledge } from './assistant-knowledge.ts';
+import { createLiveLookup, type LiveLookup } from './assistant-live.ts';
 import {
   indexBatch,
   rpcIndexSource,
@@ -108,6 +117,14 @@ type RateLimit = RecordBase & { count: number; expiresAt: Date };
 type Variables = { db: Db; address: string; workspaceAccess: WorkspaceAccess };
 const COOKIE = 'runway_session';
 const SESSION_SECONDS = 60 * 60 * 24;
+// Client IP headers are an abuse hint only, never an authorization boundary.
+const clientHint = (c: {
+  req: { header: (name: string) => string | undefined };
+}) =>
+  (c.req.header('x-forwarded-for') || 'anonymous')
+    .split(',')[0]
+    .trim()
+    .slice(0, 100);
 const digest = (token: string) =>
   createHash('sha256').update(token).digest('hex');
 const fail = (
@@ -223,6 +240,7 @@ export function createApp(
     origin?: string;
     now?: () => Date;
     assistantModel?: AssistantModel;
+    assistantLookup?: LiveLookup;
     assistantEnabled?: boolean;
     assistantDailyLimit?: number;
     verifyDirectPayment?: DirectVerifier;
@@ -361,13 +379,13 @@ export function createApp(
       );
     const db = c.get('db');
     const instant = now();
-    // Client IP headers are an abuse hint, never an authorization boundary.
     // The durable global limits apply even if a caller rotates/spoofs a client hint.
-    const clientHint = (c.req.header('x-forwarded-for') || 'anonymous')
-      .split(',')[0]
-      .trim()
-      .slice(0, 100);
-    await rateLimit(db, `assistant-client:${digest(clientHint)}`, 6, instant);
+    await rateLimit(
+      db,
+      `assistant-client:${digest(clientHint(c))}`,
+      6,
+      instant,
+    );
     await rateLimit(db, 'assistant-global', 30, instant);
     const daily =
       options.assistantDailyLimit ??
@@ -383,6 +401,12 @@ export function createApp(
         429,
       );
     activeAssistantRequests++;
+    let released = false;
+    const release = () => {
+      if (released) return;
+      released = true;
+      activeAssistantRequests--;
+    };
     const requestId = randomUUID();
     const started = Date.now();
     c.header('X-Request-Id', requestId);
@@ -395,60 +419,129 @@ export function createApp(
         86400000,
         'The assistant has reached its daily usage limit. Please use the guide and try again tomorrow.',
       );
+    } catch (failure) {
+      release();
+      throw failure;
+    }
+    const baseLookup = options.assistantLookup ?? createLiveLookup(db, now);
+    const lookup: LiveLookup = async (question) => {
+      try {
+        return await baseLookup(question);
+      } catch {
+        console.warn('Assistant lookup failed; answering without live facts.');
+        return null;
+      }
+    };
+    const failureMessage =
+      'I couldn’t complete that answer. Please try again or open the guide.';
+    const run = async (onStage?: (stage: AssistantStage) => void) => {
       const signal = AbortSignal.any([
         c.req.raw.signal,
         AbortSignal.timeout(45000),
       ]);
-      const reply = await answerQuestion(
-        input.data,
-        options.assistantModel ?? createGeminiModel(),
-        signal,
-      );
       try {
+        const reply = await answerQuestion(
+          input.data,
+          options.assistantModel ?? createGeminiModel(),
+          signal,
+          { lookup, onStage },
+        );
+        try {
+          await recordAssistantMetric(
+            db,
+            {
+              kind: reply.kind,
+              sources: reply.sources.map((s) => s.id),
+              gaps: reply.related.map((s) => s.id),
+              lookup: Boolean(reply.live),
+            },
+            Date.now() - started,
+            instant,
+          );
+        } catch {
+          console.warn('Assistant metrics could not be recorded.');
+        }
+        console.info(
+          JSON.stringify({
+            event: 'assistant',
+            requestId,
+            kind: reply.kind,
+            sources: reply.sources.map((source) => source.id),
+            lookup: reply.live?.kind ?? null,
+            durationMs: Date.now() - started,
+          }),
+        );
+        return reply;
+      } catch (failure) {
         await recordAssistantMetric(
           db,
-          { kind: reply.kind, sources: reply.sources.map((s) => s.id) },
+          { failed: true },
           Date.now() - started,
           instant,
+        ).catch(() => {});
+        console.warn(
+          JSON.stringify({
+            event: 'assistant_failed',
+            requestId,
+            durationMs: Date.now() - started,
+          }),
         );
-      } catch {
-        console.warn('Assistant metrics could not be recorded.');
+        throw failure;
       }
-      console.info(
-        JSON.stringify({
-          event: 'assistant',
-          requestId,
-          kind: reply.kind,
-          sources: reply.sources.map((source) => source.id),
-          durationMs: Date.now() - started,
-        }),
-      );
-      return c.json(reply);
-    } catch (failure) {
-      if (failure instanceof HTTPException) throw failure;
-      await recordAssistantMetric(
-        db,
-        { failed: true },
-        Date.now() - started,
-        instant,
-      ).catch(() => {});
-      console.warn(
-        JSON.stringify({
-          event: 'assistant_failed',
-          requestId,
-          durationMs: Date.now() - started,
-        }),
-      );
-      return c.json(
-        {
-          error:
-            'I couldn’t complete that answer. Please try again or open the guide.',
-        },
-        503,
-      );
-    } finally {
-      activeAssistantRequests--;
+    };
+    if (!/\btext\/event-stream\b/.test(c.req.header('accept') ?? '')) {
+      try {
+        return c.json(await run());
+      } catch {
+        return c.json({ error: failureMessage }, 503);
+      } finally {
+        release();
+      }
     }
+    // Progress-only stream: stage events while working, then one fully validated reply.
+    // Generated text is never streamed before validation.
+    c.header('X-Accel-Buffering', 'no');
+    return streamSSE(c, async (stream) => {
+      let queue = Promise.resolve();
+      const send = (event: string, data: string) => {
+        queue = queue.then(() => stream.writeSSE({ event, data }));
+        return queue;
+      };
+      try {
+        const reply = await run((stage) => void send('stage', stage));
+        await send('reply', JSON.stringify(reply));
+      } catch {
+        await send('error', JSON.stringify({ error: failureMessage })).catch(
+          () => {},
+        );
+      } finally {
+        release();
+      }
+    });
+  });
+  app.post('/api/assistant/feedback', async (c) => {
+    const input = feedbackSchema.safeParse(await json(c.req.raw));
+    if (!input.success)
+      return c.json({ error: 'Send a rating of up or down.' }, 400);
+    const db = c.get('db');
+    const instant = now();
+    await rateLimit(
+      db,
+      `assistant-feedback:${digest(clientHint(c))}`,
+      20,
+      instant,
+    );
+    await recordAssistantFeedback(
+      db,
+      {
+        rating: input.data.rating,
+        sources: input.data.sources.filter((id) =>
+          knowledge.some((source) => source.id === id),
+        ),
+      },
+      instant,
+    );
+    return c.json({ ok: true });
   });
   app.post('/api/auth/challenge', async (c) => {
     const input = await json(c.req.raw);

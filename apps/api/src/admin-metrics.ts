@@ -323,6 +323,12 @@ export async function adminOverview(db: Db, now: Date, days: number) {
       code: 'assistant-failures',
       message: `${assistant.failed} assistant request${assistant.failed === 1 ? '' : 's'} failed in this period.`,
     });
+  if (assistant.questions >= 10 && (assistant.rates.unsupported ?? 0) > 0.25)
+    alerts.push({
+      level: 'info',
+      code: 'assistant-gaps',
+      message: `${Math.round((assistant.rates.unsupported ?? 0) * 100)}% of assistant questions were not covered by the knowledge base. Check the knowledge gaps table.`,
+    });
   const byDay = new Map(series.map((row) => [row._id, row]));
   const trackedDay = tracking?.startedAt?.toISOString().slice(0, 10);
   const daily = Array.from({ length: days }, (_, i) => {

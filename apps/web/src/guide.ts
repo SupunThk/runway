@@ -215,9 +215,9 @@ export const guideSections: GuideSection[] = [
     id: 'assistant',
     title: 'Ask Runway: app and Mezo questions',
     paragraphs: [
-      'Open Assistant to ask about Runway, MUSD and Mezo without connecting a wallet. Try a suggested question or type your own, then ask follow-ups. Answers include links to the reviewed documentation and useful app pages. If the reviewed sources do not support an answer, the assistant will say so.',
-      'The assistant explains information; it cannot inspect live wallets or transactions, read private invoices, or carry out actions. Use the relevant app page to check current data. Unrelated topics are outside its scope.',
-      'Questions are sent to Google Gemini. Do not paste private keys, seed phrases or other secrets. This release keeps the conversation in page memory, not account chat history. New chat clears its context, and reloading clears the conversation. Use Stop to stop waiting for an answer, Retry after a failure, or open the guide when the assistant is unavailable.',
+      'Open Assistant to ask about Runway, MUSD and Mezo without connecting a wallet, or use an Ask Runway link on a schedule, invoice, proof, borrowing or transaction screen. Try a suggested question or type your own, then ask follow-ups or pick a suggested next question. How-to answers show numbered steps, and answers include links to the reviewed documentation and useful app pages. If the reviewed sources do not support an answer, the assistant says so and links the closest guide sections.',
+      'Mention a schedule number (for example schedule #12) or a sender wallet address to see its public status from the confirmed payment index, with the source block. The assistant cannot inspect live wallets or transaction outcomes, read private invoices, or carry out actions. Use the relevant app page to check current data. Unrelated topics are outside its scope.',
+      'Questions are sent to Google Gemini. Do not paste private keys, seed phrases or other secrets. The conversation stays in this browser tab so a reload keeps it, but it is not account chat history; New chat or closing the tab clears it. Helpful/not helpful ratings are anonymous and record only which guide sections were cited. Use Stop to stop waiting for an answer, Retry after a failure, or open the guide when the assistant is unavailable.',
     ],
   },
   {
