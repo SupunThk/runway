@@ -15,7 +15,7 @@
     "maxCapBaseUnits": "100000000000000000000"
   },
   "verifiedAt": "2026-11-15",
-  "verification": "RPC check after founder deployment: successful receipt from the founder; creation input begins with the exact local creation bytecode; musd, owner, feeRecipient, feeBps, feeCap, MAX_FEE_BPS, MAX_FEE_CAP and scheduleFee(1,000 / 1,000,000 MUSD) = 2.5 / 25 MUSD read back as expected; scheduleCount, outstandingObligations and totalFeesCollected are 0. Explorer source verification pending.",
+  "verification": "RPC check after founder deployment: successful receipt from the founder; creation input begins with the exact local creation bytecode; musd, owner, feeRecipient, feeBps, feeCap, MAX_FEE_BPS, MAX_FEE_CAP and scheduleFee(1,000 / 1,000,000 MUSD) = 2.5 / 25 MUSD read back as expected; scheduleCount, outstandingObligations and totalFeesCollected are 0. Explorer source exact-match verified 2026-11-15; see mezo-testnet-v2.explorer.check.json.",
   "compiler": {
     "version": "0.8.28",
     "evmVersion": "london",
@@ -25,5 +25,12 @@
   "creationBytecodeHash": "0x75ae1031595bfa064cba743fa4d2d7017429965025d2aaa05ffaa402cb7931ce",
   "deployedBytecodeHash": "0x22e7a8389ff99ae555678d86541b636c2dccebc20cc826aca932ef72e1993c30",
   "artifact": "contracts/out/RunwayPayments.sol/RunwayPayments.json",
-  "supersedes": "deployments/mezo-testnet.payments-v1.json (0x01A1662F2EB6C15Bfb2c8fd010c53c9055478b7D, Wave 1, no schedule fee)"
+  "supersedes": "deployments/mezo-testnet.payments-v1.json (0x01A1662F2EB6C15Bfb2c8fd010c53c9055478b7D, Wave 1, no schedule fee)",
+  "explorerVerification": {
+    "status": "exact-match verified",
+    "verifiedAt": "2026-11-15T05:28:30.117693Z",
+    "guid": "96d16598974f28b373553a4d8d8d5d31af02b24d6af942f8",
+    "record": "deployments/mezo-testnet-v2.explorer.check.json",
+    "url": "https://explorer.test.mezo.org/address/0x96d16598974F28B373553A4D8d8d5D31Af02B24D?tab=contract"
+  }
 }

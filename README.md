@@ -98,7 +98,7 @@ The Solidity suite covers both `RunwayPayments` (24 tests) and `RunwayMilestones
 | Component | Mezo testnet deployment |
 | --- | --- |
 | Network | Chain ID `31611`; BTC is the gas currency. |
-| RunwayPayments | [`0x96d16598974F28B373553A4D8d8d5D31Af02B24D`](https://explorer.test.mezo.org/address/0x96d16598974F28B373553A4D8d8d5D31Af02B24D?tab=contract): fee-enabled release deployed 2026-11-15 in block 16789575; RPC and creation-bytecode verified, explorer source verification pending. Wave 1 contract [`0x01A1662F2EB6C15Bfb2c8fd010c53c9055478b7D`](https://explorer.test.mezo.org/address/0x01A1662F2EB6C15Bfb2c8fd010c53c9055478b7D?tab=contract) (exact-match source verified) remains on chain; its schedules are no longer listed in the app. |
+| RunwayPayments | [`0x96d16598974F28B373553A4D8d8d5D31Af02B24D`](https://explorer.test.mezo.org/address/0x96d16598974F28B373553A4D8d8d5D31Af02B24D?tab=contract): fee-enabled release deployed 2026-11-15 in block 16789575; RPC, creation bytecode and explorer source exact-match verified. Wave 1 contract [`0x01A1662F2EB6C15Bfb2c8fd010c53c9055478b7D`](https://explorer.test.mezo.org/address/0x01A1662F2EB6C15Bfb2c8fd010c53c9055478b7D?tab=contract) (exact-match source verified) remains on chain; its schedules are no longer listed in the app. |
 | MUSD | [`0x118917a40FAF1CD7a13dB0Ef56C86De7973Ac503`](https://explorer.test.mezo.org/address/0x118917a40FAF1CD7a13dB0Ef56C86De7973Ac503?tab=contract), 18 decimals. |
 | MEZO | [`0x7B7c000000000000000000000000000000000001`](https://explorer.test.mezo.org/address/0x7B7c000000000000000000000000000000000001), 18 decimals. |
 

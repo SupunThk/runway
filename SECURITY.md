@@ -21,7 +21,7 @@ This policy covers Runway's payment contract, browser application, workspace API
 
 | Deployment | Mezo testnet (chain 31611) |
 | --- | --- |
-| RunwayPayments | [`0x96d16598974F28B373553A4D8d8d5D31Af02B24D`](https://explorer.test.mezo.org/address/0x96d16598974F28B373553A4D8d8d5D31Af02B24D?tab=contract), fee-enabled release (2026-11-15); explorer source verification pending. Wave 1: [`0x01A1662F2EB6C15Bfb2c8fd010c53c9055478b7D`](https://explorer.test.mezo.org/address/0x01A1662F2EB6C15Bfb2c8fd010c53c9055478b7D?tab=contract), exact-match source verified. |
+| RunwayPayments | [`0x96d16598974F28B373553A4D8d8d5D31Af02B24D`](https://explorer.test.mezo.org/address/0x96d16598974F28B373553A4D8d8d5D31Af02B24D?tab=contract), fee-enabled release (2026-11-15), exact-match source verified. Wave 1: [`0x01A1662F2EB6C15Bfb2c8fd010c53c9055478b7D`](https://explorer.test.mezo.org/address/0x01A1662F2EB6C15Bfb2c8fd010c53c9055478b7D?tab=contract), exact-match source verified. |
 | MUSD | [`0x118917a40FAF1CD7a13dB0Ef56C86De7973Ac503`](https://explorer.test.mezo.org/address/0x118917a40FAF1CD7a13dB0Ef56C86De7973Ac503?tab=contract) |
 
 RunwayPayments uses Solidity **0.8.28**, OpenZeppelin **5.0.2**, optimizer 200 runs and the **London EVM** target. See [compiler configuration](contracts/foundry.toml), [pinned dependencies](package.json) and [deployment verification](docs/explorer-verification.md). These versions describe RunwayPayments, not the separate MUSD implementation.

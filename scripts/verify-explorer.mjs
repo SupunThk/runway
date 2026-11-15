@@ -20,6 +20,24 @@ const record = JSON.parse(
   ),
 );
 const artifact = JSON.parse(await readFile(record.artifact, 'utf8'));
+// The fee-enabled RunwayPayments (v2) takes (musd, feeRecipient, feeBps, feeCap);
+// Wave 1 and RunwayMilestones take (musd). Encode from the artifact's own ABI.
+const constructorInputs =
+  artifact.abi.find((item) => item.type === 'constructor')?.inputs ?? [];
+const constructorArgs = record.fee
+  ? [
+      record.musd,
+      record.fee.recipient,
+      record.fee.bps,
+      BigInt(record.fee.capBaseUnits),
+    ]
+  : [record.musd];
+const encodedConstructorArgs = encodeAbiParameters(
+  constructorInputs,
+  constructorArgs,
+);
+// Keep the Wave 1 evidence files intact; the fee release writes -v2 files.
+const evidenceTag = record.fee ? '-v2' : '';
 const api = 'https://api.explorer.test.mezo.org';
 const explorerUrl = `https://explorer.test.mezo.org/address/${record.address}?tab=contract`;
 function requireMatch(ok, message) {
@@ -103,7 +121,7 @@ const tx = await indexedResponse.json();
 const expectedInput = encodeDeployData({
   abi: artifact.abi,
   bytecode: artifact.bytecode.object,
-  args: [record.musd],
+  args: constructorArgs,
 });
 requireMatch(
   tx.hash === record.transactionHash &&
@@ -116,14 +134,14 @@ requireMatch(
   tx.status === 'ok' &&
     tx.result === 'success' &&
     tx.created_contract?.hash?.toLowerCase() === record.address.toLowerCase() &&
-    String(tx.block) === record.deploymentBlock,
+    String(tx.block_number ?? tx.block) === record.deploymentBlock,
   'Indexed deployment result mismatch.',
 );
 requireMatch(
   code && keccak256(code) === record.deployedBytecodeHash,
   'Deployed code changed.',
 );
-const inputPath = `deployments/verification/${contractName}.standard-input.json`;
+const inputPath = `deployments/verification/${contractName}${evidenceTag}.standard-input.json`;
 await mkdir('deployments/verification', { recursive: true });
 const inputText = JSON.stringify(input, null, 2) + '\n';
 await writeFile(inputPath, inputText);
@@ -131,7 +149,7 @@ console.log(
   'Preflight passed: every source hash, compiler settings, constructor, creation transaction and deployed bytecode match the original deployment.',
 );
 if (process.argv.includes('--submit')) {
-  const args = encodeAbiParameters([{ type: 'address' }], [record.musd]);
+  const args = encodedConstructorArgs;
   forge([
     ...baseArgs,
     '--verifier',
@@ -167,7 +185,7 @@ if (verified) {
   );
   requireMatch(
     status.constructor_args?.toLowerCase() ===
-      encodeAbiParameters([{ type: 'address' }], [record.musd]).toLowerCase(),
+      encodedConstructorArgs.toLowerCase(),
     'Explorer constructor argument mismatch.',
   );
   requireMatch(
@@ -210,10 +228,7 @@ const report = {
   sourceSha256: record.sourceSha256,
   creationBytecodeHash: record.creationBytecodeHash,
   deployedBytecodeHash: keccak256(code),
-  constructorArguments: encodeAbiParameters(
-    [{ type: 'address' }],
-    [record.musd],
-  ),
+  constructorArguments: encodedConstructorArgs,
   creationTransaction: record.transactionHash,
   explorerVerifiedAt: status.verified_at ?? null,
   creationEvidence:
@@ -223,7 +238,7 @@ const report = {
 await writeFile(
   milestones
     ? 'deployments/mezo-testnet.milestones.explorer.check.json'
-    : 'deployments/mezo-testnet.explorer.check.json',
+    : `deployments/mezo-testnet${evidenceTag}.explorer.check.json`,
   JSON.stringify(report, null, 2) + '\n',
 );
 console.log(JSON.stringify(report, null, 2));

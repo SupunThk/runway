@@ -101,7 +101,7 @@ export function Documentation() {
                 <h2>Explore the project</h2>
                 <p>
                   <a href="https://explorer.test.mezo.org/address/0x96d16598974F28B373553A4D8d8d5D31Af02B24D?tab=contract">
-                    Payment contract on Mezo explorer
+                    Verified payment contract
                   </a>
                 </p>
                 <p>
