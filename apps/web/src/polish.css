@@ -1222,3 +1222,68 @@ footer a {
 .borrowing-account {
   margin: 18px 0;
 }
+
+/* Borrowing page breathing room: keep notes and links off the buttons. */
+.borrowing-layout .loan-controls select {
+  min-height: 48px;
+  font-size: 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background-color: var(--surface);
+}
+.borrowing-layout .loan-controls fieldset > .hint {
+  margin: 4px 0 0;
+}
+.borrowing-layout .loan-controls fieldset > .button {
+  justify-self: start;
+  margin: 8px 0 0;
+}
+.borrowing-layout .loan-controls form + .hint {
+  margin-top: 0;
+}
+.borrowing-layout .loan-controls > .hint:last-child {
+  margin-top: 24px;
+}
+.borrowing-layout .loan-review p {
+  margin: 0 0 12px;
+}
+.borrowing-layout .loan-review dl {
+  margin-bottom: 20px;
+}
+.borrowing-layout .loan-review .button {
+  min-height: 44px;
+  padding: 0 20px;
+  margin: 12px 12px 0 0;
+  text-decoration: none;
+}
+.borrowing-layout .loan-review .button:not(.secondary) {
+  background: var(--accent);
+  color: #fff;
+  border: 1px solid var(--accent);
+}
+.borrowing-layout .loan-review .button.secondary {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--border-strong);
+}
+.borrowing-layout .loan-review [role='alert'] {
+  margin-top: 16px;
+}
+.borrowing-layout .panel .actions {
+  margin: 20px 0 16px;
+  gap: 16px;
+}
+.borrowing-layout .runway-planner details {
+  margin: 20px 0 8px;
+}
+.borrowing-layout .runway-planner details[open] > .hint {
+  margin-top: 8px;
+}
+.borrowing-layout .runway-planner .actions {
+  margin: 20px 0 16px;
+  gap: 16px 20px;
+}
+.borrowing-layout .runway-planner > .hint:last-child {
+  margin-top: 16px;
+}
