@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
-import { calculateScheduleFee } from '@runway/mezo';
 import { durationUnits, type DurationUnit } from '../paymentOptions';
 import { createFundingIntent, fundingDestination } from '../fundingIntent';
 import { useFundingIntent } from '../hooks/useFundingIntent';
 import { FundingIntentPanel } from '../FundingIntentPanel';
-import type { Address } from 'viem';
-import { formatUnits, parseUnits } from 'viem';
+import { useScheduleFee } from '../hooks/useScheduleFee';
+import { erc20Abi, formatUnits, parseUnits, type Address } from 'viem';
+import { usePublicClient } from 'wagmi';
+import { TESTNET_CHAIN_ID } from '@runway/mezo';
+import { musdAddress } from '../config';
 
 export function NewSchedule({
   create,
@@ -54,15 +56,46 @@ export function NewSchedule({
   } catch {
     parsedAmountBaseUnits = null;
   }
-  const activeTier =
-    invoicePayment || Boolean(saved?.workspaceId) ? 'team' : 'solo';
-  const feeBreakdown =
-    parsedAmountBaseUnits !== null
-      ? calculateScheduleFee(parsedAmountBaseUnits, {
-          tier: activeTier,
-          waiveOnTestnet: true,
-        })
+  const fees = useScheduleFee();
+  const client = usePublicClient({ chainId: TESTNET_CHAIN_ID });
+  const [borrowing, setBorrowing] = useState(false);
+  /** Saves the plan, measures the wallet shortfall (incl. fee) and opens Mezo borrowing for it. */
+  async function borrowShortfall(form: HTMLFormElement) {
+    if (!address || !client || !musdAddress) return;
+    setBorrowing(true);
+    setPlanNotice('');
+    try {
+      const row = createFundingIntent(address, form);
+      const principal = BigInt(row.amountBaseUnits);
+      const required =
+        principal +
+        (row.paymentType === 'schedule' ? fees.feeFor(principal) : 0n);
+      const balance = await client.readContract({
+        address: musdAddress,
+        abi: erc20Abi,
+        functionName: 'balanceOf',
+        args: [address],
+      });
+      if (balance >= required) {
+        location.assign(fundingDestination(row));
+        return;
+      }
+      location.assign(
+        `/borrowing?intent=${row.id}&borrowAmount=${formatUnits(required - balance, 18)}`,
+      );
+    } catch (error) {
+      setPlanNotice(
+        error instanceof Error ? error.message : 'Could not save this plan.',
+      );
+      setBorrowing(false);
+    }
+  }
+  const fee =
+    !oneTime && parsedAmountBaseUnits !== null
+      ? fees.feeFor(parsedAmountBaseUnits)
       : null;
+  const feePercent = `${Number(fees.config.feeBps) / 100}%`;
+  const feeCap = formatUnits(fees.config.feeCapBaseUnits, 18);
   return (
     <>
       {plan.error || planNotice ? (
@@ -230,31 +263,57 @@ export function NewSchedule({
                     amounts, addresses and timestamps are public.
                   </p>
                   <p>
-                    You will approve the exact MUSD amount, then sign a separate
-                    funding transaction. Retain BTC for gas.
+                    You will approve the exact MUSD amount including the Runway
+                    fee, then sign a separate funding transaction. Retain BTC
+                    for gas.
                   </p>
                 </>
               )}
-              <p className="hint">
-                {activeTier === 'team' ? (
-                  <>
-                    <strong>Runway fee schedule (Team Operations):</strong> 25
-                    bps (0.25%, capped at 25 MUSD per payment)
-                    {feeBreakdown
-                      ? ` — ${formatUnits(feeBreakdown.standardFeeBaseUnits, 18)} MUSD standard fee waived to 0 MUSD on Mezo Testnet.`
-                      : ' — 100% waived on Mezo Testnet.'}{' '}
-                    Recipient receives 100% of the funded MUSD.
-                  </>
-                ) : (
-                  <>
-                    <strong>Runway fee schedule (Solo Direct):</strong> 0 bps (0
-                    MUSD protocol fee on direct schedules and transfers; only
-                    Mezo BTC gas applies). Team Operations workspaces are 49
-                    MUSD/mo + 25 bps (capped at 25 MUSD, waived on Mezo
-                    Testnet).
-                  </>
-                )}
-              </p>
+              {oneTime ? (
+                <p className="hint">
+                  <strong>Runway fee:</strong> none. One-time transfers are
+                  free; only Mezo network gas applies.
+                </p>
+              ) : fees.legacy ? (
+                <p className="hint">
+                  <strong>Runway fee:</strong> none on this deployment. The
+                  connected payment contract predates on-chain schedule fees.
+                </p>
+              ) : (
+                <dl className="fee-summary" aria-label="Schedule cost">
+                  <div>
+                    <dt>Recipient receives</dt>
+                    <dd>
+                      {parsedAmountBaseUnits !== null
+                        ? formatUnits(parsedAmountBaseUnits, 18)
+                        : '—'}{' '}
+                      MUSD
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>
+                      Runway fee · {feePercent}, max {feeCap} MUSD
+                    </dt>
+                    <dd>{fee !== null ? formatUnits(fee, 18) : '—'} MUSD</dd>
+                  </div>
+                  <div className="fee-total">
+                    <dt>You approve and pay</dt>
+                    <dd>
+                      {parsedAmountBaseUnits !== null && fee !== null
+                        ? formatUnits(parsedAmountBaseUnits + fee, 18)
+                        : '—'}{' '}
+                      MUSD
+                    </dd>
+                  </div>
+                </dl>
+              )}
+              {!oneTime && !fees.legacy ? (
+                <p className="hint">
+                  Charged on chain by RunwayPayments when the schedule is
+                  created. It is not refunded if you cancel. The transaction
+                  reverts if the fee rises above the amount shown here.
+                </p>
+              ) : null}
             </div>
             <button
               className="button"
@@ -280,29 +339,43 @@ export function NewSchedule({
               </p>
             ) : null}
             {!saved ? (
-              <button
-                type="button"
-                className="button secondary"
-                disabled={!address}
-                onClick={(event) => {
-                  try {
-                    if (!address) return;
-                    const row = createFundingIntent(
-                      address,
-                      event.currentTarget.form!,
-                    );
-                    location.assign(fundingDestination(row));
-                  } catch (error) {
-                    setPlanNotice(
-                      error instanceof Error
-                        ? error.message
-                        : 'Could not save this plan.',
-                    );
+              <div className="actions funding-options">
+                <button
+                  type="button"
+                  className="button secondary"
+                  disabled={!address || borrowing}
+                  onClick={(event) =>
+                    void borrowShortfall(event.currentTarget.form!)
                   }
-                }}
-              >
-                Save payment plan &amp; review funding options
-              </button>
+                >
+                  {borrowing
+                    ? 'Checking wallet MUSD…'
+                    : 'Borrow the shortfall against BTC'}
+                </button>
+                <button
+                  type="button"
+                  className="text-button"
+                  disabled={!address}
+                  onClick={(event) => {
+                    try {
+                      if (!address) return;
+                      const row = createFundingIntent(
+                        address,
+                        event.currentTarget.form!,
+                      );
+                      location.assign(fundingDestination(row));
+                    } catch (error) {
+                      setPlanNotice(
+                        error instanceof Error
+                          ? error.message
+                          : 'Could not save this plan.',
+                      );
+                    }
+                  }}
+                >
+                  Save as a payment plan for later
+                </button>
+              </div>
             ) : (
               <a href="/?create=1">Start a different payment plan</a>
             )}

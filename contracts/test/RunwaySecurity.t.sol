@@ -84,7 +84,7 @@ contract RunwaySecurityTest {
     function setUp() public {
         vm.warp(1000);
         token = new AdversarialMUSD();
-        payments = new RunwayPayments(address(token));
+        payments = new RunwayPayments(address(token), address(0), 0, 0);
         token.mint(address(this), 1000 ether);
         token.approve(address(payments), type(uint256).max);
     }
@@ -210,7 +210,7 @@ contract RunwaySecurityTest {
 
     function testNoReturnTokenCompletesCancellationAndClaim() public {
         NoReturnMUSD legacy = new NoReturnMUSD();
-        RunwayPayments p = new RunwayPayments(address(legacy));
+        RunwayPayments p = new RunwayPayments(address(legacy), address(0), 0, 0);
         legacy.mint(address(this), 101);
         legacy.approve(address(p), 101);
         uint256 id = p.createSchedule(recipient, 101, 1100, 1200, bytes32(0));
@@ -223,7 +223,7 @@ contract RunwaySecurityTest {
 
     function testFullPrecisionVestingWhenIntermediateProductOverflows() public {
         MockMUSD large = new MockMUSD();
-        RunwayPayments p = new RunwayPayments(address(large));
+        RunwayPayments p = new RunwayPayments(address(large), address(0), 0, 0);
         uint256 total = type(uint256).max - 1;
         large.mint(address(this), total);
         large.approve(address(p), total);
@@ -238,9 +238,9 @@ contract RunwaySecurityTest {
 
     function testInvalidConstructorAndContractRecipient() public {
         vm.expectRevert(RunwayPayments.InvalidInput.selector);
-        new RunwayPayments(address(0));
+        new RunwayPayments(address(0), address(0), 0, 0);
         vm.expectRevert(RunwayPayments.InvalidInput.selector);
-        new RunwayPayments(stranger);
+        new RunwayPayments(stranger, address(0), 0, 0);
         vm.expectRevert(RunwayPayments.InvalidInput.selector);
         payments.createSchedule(address(payments), 100, 1100, 1200, bytes32(0));
     }

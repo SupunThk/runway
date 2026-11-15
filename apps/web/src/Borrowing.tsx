@@ -28,7 +28,9 @@ export function Borrowing() {
           <section className="page-heading">
             <div>
               <h1>Mezo borrowing</h1>
-              <p>Track BTC collateral, MUSD debt and price-drop scenarios.</p>
+              <p>
+                Borrow MUSD against your BTC and route it straight into payroll.
+              </p>
             </div>
             <a
               className="button secondary"
@@ -49,8 +51,26 @@ export function Borrowing() {
               </p>
             ) : null}
             {plan.intent ? <FundingIntentPanel intent={plan.intent} /> : null}
-            <BorrowingPosition />
-            {loanControlsEnabled ? <BorrowingActions /> : null}
+            {!plan.intent ? (
+              <ol className="borrow-flow" aria-label="From BTC to payroll">
+                <li>
+                  <strong>Borrow</strong>
+                  <span>Lock BTC in a Mezo trove and mint MUSD.</span>
+                </li>
+                <li>
+                  <strong>Fund</strong>
+                  <span>Send that MUSD into a payment schedule.</span>
+                </li>
+                <li>
+                  <strong>Plan</strong>
+                  <span>See how many months your BTC can cover.</span>
+                </li>
+              </ol>
+            ) : null}
+            <div className="borrowing-split">
+              {loanControlsEnabled ? <BorrowingActions /> : null}
+              <BorrowingPosition />
+            </div>
             <RunwayPlanner />
             <details
               className="info-card borrowing-explainer"

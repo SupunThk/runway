@@ -19,9 +19,10 @@ export function BorrowingPosition() {
       className="info-card light borrowing"
       aria-label="Mezo borrowing position"
     >
-      <span className="eyebrow">MEZO BORROWING · READ ONLY</span>
+      <span className="eyebrow">MEZO TROVE · LIVE READ</span>
       <h2>Your borrowing position</h2>
       <form
+        className="borrowing-account"
         onSubmit={(event) => {
           event.preventDefault();
           if (!isAddress(draft) || BigInt(draft) === 0n) {
@@ -208,7 +209,7 @@ export function BorrowingPosition() {
           </button>
         )}
         <a href="https://testnet.mezo.org" target="_blank" rel="noreferrer">
-          Manage borrowing in Mezo ↗
+          Open in Mezo ↗
         </a>
       </div>
       <p className="hint">
@@ -220,8 +221,8 @@ export function BorrowingPosition() {
         >
           Mezo testnet TroveManager
         </a>
-        . Position and price reads share the displayed block. Loan management
-        opens Mezo.
+        . Position and price reads share the displayed block. Borrow, add
+        collateral or repay with the loan controls on this page.
       </p>
     </section>
   );

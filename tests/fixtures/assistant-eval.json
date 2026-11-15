@@ -81,7 +81,7 @@
     "expectedScope": "knowledge",
     "requiredSources": ["funding-plans"],
     "expectedSourceFacts": [
-      "Save payment plan & review funding options",
+      "Save as a payment plan for later",
       "separate wallet-confirmed transactions",
       "12-block confirmation buffer"
     ],
@@ -154,14 +154,14 @@
   {
     "id": "runway-business-model-and-fees",
     "category": "business-model",
-    "question": "What is Runway's business model and fee schedule for Solo vs Team Operations workspaces?",
+    "question": "What is Runway's business model and how is the schedule fee charged?",
     "expectedScope": "knowledge",
     "requiredSources": ["business-model"],
     "expectedSourceFacts": [
-      "49 MUSD/month",
-      "25 bps (0.25%)",
-      "capped at 25 MUSD per payment",
-      "100% waived"
+      "0.25% of each RunwayPayments schedule",
+      "capped at 25 MUSD",
+      "collected on chain",
+      "49 MUSD/month"
     ],
     "suggestedLink": "workspace"
   },

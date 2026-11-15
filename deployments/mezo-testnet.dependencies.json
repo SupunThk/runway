@@ -12,8 +12,8 @@
       "verificationDate": "2026-10-10"
     },
     "payments": {
-      "address": "0x01A1662F2EB6C15Bfb2c8fd010c53c9055478b7D",
-      "status": "RPC, local creation bytecode and explorer source exact-match verified; see mezo-testnet.payments.json and mezo-testnet.explorer.check.json",
+      "address": "0x96d16598974F28B373553A4D8d8d5D31Af02B24D",
+      "status": "Fee-enabled RunwayPayments (25 bps, 25 MUSD cap). RPC and local creation bytecode verified; explorer source verification pending. Wave 1 contract 0x01A1662F2EB6C15Bfb2c8fd010c53c9055478b7D is recorded in mezo-testnet.payments-v1.json.",
       "record": "deployments/mezo-testnet.payments.json"
     },
     "borrowing": {

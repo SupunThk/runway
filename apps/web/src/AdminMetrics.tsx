@@ -51,11 +51,11 @@ export function AdminMetrics({ data }: { data: AdminOverview }) {
         <div className="metric">
           <span>RUNWAY REVENUE</span>
           <strong className="admin-status-value">
-            <span className="status-pill neutral">Not collecting fees</span>
+            <span className="status-pill neutral">Schedule fee on chain</span>
           </strong>
           <p>
-            Team tier: 49 MUSD/mo + 25 bps (max 25 MUSD), waived on Mezo
-            Testnet.
+            Schedule fee 25 bps (max 25 MUSD) on chain; workspaces 49 MUSD/mo,
+            not billed on Mezo Testnet.
             {data.revenue.pricingModel
               ? ` Subscription eq: ${musd(data.revenue.pricingModel.monthlySubscriptionEquivalentBaseUnits)}/mo.`
               : ''}
@@ -612,19 +612,18 @@ export function AdminMetrics({ data }: { data: AdminOverview }) {
           <span className="eyebrow">MONETIZATION &amp; FEE SCHEDULE</span>
           <h2>Business model &amp; projected run-rate</h2>
           <p>
-            Solo direct schedules and one-time transfers remain 0 bps open
-            infrastructure. Multi-wallet Team Operations workspaces carry a 49
-            MUSD/month subscription plus a 25 bps (0.25%) coordination fee
-            capped at 25 MUSD per payment. All fees are 100% waived during the
-            Mezo Testnet pilot.
+            RunwayPayments collects a 0.25% schedule fee on chain, capped at 25
+            MUSD per schedule and paid by the sender on top. One-time transfers,
+            proofs and borrowing are free. Team workspaces carry a 49 MUSD/month
+            subscription that is not billed during the testnet pilot.
           </p>
           <dl className="borrowing-values">
             <div>
-              <dt>Solo &amp; Open Protocol</dt>
-              <dd>0 MUSD/mo · 0 bps</dd>
+              <dt>Free</dt>
+              <dd>Transfers · proofs · borrowing</dd>
             </div>
             <div>
-              <dt>Team Operations tier</dt>
+              <dt>Schedule fee · workspace</dt>
               <dd>
                 {musd(data.revenue.pricingModel.workspaceMonthlyFeeBaseUnits)}
                 /mo · {data.revenue.pricingModel.scheduleFeeBps} bps (max{' '}
@@ -649,9 +648,9 @@ export function AdminMetrics({ data }: { data: AdminOverview }) {
             </div>
           </dl>
           <p className="hint">
-            Collected on Mezo Testnet: 0 MUSD (100% pilot waiver). Equivalents
-            reflect the standard fee schedule applied to stored workspaces and
-            indexed schedule volume.
+            Equivalents apply the fee schedule to stored workspaces and indexed
+            schedule volume. Fees actually collected are on chain: see the
+            payment contract&apos;s totalFeesCollected and FeeCharged events.
           </p>
         </section>
       ) : null}

@@ -2,7 +2,7 @@
 
 Fund contractor payments upfront in MUSD on Mezo testnet, or send direct one-time MUSD transfers. Contractors earn scheduled allocations linearly over time and claim them to their wallet; founders and teams can manage invoices, approval quorums, payroll runs, client payment links, public funding proofs, and Mezo borrowing coverage.
 
-**[Open the live app](https://mezo-runway-testnet.vercel.app) · [User guide](docs/user-guide.md) · [Live documentation](https://mezo-runway-testnet.vercel.app/docs) · [Security](SECURITY.md)**
+**[Open the live app](https://mezo-runway-testnet.vercel.app) · [Pitch deck](https://canva.link/186dg5oj3vil4cf) · [User guide](docs/user-guide.md) · [Live documentation](https://mezo-runway-testnet.vercel.app/docs) · [Security](SECURITY.md)**
 
 **Status:** Wave 2 is deployed and live in production as of **November 12, 2026** (`https://mezo-runway-testnet.vercel.app` and `https://runway-api-rw61.onrender.com`). Scheduled and one-time payments, team workspaces, approval quorums, payroll runs, recurring plans, dated cash forecasts, client `/pay/<token>` links, public `/proof/<address>` escrow verification, `/admin` operational metrics, and the Wave 2 Ask Runway assistant are live. This is a **testnet prototype with no independent security audit**. Use dedicated test wallets and testnet assets only.
 
@@ -21,14 +21,15 @@ Fund contractor payments upfront in MUSD on Mezo testnet, or send direct one-tim
 
 ## Business model & fee schedule
 
-Runway uses a two-tier monetization model that keeps core onchain escrow open while monetizing multi-wallet team operations and payroll coordination:
+Runway charges for funding payment schedules, the core action every customer takes, and keeps the features that bring people in free.
 
-| Tier | Pricing | Included capabilities |
+| What | Price | How it is charged |
 | --- | --- | --- |
-| **Solo & Open Protocol** | **0 MUSD / month · 0 bps** | Direct 1-to-1 `RunwayPayments` streaming schedules, one-time MUSD transfers, public `/proof/<address>` escrow verification, and BTC-backed `BorrowerOperations` borrowing. Senders pay only Mezo BTC gas; 100% of funded MUSD goes to the recipient or sender cancellation refund. |
-| **Team Operations & Payroll** | **49 MUSD / month** per active workspace + **25 bps (0.25%)** schedule & payroll fee (**capped at 25 MUSD** per payment) | Multi-wallet team roles (`manager`, `approver`, `viewer`, `contractor`), versioned approval quorums, batch payroll runs (up to 50 invoices per run), recurring invoice automation, client `/pay/<token>` checkout links, and 1-year private audit/CSV exports. |
+| **Payment schedule fee** | **0.25%** of each schedule, **capped at 25 MUSD** | **On chain.** `RunwayPayments.createScheduleWithMaxFee` pulls the fee from the sender, on top of the funded amount, and sends it to the Runway treasury in the same transaction. Recipients receive 100% of the schedule. Not refunded on cancellation. |
+| **Team workspace** | **49 MUSD / month** per active workspace | Off chain. Covers approval quorums, payroll runs, recurring plans, client `/pay/<token>` links and audit exports. Not billed during the testnet pilot. |
+| One-time transfers, `/proof`, borrowing, Ask Runway | **Free** | Only Mezo gas and Mezo's own borrowing fee apply. |
 
-**Mezo Testnet Pilot Waiver:** On Mezo Testnet (Chain ID `31611`), both the `49 MUSD/month` workspace subscription and the `25 bps` coordination fee are **100% waived (`0 MUSD` charged onchain)**. The payment form, payroll run review, workspace reports, and `/admin` dashboard calculate and display the exact `25 bps` standard fee and monthly subscription equivalent transparently while reporting `0 MUSD` collected on testnet.
+Fee safety: the sender signs a `maxFee` with each schedule, so the transaction reverts if the fee rises after review. The contract hard-limits the fee to 1% and 100 MUSD per schedule, and only the two-step `Ownable2Step` owner can change it within those limits. The payment form reads the live terms from the contract and shows the recipient amount, the Runway fee and the total to approve. Payroll runs show the fee per scheduled payment. A payment contract deployed before fees (the Wave 1 deployment) has no fee functions; Runway detects it and charges nothing.
 
 ## Try the payment flow
 
@@ -46,7 +47,7 @@ You can read the [documentation](https://mezo-runway-testnet.vercel.app/docs), i
 | Layer | Implementation |
 | --- | --- |
 | Frontend | React 19, TypeScript, Vite 8, wagmi and viem; hosted on Vercel. Wallets authorize blockchain transactions. |
-| Payments | Solidity `RunwayPayments` on Mezo testnet (`0x01A1662F2EB6C15Bfb2c8fd010c53c9055478b7D`); MUSD settlement, BTC gas. Separate `RunwayMilestones` contract prepared and tested offline. |
+| Payments | Solidity `RunwayPayments` on Mezo testnet (`0x96d16598974F28B373553A4D8d8d5D31Af02B24D`, 0.25% schedule fee capped at 25 MUSD); MUSD settlement, BTC gas. Separate `RunwayMilestones` contract prepared and tested offline. |
 | API and workspace | Hono on Node.js, hosted on Render, with MongoDB Atlas for workspaces, team roles, approval quorums, payroll runs, payment requests, wallet-login sessions and usage counters. Vercel proxies `/api` to Render. |
 | Reconciliation | Read-only payment indexer and direct-transfer verifier in the Render API process; confirmed chain snapshots (12-block buffer) supply invoice and payment-link settlement evidence. |
 | Assistant | Server-side Gemini through the AI SDK, using 25 reviewed public knowledge sections, coverage guards, and validated source links. Provider credentials stay on the server. |
@@ -97,7 +98,7 @@ The Solidity suite covers both `RunwayPayments` (24 tests) and `RunwayMilestones
 | Component | Mezo testnet deployment |
 | --- | --- |
 | Network | Chain ID `31611`; BTC is the gas currency. |
-| RunwayPayments | [`0x01A1662F2EB6C15Bfb2c8fd010c53c9055478b7D`](https://explorer.test.mezo.org/address/0x01A1662F2EB6C15Bfb2c8fd010c53c9055478b7D?tab=contract), exact-match source verified. |
+| RunwayPayments | [`0x96d16598974F28B373553A4D8d8d5D31Af02B24D`](https://explorer.test.mezo.org/address/0x96d16598974F28B373553A4D8d8d5D31Af02B24D?tab=contract): fee-enabled release deployed 2026-11-15 in block 16789575; RPC and creation-bytecode verified, explorer source verification pending. Wave 1 contract [`0x01A1662F2EB6C15Bfb2c8fd010c53c9055478b7D`](https://explorer.test.mezo.org/address/0x01A1662F2EB6C15Bfb2c8fd010c53c9055478b7D?tab=contract) (exact-match source verified) remains on chain; its schedules are no longer listed in the app. |
 | MUSD | [`0x118917a40FAF1CD7a13dB0Ef56C86De7973Ac503`](https://explorer.test.mezo.org/address/0x118917a40FAF1CD7a13dB0Ef56C86De7973Ac503?tab=contract), 18 decimals. |
 | MEZO | [`0x7B7c000000000000000000000000000000000001`](https://explorer.test.mezo.org/address/0x7B7c000000000000000000000000000000000001), 18 decimals. |
 
@@ -105,7 +106,7 @@ Contract details are in [the deployment manifest](deployments/mezo-testnet.payme
 
 ## Limits and remaining work
 
-- **Borrowing writes are opt-in.** Production borrowing, collateral and repayment writes on `/borrowing` require `VITE_RUNWAY_BORROWING_ENABLED=true` on the deployment; otherwise loan execution opens in the external Mezo interface. Planner months are 30 days and price scenarios are hypothetical.
+- **Borrowing writes run inside Runway.** `/borrowing` opens troves, borrows, adds collateral and repays through Mezo `BorrowerOperations` (enabled in production with `VITE_RUNWAY_BORROWING_ENABLED=true`). Full trove closure stays in the Mezo app. Planner months are 30 days and price scenarios are hypothetical.
 - **Milestone escrow awaits user-signed deployment.** `RunwayMilestones.sol` and its offline verification artifacts are complete and tested; app/proof integration is gated on a user-signed testnet deployment (`node scripts/deploy-browser.mjs --contract milestones --founder <address>`).
 - **Free hosting can sleep.** The API stays on Render's free plan. A GitHub Actions keep-alive pings `/api/health` every 5 minutes year-round, and an external free monitor is recommended as a second pinger ([setup](docs/render-hosting.md#staying-awake-on-the-free-plan)). If both lapse, the first request waits for a cold start. `/admin` counts backend starts so you can see when that happens.
 - **Assistant scope is documentation only.** Ask Runway explains product and Mezo concepts from 25 reviewed knowledge sections; it does not inspect live wallets, private workspace records, or submit transactions.

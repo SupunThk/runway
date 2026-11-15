@@ -25,7 +25,7 @@ contract RunwayPaymentsTest {
     function setUp() public {
         vm.warp(1000);
         token = new MockMUSD();
-        payments = new RunwayPayments(address(token));
+        payments = new RunwayPayments(address(token), address(0), 0, 0);
         token.mint(address(this), 1_000_000 ether);
         token.approve(address(payments), type(uint256).max);
     }

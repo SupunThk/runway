@@ -48,7 +48,7 @@ contract MezoForkTest {
     address constant IMPLEMENTATION = 0xc05Bf344BD5b58825784326dD3112fB6cC160dcC;
     address constant MANAGER = 0xE47c80e8c23f6B4A1aE41c34837a0599D5D16bb0;
     address constant MUSD = 0x118917a40FAF1CD7a13dB0Ef56C86De7973Ac503;
-    address constant PAYMENTS = 0x01A1662F2EB6C15Bfb2c8fd010c53c9055478b7D;
+    address constant PAYMENTS = 0x96d16598974F28B373553A4D8d8d5D31Af02B24D;
     address constant ORACLE = 0x7b7c000000000000000000000000000000000015;
     bytes32 constant SLOT = 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
 
@@ -91,7 +91,7 @@ contract MezoForkTest {
         require(token.balanceOf(actor) == beforeBalance + 2050 ether, "repayment balance mismatch");
         uint256 obligationBefore = payments.outstandingObligations();
         uint256 escrowBefore = token.balanceOf(PAYMENTS);
-        vm.prank(actor); require(token.approve(PAYMENTS, 100 ether), "funding approval rejected");
+        vm.prank(actor); require(token.approve(PAYMENTS, 100.25 ether), "funding approval rejected"); // 100 MUSD + 0.25% schedule fee
         vm.prank(actor); uint256 id = payments.createSchedule(recipient, 100 ether, uint64(block.timestamp + 120), uint64(block.timestamp + 3600), bytes32(0));
         ForkPayments.Schedule memory schedule = payments.getSchedule(id);
         require(schedule.sender == actor && schedule.recipient == recipient && schedule.total == 100 ether, "payment terms mismatch");

@@ -56,13 +56,16 @@ export async function installLoanFixture(
     proof?: boolean;
     failProofRow?: boolean;
     revertedTransfer?: boolean;
+    /** Emulate the fee-enabled RunwayPayments (25 bps, 25 MUSD cap). Default: pre-fee contract. */
+    scheduleFees?: boolean;
   } = {},
 ) {
   const U = 10n ** 18n;
   let fee = U / 1000n;
   const transactions = new Map<string, Record<string, string>>();
   let walletMusd = 1000n * U,
-    allowance = 0n;
+    allowance = 0n,
+    feesCollected = 0n;
   let loanDebt = options.inactive ? 0n : 2100n * U,
     loanCollateral = options.inactive ? 0n : U;
   let active = !options.inactive;
@@ -126,7 +129,10 @@ export async function installLoanFixture(
           abi: paymentsAbi,
           data: tx.data as `0x${string}`,
         });
-        if (decoded.functionName === 'createSchedule') {
+        if (
+          decoded.functionName === 'createSchedule' ||
+          decoded.functionName === 'createScheduleWithMaxFee'
+        ) {
           created = {
             recipient: decoded.args[0],
             total: decoded.args[1],
@@ -134,7 +140,14 @@ export async function installLoanFixture(
             end: decoded.args[3],
             referenceHash: decoded.args[4],
           };
-          walletMusd -= created.total;
+          const charged = options.scheduleFees
+            ? (() => {
+                const raw = (created.total * 25n) / 10_000n;
+                return raw > 25n * U ? 25n * U : raw;
+              })()
+            : 0n;
+          feesCollected += charged;
+          walletMusd -= created.total + charged;
         }
       }
       return hash;
@@ -402,15 +415,27 @@ export async function installLoanFixture(
                 result: true,
               }),
             };
-          if (f === 'createSchedule')
+          if (f === 'createSchedule' || f === 'createScheduleWithMaxFee')
             return {
               jsonrpc: '2.0',
               id: r.id,
               result: encodeFunctionResult({
                 abi: paymentsAbi,
-                functionName: 'createSchedule',
+                functionName: f,
                 result: 1n,
               }),
+            };
+          if (
+            !options.scheduleFees &&
+            ['feeBps', 'feeCap', 'feeRecipient', 'totalFeesCollected'].includes(
+              f,
+            )
+          )
+            // A pre-fee contract has no such function: the call reverts.
+            return {
+              jsonrpc: '2.0',
+              id: r.id,
+              error: { code: 3, message: 'execution reverted', data: '0x' },
             };
           if (
             f === 'getSchedule' &&
@@ -495,6 +520,10 @@ export async function installLoanFixture(
                 : undefined,
             claimable: 0n,
             allowance,
+            feeBps: 25,
+            feeCap: 25n * U,
+            feeRecipient: '0x00000000000000000000000000000000000000fe',
+            totalFeesCollected: feesCollected,
           };
           if (!(f in values)) continue;
           result = encodeFunctionResult({

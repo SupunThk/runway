@@ -239,6 +239,17 @@ export async function installPlannerFixture(
           getTCR: 4n * unit,
           checkRecoveryMode: false,
         };
+        // Pre-fee RunwayPayments: fee getters do not exist and revert.
+        if (
+          ['feeBps', 'feeCap', 'feeRecipient', 'totalFeesCollected'].includes(
+            functionName,
+          )
+        )
+          return {
+            jsonrpc: '2.0',
+            id: request.id,
+            error: { code: 3, message: 'execution reverted', data: '0x' },
+          };
         result = encodeFunctionResult({
           abi,
           functionName,

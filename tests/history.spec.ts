@@ -17,6 +17,21 @@ for (const id of [1, 2]) {
     const fixture = JSON.parse(
       await readFile(`deployments/schedule-${id}.check.json`, 'utf8'),
     );
+    // The saved evidence is from the Wave 1 contract. Replay it against the
+    // configured fee-enabled deployment, shifted by the gap between the two
+    // deployment blocks, so block ordering and range scanning stay realistic.
+    const current = JSON.parse(
+      await readFile('deployments/mezo-testnet.payments.json', 'utf8'),
+    );
+    const previous = JSON.parse(
+      await readFile('deployments/mezo-testnet.payments-v1.json', 'utf8'),
+    );
+    const shift =
+      BigInt(current.deploymentBlock) - BigInt(previous.deploymentBlock);
+    fixture.contract = current.address;
+    fixture.block = String(BigInt(fixture.block) + shift);
+    for (const event of fixture.events)
+      event.blockNumber = String(BigInt(event.blockNumber) + shift);
     const logs = fixture.events.map((event: any, index: number) => {
       const abi = paymentsAbi.find(
         (item) => item.type === 'event' && item.name === event.event,
@@ -198,7 +213,7 @@ for (const id of [1, 2]) {
     expect(await readFile((await completeCsv.path())!, 'utf8')).toContain(
       '"true"',
     );
-    expect(ranges[0][0]).toBe(16083735n);
+    expect(ranges[0][0]).toBe(16789575n);
     for (const [from, to] of ranges)
       expect(to - from).toBeLessThanOrEqual(999n);
     const uniqueRanges = [

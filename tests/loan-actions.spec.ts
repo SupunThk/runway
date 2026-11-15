@@ -9,7 +9,6 @@ test('reviews fee-aware borrowing, submits only on confirmation, and resumes aft
   await page.goto('/borrowing');
   await connectPlannerWallet(page);
   const panel = page.getByRole('region', { name: 'Manage Mezo loan' });
-  await panel.getByRole('button', { name: 'Open loan controls' }).click();
   await expect(panel.getByText('Normal Mode', { exact: true })).toBeVisible();
   await panel.getByLabel('Receive in wallet').fill('100');
   await panel.getByRole('button', { name: 'Review and simulate' }).click();
@@ -25,7 +24,6 @@ test('reviews fee-aware borrowing, submits only on confirmation, and resumes aft
   );
   expect(fixture.submissions()).toBe(1);
   await page.reload();
-  await panel.getByRole('button', { name: 'Open loan controls' }).click();
   await expect(panel.getByLabel('Saved loan transaction')).toBeVisible();
   fixture.finish();
   await panel.getByRole('button', { name: 'Check loan transaction' }).click();
@@ -46,7 +44,6 @@ test('opens a new trove with explicit minimum debt, fee and reserve', async ({
   await page.goto('/borrowing');
   await connectPlannerWallet(page);
   const panel = page.getByRole('region', { name: 'Manage Mezo loan' });
-  await panel.getByRole('button', { name: 'Open loan controls' }).click();
   await expect(panel.getByLabel('Loan action')).toHaveValue('open');
   await panel.getByLabel('Receive in wallet').fill('10');
   await panel.getByLabel('BTC collateral to add').fill('1');
@@ -68,7 +65,6 @@ test('collateral top-up creates no MUSD debt; repayment retains the minimum', as
   await page.goto('/borrowing');
   await connectPlannerWallet(page);
   const panel = page.getByRole('region', { name: 'Manage Mezo loan' });
-  await panel.getByRole('button', { name: 'Open loan controls' }).click();
   await panel.getByLabel('Loan action').selectOption('add-collateral');
   await panel.getByLabel('BTC collateral to add').fill('0.1');
   await panel.getByRole('button', { name: 'Review and simulate' }).click();
@@ -91,7 +87,6 @@ test('Recovery Mode prevents debt-only increases and accepts sufficient collater
   await page.goto('/borrowing');
   await connectPlannerWallet(page);
   const panel = page.getByRole('region', { name: 'Manage Mezo loan' });
-  await panel.getByRole('button', { name: 'Open loan controls' }).click();
   await expect(panel.getByText('Recovery Mode', { exact: true })).toBeVisible();
   await panel.getByLabel('Receive in wallet').fill('100');
   await panel.getByRole('button', { name: 'Review and simulate' }).click();
@@ -109,7 +104,6 @@ test('changed fees invalidate the review without opening a transaction prompt', 
   await page.goto('/borrowing');
   await connectPlannerWallet(page);
   const panel = page.getByRole('region', { name: 'Manage Mezo loan' });
-  await panel.getByRole('button', { name: 'Open loan controls' }).click();
   await panel.getByLabel('Receive in wallet').fill('100');
   await panel.getByRole('button', { name: 'Review and simulate' }).click();
   await expect(panel.getByLabel('Review loan action')).toBeVisible();
@@ -126,7 +120,6 @@ for (const failure of ['changedCode', 'stale', 'lowGas'] as const) {
     await page.goto('/borrowing');
     await connectPlannerWallet(page);
     const panel = page.getByRole('region', { name: 'Manage Mezo loan' });
-    await panel.getByRole('button', { name: 'Open loan controls' }).click();
     if (failure === 'lowGas') {
       await panel.getByLabel('Receive in wallet').fill('100');
       await panel.getByRole('button', { name: 'Review and simulate' }).click();
@@ -146,7 +139,6 @@ test('wallet rejection remains recoverable and 320px controls fit', async ({
   await page.goto('/borrowing');
   await connectPlannerWallet(page);
   const panel = page.getByRole('region', { name: 'Manage Mezo loan' });
-  await panel.getByRole('button', { name: 'Open loan controls' }).click();
   await panel.getByLabel('Receive in wallet').fill('100');
   await panel.getByRole('button', { name: 'Review and simulate' }).click();
   await panel
@@ -171,7 +163,6 @@ test('a wallet network change after review prevents submission', async ({
   await page.goto('/borrowing');
   await connectPlannerWallet(page);
   const panel = page.getByRole('region', { name: 'Manage Mezo loan' });
-  await panel.getByRole('button', { name: 'Open loan controls' }).click();
   await panel.getByLabel('Receive in wallet').fill('100');
   await panel.getByRole('button', { name: 'Review and simulate' }).click();
   await expect(panel.getByLabel('Review loan action')).toBeVisible();
@@ -190,7 +181,6 @@ test('an expired review cannot open a wallet prompt', async ({ page }) => {
   await page.goto('/borrowing');
   await connectPlannerWallet(page);
   const panel = page.getByRole('region', { name: 'Manage Mezo loan' });
-  await panel.getByRole('button', { name: 'Open loan controls' }).click();
   await panel.getByLabel('Receive in wallet').fill('100');
   await panel.getByRole('button', { name: 'Review and simulate' }).click();
   await expect(panel.getByLabel('Review loan action')).toBeVisible();
@@ -207,7 +197,6 @@ test('removing pending tracking requires explicit acknowledgement and never canc
   await page.goto('/borrowing');
   await connectPlannerWallet(page);
   const panel = page.getByRole('region', { name: 'Manage Mezo loan' });
-  await panel.getByRole('button', { name: 'Open loan controls' }).click();
   await panel.getByLabel('Receive in wallet').fill('100');
   await panel.getByRole('button', { name: 'Review and simulate' }).click();
   await panel

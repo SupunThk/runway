@@ -130,7 +130,7 @@ test('authorized wallet signs in, sees real aggregates, reloads, filters and sig
   await page.getByRole('button', { name: 'Sign in as admin' }).click();
   await expect(
     page.getByRole('region', { name: 'Admin summary' }),
-  ).toContainText('Not collecting fees');
+  ).toContainText('Schedule fee on chain');
   const payments = page.getByRole('region', { name: 'Payment activity' });
   await expect(payments).toContainText('100 MUSD');
   await expect(payments).toContainText('25 MUSD');

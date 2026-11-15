@@ -1,9 +1,9 @@
 import { paymentsAbi, TESTNET_CHAIN_ID } from '@runway/mezo';
 import { formatUnits, type Address, type Hash, type PublicClient } from 'viem';
 
-// This start block is verified only for the existing testnet deployment.
-export const historyDeployment = '0x01a1662f2eb6c15bfb2c8fd010c53c9055478b7d';
-export const deploymentBlock = 16083735n;
+// Start block verified for the fee-enabled RunwayPayments deployment (2026-11-15).
+export const historyDeployment = '0x96d16598974f28b373553a4d8d8d5d31af02b24d';
+export const deploymentBlock = 16789575n;
 export type HistoryRecord = {
   event: 'ScheduleCreated' | 'Claimed' | 'Cancelled';
   transactionHash: Hash;

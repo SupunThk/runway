@@ -369,7 +369,7 @@ export async function adminOverview(db: Db, now: Date, days: number) {
       grossBaseUnits: null,
       refundBaseUnits: null,
       netBaseUnits: null,
-      note: 'Runway fee collection is waived on Mezo Testnet. Customer payments and borrowed MUSD are not Runway revenue.',
+      note: 'Schedule fees are collected on chain by the fee-enabled RunwayPayments contract (see totalFeesCollected and FeeCharged events). Workspace subscriptions are not billed during the testnet pilot. Customer payments and borrowed MUSD are not Runway revenue.',
       pricingModel: estimateWorkspaceRevenueEquivalent({
         workspaces,
         fundedBaseUnits:

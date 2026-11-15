@@ -10,7 +10,7 @@ import {
 } from 'viem';
 import { paymentsAbi } from '../packages/mezo/src/index';
 
-const contract = '0x01A1662F2EB6C15Bfb2c8fd010c53c9055478b7D';
+const contract = '0x96d16598974F28B373553A4D8d8d5D31Af02B24D';
 const sender = '0x1ac891Ce491851AC87851D62B9184c75A76f55cF';
 const token = '0x118917a40FAF1CD7a13dB0Ef56C86De7973Ac503';
 const hash = `0x${'1'.repeat(64)}`;
@@ -306,6 +306,17 @@ for (const scenario of [
             },
             claimable: 100n,
           };
+          // Pre-fee RunwayPayments: fee getters do not exist and revert.
+          if (
+            ['feeBps', 'feeCap', 'feeRecipient', 'totalFeesCollected'].includes(
+              functionName,
+            )
+          )
+            return {
+              jsonrpc: '2.0',
+              id: request.id,
+              error: { code: 3, message: 'execution reverted', data: '0x' },
+            };
           result = encodeFunctionResult({
             abi,
             functionName,

@@ -11,7 +11,7 @@
   "source": "local tested Vite static build",
   "commit": null,
   "chainId": 31611,
-  "paymentContract": "0x01A1662F2EB6C15Bfb2c8fd010c53c9055478b7D",
+  "paymentContract": "0x96d16598974F28B373553A4D8d8d5D31Af02B24D",
   "verificationReport": "deployments/frontend.check.json",
   "artifacts": [
     { "file": "index.html", "sha1": "bd3b5029b74a9fc2c1f7450b728ee242a3e5d9ec" },

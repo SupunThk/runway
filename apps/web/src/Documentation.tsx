@@ -100,8 +100,8 @@ export function Documentation() {
               <section className="docs-section" id="references">
                 <h2>Explore the project</h2>
                 <p>
-                  <a href="https://explorer.test.mezo.org/address/0x01A1662F2EB6C15Bfb2c8fd010c53c9055478b7D?tab=contract">
-                    Verified payment contract
+                  <a href="https://explorer.test.mezo.org/address/0x96d16598974F28B373553A4D8d8d5D31Af02B24D?tab=contract">
+                    Payment contract on Mezo explorer
                   </a>
                 </p>
                 <p>

@@ -21,26 +21,22 @@ function tokenInput(value: string) {
   return parseUnits(value, 18);
 }
 export function BorrowingActions() {
-  const [open, setOpen] = useState(false);
   const { address } = useAccount();
   return (
     <section className="panel loan-actions" aria-label="Manage Mezo loan">
+      <span className="eyebrow">
+        BORROWEROPERATIONS · SIGNED IN YOUR WALLET
+      </span>
       <div className="section-heading">
-        <h2>Manage your Mezo loan</h2>
+        <h2>Borrow MUSD against BTC</h2>
         <span className="badge">TESTNET</span>
       </div>
       <p>
-        Review BTC collateral and MUSD debt changes, then confirm each
-        transaction in your wallet.
+        Open a trove, borrow more, add collateral or repay. Runway simulates
+        each call against Mezo first and shows the protocol fee, minimum debt
+        and Recovery Mode limits before you sign.
       </p>
-      <button
-        className="button secondary"
-        aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
-      >
-        {open ? 'Hide loan controls' : 'Open loan controls'}
-      </button>
-      {open ? <LoanControls key={address ?? 'disconnected'} /> : null}
+      <LoanControls key={address ?? 'disconnected'} />
     </section>
   );
 }

@@ -11,7 +11,7 @@ import { paymentsAbi } from '../packages/mezo/src/index';
 const founder = '0x1ac891Ce491851AC87851D62B9184c75A76f55cF';
 const contractor = '0x99d7a7dcf20a0ac9fc3D03Cd90b0a1F4BC561b09';
 const token = '0x118917a40FAF1CD7a13dB0Ef56C86De7973Ac503';
-const contract = '0x01A1662F2EB6C15Bfb2c8fd010c53c9055478b7D';
+const contract = '0x96d16598974F28B373553A4D8d8d5D31Af02B24D';
 const unit = 10n ** 18n;
 
 async function fixture(page: Page, sentCount = 121, receivedCount = 22) {

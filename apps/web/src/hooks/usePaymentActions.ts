@@ -3,6 +3,7 @@ import type { usePublicClient, useWalletClient, Config } from 'wagmi';
 import {
   erc20Abi,
   encodeFunctionData,
+  formatUnits,
   getAddress,
   isAddress,
   parseEventLogs,
@@ -11,7 +12,13 @@ import {
   type Hash,
   type Address,
 } from 'viem';
-import { paymentsAbi, TESTNET_CHAIN_ID, type TeamInvoice } from '@runway/mezo';
+import {
+  paymentsAbi,
+  readScheduleFeeConfig,
+  scheduleFee,
+  TESTNET_CHAIN_ID,
+  type TeamInvoice,
+} from '@runway/mezo';
 import { teamRequest } from '../teamApi';
 import { musdAddress, paymentAddress } from '../config';
 import { errorText } from '../format';
@@ -357,14 +364,25 @@ export function usePaymentActions({
             'Approval is still awaiting confirmations. Resume this plan after checking its receipt.',
           );
       }
+      const feeConfig =
+        paymentType === 'schedule'
+          ? await readScheduleFeeConfig(client!, paymentAddress!)
+          : undefined;
+      // Fee is charged on top by the contract; the recipient still gets `total`.
+      const fee = feeConfig ? scheduleFee(total, feeConfig) : 0n;
+      const debit = total + fee;
       const balance = await client!.readContract({
         address: musdAddress!,
         abi: erc20Abi,
         functionName: 'balanceOf',
         args: [address!],
       });
-      if (balance < total)
-        throw new Error('Insufficient MUSD. Fund your wallet first.');
+      if (balance < debit)
+        throw new Error(
+          fee > 0n
+            ? `Insufficient MUSD. This schedule needs ${formatUnits(debit, decimals)} MUSD including the ${formatUnits(fee, decimals)} MUSD Runway fee.`
+            : 'Insufficient MUSD. Fund your wallet first.',
+        );
       if (paymentType === 'one-time') {
         setNotice('Confirm the one-time MUSD payment in your wallet.');
         const args = [getAddress(recipient), total] as const;
@@ -436,14 +454,18 @@ export function usePaymentActions({
         functionName: 'allowance',
         args: [address!, paymentAddress!],
       });
-      if (allowance < total) {
-        setNotice('Approve the exact funding amount in your wallet.');
+      if (allowance < debit) {
+        setNotice(
+          fee > 0n
+            ? 'Approve the exact funding amount plus the Runway fee in your wallet.'
+            : 'Approve the exact funding amount in your wallet.',
+        );
         const { request } = await client!.simulateContract({
           account: address!,
           address: musdAddress!,
           abi: erc20Abi,
           functionName: 'approve',
-          args: [paymentAddress!, total],
+          args: [paymentAddress!, debit],
         });
         await checkWallet();
         await checkInvoice();
@@ -456,7 +478,7 @@ export function usePaymentActions({
           encodeFunctionData({
             abi: erc20Abi,
             functionName: 'approve',
-            args: [paymentAddress!, total],
+            args: [paymentAddress!, debit],
           }),
           undefined,
           intent,
@@ -471,28 +493,56 @@ export function usePaymentActions({
       setNotice(
         'Approval ready. Confirm schedule creation in your wallet; accrual starts about two minutes from now.',
       );
-      const { request } = await client!.simulateContract({
-        account: address!,
-        address: paymentAddress!,
-        abi: paymentsAbi,
-        functionName: 'createSchedule',
-        args: [getAddress(recipient), total, start, end, referenceHash],
-      });
+      const scheduleArgs = [
+        getAddress(recipient),
+        total,
+        start,
+        end,
+        referenceHash,
+      ] as const;
+      // Simulate now; sign only after the wallet and invoice checks below.
+      let signCreate: () => Promise<Hash>;
+      if (feeConfig?.supported) {
+        const { request } = await client!.simulateContract({
+          account: address!,
+          address: paymentAddress!,
+          abi: paymentsAbi,
+          functionName: 'createScheduleWithMaxFee',
+          args: [...scheduleArgs, fee],
+        });
+        signCreate = () => wallet!.writeContract(request);
+      } else {
+        const { request } = await client!.simulateContract({
+          account: address!,
+          address: paymentAddress!,
+          abi: paymentsAbi,
+          functionName: 'createSchedule',
+          args: scheduleArgs,
+        });
+        signCreate = () => wallet!.writeContract(request);
+      }
+      const createData = feeConfig?.supported
+        ? encodeFunctionData({
+            abi: paymentsAbi,
+            functionName: 'createScheduleWithMaxFee',
+            args: [...scheduleArgs, fee],
+          })
+        : encodeFunctionData({
+            abi: paymentsAbi,
+            functionName: 'createSchedule',
+            args: scheduleArgs,
+          });
       recovery.checkStorage();
       await checkWallet();
       await checkInvoice();
-      const tx = await wallet!.writeContract(request);
+      const tx = await signCreate();
       setHash(tx);
       setNotice('Schedule submitted. Waiting for confirmation…');
       const receipt = await waitTracked(
         tx,
         'Funding',
         paymentAddress!,
-        encodeFunctionData({
-          abi: paymentsAbi,
-          functionName: 'createSchedule',
-          args: [getAddress(recipient), total, start, end, referenceHash],
-        }),
+        createData,
         undefined,
         intent,
       );
@@ -506,10 +556,12 @@ export function usePaymentActions({
         eventName: 'ScheduleCreated',
       });
       const id = events[0]?.args.scheduleId;
+      const feeNote =
+        fee > 0n ? ` Runway fee paid: ${formatUnits(fee, decimals)} MUSD.` : '';
       setNotice(
         id
-          ? `Schedule #${id} confirmed. Share its recipient link below.`
-          : 'Schedule confirmed. Refresh to view it.',
+          ? `Schedule #${id} confirmed. Share its recipient link below.${feeNote}`
+          : `Schedule confirmed. Refresh to view it.${feeNote}`,
       );
       if (!intent) {
         onCreated();

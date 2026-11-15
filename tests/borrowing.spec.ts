@@ -273,7 +273,7 @@ for (const state of [
       await expect(simulator).toHaveCount(0);
     }
     await expect(
-      panel.getByRole('link', { name: 'Manage borrowing in Mezo' }),
+      panel.getByRole('link', { name: 'Open in Mezo' }),
     ).toHaveAttribute('href', 'https://testnet.mezo.org');
     await page.setViewportSize({ width: 390, height: 844 });
     expect(

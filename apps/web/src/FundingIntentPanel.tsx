@@ -16,6 +16,7 @@ import {
   type FundingIntent,
   type IntentStep,
 } from './fundingIntent';
+import { useScheduleFee } from './hooks/useScheduleFee';
 
 export function FundingIntentPanel({ intent }: { intent: FundingIntent }) {
   const client = usePublicClient({ chainId: TESTNET_CHAIN_ID });
@@ -91,14 +92,16 @@ export function FundingIntentPanel({ intent }: { intent: FundingIntent }) {
       }
     }
   }, [query.data, query.error, intent]);
+  const fees = useScheduleFee();
+  const principal = BigInt(intent.amountBaseUnits);
+  const fee = intent.paymentType === 'schedule' ? fees.feeFor(principal) : 0n;
+  const required = principal + fee;
   const states = !query.error ? query.data?.evidence : undefined;
   const funded = states?.funding?.state === 'confirmed';
   const borrowed = states?.loan?.state === 'confirmed';
   const missing =
-    query.data &&
-    !query.error &&
-    query.data.balance < BigInt(intent.amountBaseUnits)
-      ? BigInt(intent.amountBaseUnits) - query.data.balance
+    query.data && !query.error && query.data.balance < required
+      ? required - query.data.balance
       : 0n;
   const unresolved = Object.keys(intent.evidence).some(
     (step) => !states || states[step as IntentStep]?.state === 'submitted',
@@ -120,23 +123,72 @@ export function FundingIntentPanel({ intent }: { intent: FundingIntent }) {
         to <span className="mono">{intent.recipient}</span>.
       </p>
       <ol className="transaction-steps" aria-label="Payment progress">
-        <li>Payment terms saved</li>
-        <li>
-          {intent.evidence.loan
-            ? `Borrowing: ${states?.loan?.state ?? 'checking'}`
-            : 'Borrowing: optional'}
+        <li data-state="done">
+          <strong>Plan saved</strong>
+          <span>Recipient, amount and period locked</span>
+        </li>
+        <li
+          data-state={
+            borrowed
+              ? 'done'
+              : intent.evidence.loan
+                ? 'current'
+                : missing > 0n && !funded
+                  ? 'current'
+                  : 'skipped'
+          }
+        >
+          <strong>Borrow MUSD</strong>
+          <span>
+            {intent.evidence.loan
+              ? (states?.loan?.state ?? 'checking')
+              : missing > 0n
+                ? `${formatUnits(missing, 18)} MUSD short`
+                : 'Not needed: wallet covers it'}
+          </span>
         </li>
         {intent.paymentType === 'schedule' ? (
-          <li>
-            Allowance: {states?.approval?.state ?? 'checked before funding'}
+          <li
+            data-state={
+              states?.approval?.state === 'confirmed' || funded
+                ? 'done'
+                : intent.evidence.approval
+                  ? 'current'
+                  : 'todo'
+            }
+          >
+            <strong>Approve</strong>
+            <span>
+              {states?.approval?.state ??
+                (funded ? 'confirmed' : 'checked before funding')}
+            </span>
           </li>
         ) : null}
-        <li>
-          Payment:{' '}
-          {states?.funding?.state ??
-            (intent.evidence.funding ? 'checking' : 'not submitted')}
+        <li
+          data-state={
+            funded
+              ? 'done'
+              : intent.evidence.funding || (missing === 0n && query.data)
+                ? 'current'
+                : 'todo'
+          }
+        >
+          <strong>
+            {intent.paymentType === 'schedule' ? 'Fund schedule' : 'Pay'}
+          </strong>
+          <span>
+            {states?.funding?.state ??
+              (intent.evidence.funding ? 'checking' : 'not submitted')}
+          </span>
         </li>
       </ol>
+      {fee > 0n ? (
+        <p className="hint">
+          Includes the {formatUnits(fee, 18)} MUSD Runway schedule fee: you need{' '}
+          {formatUnits(required, 18)} MUSD in total; the recipient gets{' '}
+          {formatUnits(principal, 18)} MUSD.
+        </p>
+      ) : null}
       {query.error ? (
         <p className="callout warning" role="alert">
           Could not revalidate this plan: {query.error.message}. Keep the saved

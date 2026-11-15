@@ -1,126 +1,124 @@
 const MUSD_UNIT = 10n ** 18n;
 const BPS_DENOMINATOR = 10_000n;
 
+/** Off-chain Team workspace subscription. Not billed during the testnet pilot. */
 export const WORKSPACE_MONTHLY_FEE_MUSD = 49n * MUSD_UNIT;
-export const SCHEDULE_FEE_BPS = 25n; // 0.25%
+/** Default on-chain RunwayPayments schedule fee: 25 bps (0.25%), capped per schedule. */
+export const SCHEDULE_FEE_BPS = 25n;
 export const SCHEDULE_FEE_CAP_MUSD = 25n * MUSD_UNIT;
+/** Hard ceilings enforced by the contract; the owner can never exceed them. */
+export const MAX_SCHEDULE_FEE_BPS = 100n;
+export const MAX_SCHEDULE_FEE_CAP_MUSD = 100n * MUSD_UNIT;
 
-export type RunwayPricingTier = 'solo' | 'team';
+export type ScheduleFeeConfig = {
+  feeBps: bigint;
+  feeCapBaseUnits: bigint;
+};
+export const DEFAULT_SCHEDULE_FEE: ScheduleFeeConfig = {
+  feeBps: SCHEDULE_FEE_BPS,
+  feeCapBaseUnits: SCHEDULE_FEE_CAP_MUSD,
+};
 
 export type ScheduleFeeBreakdown = {
-  tier: RunwayPricingTier;
   principalBaseUnits: bigint;
   feeBps: number;
   feeCapBaseUnits: bigint;
-  standardFeeBaseUnits: bigint;
-  chargedFeeBaseUnits: bigint;
-  waivedFeeBaseUnits: bigint;
+  feeBaseUnits: bigint;
   recipientReceivesBaseUnits: bigint;
   totalSenderDebitBaseUnits: bigint;
-  waivedOnTestnet: boolean;
 };
 
 export type PayrollRunFeeBreakdown = {
   paymentCount: number;
+  scheduledCount: number;
   principalBaseUnits: bigint;
-  feeBps: number;
-  feeCapBaseUnits: bigint;
-  standardFeeBaseUnits: bigint;
-  chargedFeeBaseUnits: bigint;
-  waivedFeeBaseUnits: bigint;
+  feeBaseUnits: bigint;
   totalSenderDebitBaseUnits: bigint;
-  waivedOnTestnet: boolean;
 };
 
 export const RUNWAY_BUSINESS_MODEL = {
   currency: 'MUSD' as const,
-  soloTier: {
-    name: 'Solo & Open Protocol',
-    monthlyWorkspaceFeeBaseUnits: '0',
-    scheduleFeeBps: 0,
-    scheduleFeeCapBaseUnits: '0',
+  scheduleFee: {
+    name: 'Payment schedule fee',
+    feeBps: Number(SCHEDULE_FEE_BPS),
+    feeCapBaseUnits: SCHEDULE_FEE_CAP_MUSD.toString(),
+    collection: 'on-chain' as const,
     summary:
-      '0 MUSD/month and 0 bps on direct 1-to-1 RunwayPayments schedules, one-time transfers, public /proof verification, and BTC-backed borrowing.',
+      '0.25% of each funded RunwayPayments schedule, capped at 25 MUSD, charged on top of the funded amount at creation. The recipient receives 100% of the schedule; the fee is not refunded on cancellation.',
   },
-  teamTier: {
-    name: 'Team Operations & Payroll',
-    monthlyWorkspaceFeeBaseUnits: WORKSPACE_MONTHLY_FEE_MUSD.toString(),
-    scheduleFeeBps: Number(SCHEDULE_FEE_BPS),
-    scheduleFeeCapBaseUnits: SCHEDULE_FEE_CAP_MUSD.toString(),
+  free: {
+    name: 'Free',
     summary:
-      '49 MUSD/month per active team workspace plus a 25 bps (0.25%) schedule and payroll coordination fee capped at 25 MUSD per payment. 100% waived on Mezo Testnet.',
+      'One-time MUSD transfers, public /proof verification, Mezo borrowing through Runway and Ask Runway carry no Runway fee. Only Mezo network gas and Mezo protocol borrowing fees apply.',
+  },
+  teamWorkspace: {
+    name: 'Team workspace',
+    monthlyFeeBaseUnits: WORKSPACE_MONTHLY_FEE_MUSD.toString(),
+    collection: 'off-chain' as const,
+    summary:
+      '49 MUSD per active team workspace per month for approvals, payroll runs, recurring plans and client payment links. Not billed during the testnet pilot.',
   },
 } as const;
 
+function validConfig(config: ScheduleFeeConfig) {
+  if (
+    config.feeBps < 0n ||
+    config.feeBps > MAX_SCHEDULE_FEE_BPS ||
+    config.feeCapBaseUnits < 0n ||
+    config.feeCapBaseUnits > MAX_SCHEDULE_FEE_CAP_MUSD
+  )
+    throw new Error('Schedule fee configuration is outside contract limits.');
+  return config;
+}
+
+/** Exact mirror of RunwayPayments.scheduleFee: min(floor(amount × bps / 10,000), cap). */
+export function scheduleFee(
+  amountBaseUnits: bigint,
+  config: ScheduleFeeConfig = DEFAULT_SCHEDULE_FEE,
+) {
+  if (amountBaseUnits < 0n)
+    throw new Error('Payment amount must be nonnegative');
+  const { feeBps, feeCapBaseUnits } = validConfig(config);
+  if (feeBps === 0n) return 0n;
+  const fee = (amountBaseUnits * feeBps) / BPS_DENOMINATOR;
+  return fee > feeCapBaseUnits ? feeCapBaseUnits : fee;
+}
+
 export function calculateScheduleFee(
   amountBaseUnits: bigint,
-  options?: { tier?: RunwayPricingTier; waiveOnTestnet?: boolean },
+  config: ScheduleFeeConfig = DEFAULT_SCHEDULE_FEE,
 ): ScheduleFeeBreakdown {
-  if (amountBaseUnits < 0n) {
-    throw new Error('Payment amount must be nonnegative');
-  }
-  const tier = options?.tier ?? 'team';
-  const waivedOnTestnet = options?.waiveOnTestnet ?? true;
-  if (tier === 'solo') {
-    return {
-      tier,
-      principalBaseUnits: amountBaseUnits,
-      feeBps: 0,
-      feeCapBaseUnits: 0n,
-      standardFeeBaseUnits: 0n,
-      chargedFeeBaseUnits: 0n,
-      waivedFeeBaseUnits: 0n,
-      recipientReceivesBaseUnits: amountBaseUnits,
-      totalSenderDebitBaseUnits: amountBaseUnits,
-      waivedOnTestnet,
-    };
-  }
-  const uncappedFee = (amountBaseUnits * SCHEDULE_FEE_BPS) / BPS_DENOMINATOR;
-  const standardFeeBaseUnits =
-    uncappedFee > SCHEDULE_FEE_CAP_MUSD ? SCHEDULE_FEE_CAP_MUSD : uncappedFee;
-  const chargedFeeBaseUnits = waivedOnTestnet ? 0n : standardFeeBaseUnits;
-  const waivedFeeBaseUnits = standardFeeBaseUnits - chargedFeeBaseUnits;
+  const feeBaseUnits = scheduleFee(amountBaseUnits, config);
   return {
-    tier,
     principalBaseUnits: amountBaseUnits,
-    feeBps: Number(SCHEDULE_FEE_BPS),
-    feeCapBaseUnits: SCHEDULE_FEE_CAP_MUSD,
-    standardFeeBaseUnits,
-    chargedFeeBaseUnits,
-    waivedFeeBaseUnits,
+    feeBps: Number(config.feeBps),
+    feeCapBaseUnits: config.feeCapBaseUnits,
+    feeBaseUnits,
     recipientReceivesBaseUnits: amountBaseUnits,
-    totalSenderDebitBaseUnits: amountBaseUnits + chargedFeeBaseUnits,
-    waivedOnTestnet,
+    totalSenderDebitBaseUnits: amountBaseUnits + feeBaseUnits,
   };
 }
 
+/** One-time transfers are free; each scheduled payment is capped independently. */
 export function calculatePayrollRunFee(
-  invoiceAmountsBaseUnits: readonly bigint[],
-  options?: { waiveOnTestnet?: boolean },
+  payments: readonly { amountBaseUnits: bigint; scheduled: boolean }[],
+  config: ScheduleFeeConfig = DEFAULT_SCHEDULE_FEE,
 ): PayrollRunFeeBreakdown {
-  const waivedOnTestnet = options?.waiveOnTestnet ?? true;
   let principalBaseUnits = 0n;
-  let standardFeeBaseUnits = 0n;
-  for (const amount of invoiceAmountsBaseUnits) {
-    const item = calculateScheduleFee(amount, {
-      tier: 'team',
-      waiveOnTestnet: waivedOnTestnet,
-    });
-    principalBaseUnits += item.principalBaseUnits;
-    standardFeeBaseUnits += item.standardFeeBaseUnits;
+  let feeBaseUnits = 0n;
+  let scheduledCount = 0;
+  for (const payment of payments) {
+    principalBaseUnits += payment.amountBaseUnits;
+    if (!payment.scheduled) continue;
+    scheduledCount++;
+    feeBaseUnits += scheduleFee(payment.amountBaseUnits, config);
   }
-  const chargedFeeBaseUnits = waivedOnTestnet ? 0n : standardFeeBaseUnits;
-  const waivedFeeBaseUnits = standardFeeBaseUnits - chargedFeeBaseUnits;
   return {
-    paymentCount: invoiceAmountsBaseUnits.length,
+    paymentCount: payments.length,
+    scheduledCount,
     principalBaseUnits,
-    feeBps: Number(SCHEDULE_FEE_BPS),
-    feeCapBaseUnits: SCHEDULE_FEE_CAP_MUSD,
-    standardFeeBaseUnits,
-    chargedFeeBaseUnits,
-    waivedFeeBaseUnits,
-    totalSenderDebitBaseUnits: principalBaseUnits + chargedFeeBaseUnits,
-    waivedOnTestnet,
+    feeBaseUnits,
+    totalSenderDebitBaseUnits: principalBaseUnits + feeBaseUnits,
   };
 }
 

@@ -176,7 +176,7 @@ contract RunwayInvariantTest {
     function setUp() public {
         vm.warp(1000);
         token = new MockMUSD();
-        payments = new RunwayPayments(address(token));
+        payments = new RunwayPayments(address(token), address(0), 0, 0);
         handler = new RunwayHandler(payments, token);
         // Seed both active and future schedules so invariants cannot pass on an empty system.
         handler.create(0, 1, 100 ether, 0, 30 days - 1);

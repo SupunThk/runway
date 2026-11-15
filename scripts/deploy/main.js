@@ -33,7 +33,18 @@ const contractSelect = document.querySelector('#contract');
 contractSelect.value = __CONTRACT__;
 let artifact = artifacts[contractSelect.value];
 let bytecode = artifact.bytecode.object;
-let data = encodeDeployData({ abi: artifact.abi, bytecode, args: [token] });
+// RunwayPayments: fee recipient = founder treasury, 25 bps, capped at 25 MUSD per schedule.
+const SCHEDULE_FEE_BPS = 25;
+const SCHEDULE_FEE_CAP = 25n * 10n ** 18n;
+const deployArgs = (name) =>
+  name === 'payments'
+    ? [token, founder, SCHEDULE_FEE_BPS, SCHEDULE_FEE_CAP]
+    : [token];
+let data = encodeDeployData({
+  abi: artifact.abi,
+  bytecode,
+  args: deployArgs(contractSelect.value),
+});
 const wallets = new Map();
 const select = document.querySelector('#wallet');
 const connectButton = document.querySelector('#connect');
@@ -53,7 +64,11 @@ contractSelect.addEventListener('change', () => {
   if (pending || deployed) return;
   artifact = artifacts[contractSelect.value];
   bytecode = artifact.bytecode.object;
-  data = encodeDeployData({ abi: artifact.abi, bytecode, args: [token] });
+  data = encodeDeployData({
+    abi: artifact.abi,
+    bytecode,
+    args: deployArgs(contractSelect.value),
+  });
   document.querySelector('#bytecode-hash').textContent = keccak256(bytecode);
   document.querySelector('#contract-name').textContent =
     contractSelect.value === 'milestones'
@@ -182,7 +197,7 @@ deployButton.addEventListener('click', async () => {
       chain,
       abi: artifact.abi,
       bytecode,
-      args: [token],
+      args: deployArgs(contractSelect.value),
     });
     status.textContent = `Deployment submitted: ${hash}\nWaiting for confirmation. Do not deploy again.`;
     const receipt = await client.waitForTransactionReceipt({ hash });
@@ -195,8 +210,30 @@ deployButton.addEventListener('click', async () => {
     });
     if (getAddress(deployedToken) !== token)
       throw new Error('Deployed token verification failed.');
+    if (contractSelect.value === 'payments') {
+      const feeAbi = parseAbi([
+        'function feeRecipient() view returns (address)',
+        'function feeBps() view returns (uint16)',
+        'function feeCap() view returns (uint256)',
+      ]);
+      const [recipient, bps, cap] = await Promise.all(
+        ['feeRecipient', 'feeBps', 'feeCap'].map((functionName) =>
+          client.readContract({
+            address: receipt.contractAddress,
+            abi: feeAbi,
+            functionName,
+          }),
+        ),
+      );
+      if (
+        getAddress(recipient) !== founder ||
+        Number(bps) !== SCHEDULE_FEE_BPS ||
+        cap !== SCHEDULE_FEE_CAP
+      )
+        throw new Error('Deployed fee configuration verification failed.');
+    }
     deployed = true;
-    status.textContent = `Deployment confirmed and MUSD configuration verified.\nContract: ${receipt.contractAddress}\nTransaction: ${hash}`;
+    status.textContent = `Deployment confirmed; MUSD and fee configuration verified.\nContract: ${receipt.contractAddress}\nTransaction: ${hash}`;
     const link = document.createElement('a');
     link.href = `https://explorer.test.mezo.org/tx/${hash}`;
     link.textContent = 'View confirmed deployment in explorer ↗';

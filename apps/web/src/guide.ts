@@ -149,7 +149,7 @@ export const guideSections: GuideSection[] = [
     id: 'funding-plans',
     title: 'Saved borrowing and payment plans',
     paragraphs: [
-      'On New payment, enter the recipient, exact amount and payment period, then choose Save payment plan & review funding options. The plan retains these terms for the connected wallet in this browser. Review borrowing for any funding gap; a new trove still needs to meet the protocol minimum, and the app never enlarges a small loan automatically.',
+      'On New payment, enter the recipient, exact amount and payment period, then choose Borrow the shortfall against BTC, which saves the plan and opens borrowing for exactly the missing MUSD including the Runway schedule fee, or Save as a payment plan for later. The plan retains these terms for the connected wallet in this browser. Review borrowing for any funding gap; a new trove still needs to meet the protocol minimum, and the app never enlarges a small loan automatically.',
       'After borrowing, the plan can say Borrowed; payment not yet funded. Acknowledge the confirmed loan result and continue payment funding without borrowing again. It retains reviewed debt, a later observed debt snapshot, allowance and funding hashes. Schedule confirmation exposes the recipient link. A saved one-time plan instead verifies a direct MUSD transfer.',
       'Borrowing and funding remain separate transactions. Rejected funding does not undo the loan. Reloading checks saved hashes, and unknown or pending transactions block repeated submissions. Confirmation uses the 12-block application buffer. Recovery starts only when the wallet returns a hash; clearing browser storage, closing before that response or changing browsers can lose this record. Current balances and canonical receipts are checked again before continuing.',
     ],
@@ -189,7 +189,7 @@ export const guideSections: GuideSection[] = [
     title: 'Borrowing overview and BTC scenarios',
     paragraphs: [
       'Open Borrowing in the sidebar to read an existing Mezo testnet position for your connected wallet or an entered public address. The dedicated /borrowing page shows collateral, interest-inclusive debt, the position’s annual rate, and dated loan health when the price and freshness checks pass. A wallet’s MUSD balance is not its loan debt.',
-      'When borrowing writes are enabled on the deployment, the connected wallet can review, simulate, and sign trove opening, additional borrowing, collateral addition, and partial repayment directly on /borrowing; otherwise loan management opens in Mezo. Funding or claiming a contractor payment does not repay a Mezo loan.',
+      'The connected wallet can open a trove, borrow more, add collateral and partially repay directly on /borrowing. Runway builds the BorrowerOperations call with sorted-trove hints, simulates it, and shows the Mezo borrowing fee, minimum net debt, gas reserve and Recovery Mode limits before the wallet prompt. To pay someone with borrowed MUSD, choose Borrow the shortfall against BTC on the payment form: Runway saves the payment plan, borrows exactly the missing MUSD including the Runway fee, then takes you back to approve and fund the schedule. Funding or claiming a contractor payment does not repay a Mezo loan.',
       'BTC price-drop scenarios are hypothetical. The slider holds snapshot debt and collateral fixed while changing the BTC price to estimate the collateral ratio and threshold price. It does not predict future prices or include future interest, and moving it submits no transaction.',
       'Health and scenarios may be unavailable when data is stale or price checks fail. Refresh and check the position in Mezo before making a borrowing decision.',
     ],
@@ -257,10 +257,11 @@ export const guideSections: GuideSection[] = [
     id: 'business-model',
     title: 'Business model & fee schedule',
     paragraphs: [
-      'Runway uses a two-tier business model designed around open onchain escrow and team treasury operations:',
-      '1. Solo & Open Protocol Tier (0 MUSD/month, 0 bps): Direct 1-to-1 RunwayPayments streaming schedules, one-time MUSD transfers, public /proof verification, and BTC-backed borrowing remain 0 bps open infrastructure. Senders pay only native Mezo BTC gas, and 100% of funded MUSD goes to the recipient or sender cancellation refund.',
-      '2. Team Operations & Payroll Tier (49 MUSD/month per workspace + 25 bps schedule & payroll fee, capped at 25 MUSD per payment): Multi-wallet workspaces with role-based access (manager, approver, viewer, contractor), versioned approval quorums, batch payroll runs (up to 50 invoices), recurring invoice automation, client /pay/TOKEN checkout links, and 1-year private audit exports carry a 49 MUSD monthly workspace subscription plus a 25 bps (0.25%) coordination fee capped at 25 MUSD per payment.',
-      'Mezo Testnet Pilot Waiver: On Mezo Testnet (Chain ID 31611), both the 49 MUSD/month workspace subscription and the 25 bps coordination fee are 100% waived (0 MUSD charged onchain). The payment form, payroll run review, workspace reports, and /admin dashboard calculate and display the exact 25 bps standard fee and monthly subscription equivalent transparently while reporting 0 MUSD collected on testnet.',
+      'Runway earns from the one thing every customer does: funding a payment schedule. Everything else that brings people in stays free.',
+      '1. Schedule fee (collected on chain): 0.25% of each RunwayPayments schedule, capped at 25 MUSD. The sender pays it on top of the funded amount and the contract sends it to the Runway treasury in the same transaction as the escrow deposit. Recipients always receive 100% of the schedule. The fee is not refunded on cancellation. Each signature includes a maximum fee, so the transaction reverts if the fee rises after review, and the contract hard-limits any future change to 1% and 100 MUSD per schedule.',
+      '2. Free: one-time MUSD transfers, public /proof verification, borrowing through Runway (only Mezo protocol fees and gas apply) and Ask Runway.',
+      '3. Team workspace subscription: 49 MUSD per active workspace per month for approval quorums, payroll runs, recurring plans, client /pay links and audit exports. It is billed off chain and not charged during the testnet pilot.',
+      'The payment form reads the live fee terms from the contract and shows the recipient amount, the Runway fee and the total you approve before you sign. A payment contract deployed before schedule fees has no fee functions; Runway detects it and charges nothing on it.',
     ],
   },
 ];

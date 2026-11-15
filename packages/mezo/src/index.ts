@@ -1,4 +1,12 @@
-import { defineChain, getAddress, isAddress, parseAbi } from 'viem';
+import {
+  defineChain,
+  getAddress,
+  isAddress,
+  parseAbi,
+  type Address,
+  type PublicClient,
+} from 'viem';
+import { MAX_SCHEDULE_FEE_BPS, MAX_SCHEDULE_FEE_CAP_MUSD } from './pricing';
 export * from './borrowing';
 export * from './stress';
 export * from './planner';
@@ -60,10 +68,74 @@ export const paymentsAbi = parseAbi([
   'function getSenderScheduleIds(address sender, uint256 offset, uint256 limit) view returns (uint256[])',
   'function getRecipientScheduleIds(address recipient, uint256 offset, uint256 limit) view returns (uint256[])',
   'function createSchedule(address recipient, uint256 totalAmount, uint64 start, uint64 end, bytes32 referenceHash) returns (uint256)',
+  'function createScheduleWithMaxFee(address recipient, uint256 totalAmount, uint64 start, uint64 end, bytes32 referenceHash, uint256 maxFee) returns (uint256)',
+  'function scheduleFee(uint256 totalAmount) view returns (uint256)',
+  'function feeRecipient() view returns (address)',
+  'function feeBps() view returns (uint16)',
+  'function feeCap() view returns (uint256)',
+  'function totalFeesCollected() view returns (uint256)',
   'function claim(uint256 id)',
   'function cancel(uint256 id)',
   'function claimable(uint256 id) view returns (uint256)',
   'event ScheduleCreated(uint256 indexed scheduleId, address indexed sender, address indexed recipient, uint256 total, uint64 start, uint64 end, bytes32 referenceHash)',
   'event Claimed(uint256 indexed scheduleId, address indexed recipient, uint256 amount)',
   'event Cancelled(uint256 indexed scheduleId, address indexed sender, uint256 refund, uint256 vested)',
+  'event FeeCharged(uint256 indexed scheduleId, address indexed payer, address indexed feeRecipient, uint256 fee)',
 ]);
+
+export type OnChainScheduleFee =
+  | {
+      supported: true;
+      feeRecipient: Address;
+      feeBps: bigint;
+      feeCapBaseUnits: bigint;
+      totalFeesCollected: bigint;
+    }
+  | { supported: false; feeBps: 0n; feeCapBaseUnits: 0n };
+
+/**
+ * Reads the live fee terms. A RunwayPayments deployment that predates schedule
+ * fees has no fee functions; it is reported as unsupported (charging nothing).
+ */
+export async function readScheduleFeeConfig(
+  client: Pick<PublicClient, 'readContract'>,
+  contract: Address,
+): Promise<OnChainScheduleFee> {
+  let bps: number;
+  try {
+    bps = await client.readContract({
+      address: contract,
+      abi: paymentsAbi,
+      functionName: 'feeBps',
+    });
+  } catch {
+    return { supported: false, feeBps: 0n, feeCapBaseUnits: 0n };
+  }
+  const [recipient, cap, collected] = await Promise.all([
+    client.readContract({
+      address: contract,
+      abi: paymentsAbi,
+      functionName: 'feeRecipient',
+    }),
+    client.readContract({
+      address: contract,
+      abi: paymentsAbi,
+      functionName: 'feeCap',
+    }),
+    client.readContract({
+      address: contract,
+      abi: paymentsAbi,
+      functionName: 'totalFeesCollected',
+    }),
+  ]);
+  const feeBps = BigInt(bps);
+  if (feeBps > MAX_SCHEDULE_FEE_BPS || cap > MAX_SCHEDULE_FEE_CAP_MUSD)
+    throw new Error('Payment contract fee is outside its published limits.');
+  return {
+    supported: true,
+    feeRecipient: getAddress(recipient),
+    feeBps,
+    feeCapBaseUnits: cap,
+    totalFeesCollected: collected,
+  };
+}

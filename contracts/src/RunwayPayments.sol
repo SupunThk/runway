@@ -5,9 +5,14 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 
 /// @notice Fully funded, linear MUSD entitlements. Claims always pay the immutable recipient.
-contract RunwayPayments is ReentrancyGuard {
+/// @dev A bounded schedule fee is charged to the sender on top of the funded total and sent
+///      directly to the fee recipient. Recipients always receive 100% of the funded total, the fee
+///      never enters escrow, and it is not refunded on cancellation.
+contract RunwayPayments is ReentrancyGuard, Ownable2Step {
     using SafeERC20 for IERC20;
 
     struct Schedule {
@@ -22,7 +27,16 @@ contract RunwayPayments is ReentrancyGuard {
         bytes32 referenceHash;
     }
 
+    /// @notice Hard ceilings the owner can never exceed: 1% and 100 MUSD per schedule.
+    uint16 public constant MAX_FEE_BPS = 100;
+    uint256 public constant MAX_FEE_CAP = 100e18;
+    uint256 private constant BPS = 10_000;
+
     IERC20 public immutable musd;
+    address public feeRecipient;
+    uint16 public feeBps;
+    uint256 public feeCap;
+    uint256 public totalFeesCollected;
     uint256 public scheduleCount;
     uint256 public outstandingObligations;
     mapping(uint256 => Schedule) private schedules;
@@ -36,20 +50,73 @@ contract RunwayPayments is ReentrancyGuard {
     error AccrualEnded();
     error NothingToClaim();
     error UnsupportedToken();
+    error FeeAboveMaximum();
 
     event ScheduleCreated(uint256 indexed scheduleId, address indexed sender, address indexed recipient, uint256 total, uint64 start, uint64 end, bytes32 referenceHash);
     event Claimed(uint256 indexed scheduleId, address indexed recipient, uint256 amount);
     event Cancelled(uint256 indexed scheduleId, address indexed sender, uint256 refund, uint256 vested);
+    event FeeCharged(uint256 indexed scheduleId, address indexed payer, address indexed feeRecipient, uint256 fee);
+    event FeeConfigUpdated(address indexed feeRecipient, uint16 feeBps, uint256 feeCap);
 
-    constructor(address token) {
+    constructor(address token, address initialFeeRecipient, uint16 initialFeeBps, uint256 initialFeeCap)
+        Ownable(msg.sender)
+    {
         if (token == address(0) || token.code.length == 0) revert InvalidInput();
         musd = IERC20(token);
+        _setFeeConfig(initialFeeRecipient, initialFeeBps, initialFeeCap);
     }
 
+    /// @notice Fee for funding a schedule of `totalAmount`, paid by the sender in addition to it.
+    function scheduleFee(uint256 totalAmount) public view returns (uint256) {
+        if (feeBps == 0) return 0;
+        return Math.min(Math.mulDiv(totalAmount, feeBps, BPS), feeCap);
+    }
+
+    /// @notice Charges the current fee. Prefer `createScheduleWithMaxFee` to bound it.
     function createSchedule(address recipient, uint256 totalAmount, uint64 start, uint64 end, bytes32 referenceHash)
         external nonReentrant returns (uint256 id)
     {
+        id = _create(recipient, totalAmount, start, end, referenceHash, type(uint256).max);
+    }
+
+    /// @notice Reverts if the fee at execution exceeds the `maxFee` the sender reviewed.
+    function createScheduleWithMaxFee(
+        address recipient,
+        uint256 totalAmount,
+        uint64 start,
+        uint64 end,
+        bytes32 referenceHash,
+        uint256 maxFee
+    ) external nonReentrant returns (uint256 id) {
+        id = _create(recipient, totalAmount, start, end, referenceHash, maxFee);
+    }
+
+    function setFeeConfig(address newFeeRecipient, uint16 newFeeBps, uint256 newFeeCap) external onlyOwner {
+        _setFeeConfig(newFeeRecipient, newFeeBps, newFeeCap);
+    }
+
+    function _setFeeConfig(address newFeeRecipient, uint16 newFeeBps, uint256 newFeeCap) private {
+        if (newFeeBps > MAX_FEE_BPS || newFeeCap > MAX_FEE_CAP) revert FeeAboveMaximum();
+        if (newFeeBps != 0 && (newFeeRecipient == address(0) || newFeeRecipient == address(this) || newFeeCap == 0)) {
+            revert InvalidInput();
+        }
+        feeRecipient = newFeeRecipient;
+        feeBps = newFeeBps;
+        feeCap = newFeeCap;
+        emit FeeConfigUpdated(newFeeRecipient, newFeeBps, newFeeCap);
+    }
+
+    function _create(
+        address recipient,
+        uint256 totalAmount,
+        uint64 start,
+        uint64 end,
+        bytes32 referenceHash,
+        uint256 maxFee
+    ) private returns (uint256 id) {
         if (recipient == address(0) || recipient == address(this) || totalAmount == 0 || start < block.timestamp || end <= start) revert InvalidInput();
+        uint256 fee = scheduleFee(totalAmount);
+        if (fee > maxFee) revert FeeAboveMaximum();
         uint256 beforeBalance = musd.balanceOf(address(this));
         musd.safeTransferFrom(msg.sender, address(this), totalAmount);
         if (musd.balanceOf(address(this)) - beforeBalance != totalAmount) revert UnsupportedToken();
@@ -59,6 +126,12 @@ contract RunwayPayments is ReentrancyGuard {
         recipientIds[recipient].push(id);
         outstandingObligations += totalAmount;
         emit ScheduleCreated(id, msg.sender, recipient, totalAmount, start, end, referenceHash);
+        if (fee != 0) {
+            address to = feeRecipient;
+            totalFeesCollected += fee;
+            musd.safeTransferFrom(msg.sender, to, fee);
+            emit FeeCharged(id, msg.sender, to, fee);
+        }
     }
 
     function claim(uint256 id) external nonReentrant {

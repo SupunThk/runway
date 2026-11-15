@@ -3,7 +3,6 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { formatUnits, parseUnits } from 'viem';
 import {
   calculatePayrollRunFee,
-  calculateScheduleFee,
   type TeamInvoice,
   type PayrollRun,
   type RecurringPlan,
@@ -416,13 +415,12 @@ export function TeamOperations({
             const runFee =
               known.length === rows.length
                 ? calculatePayrollRunFee(
-                    known.map((i) => parseUnits(i.amount, 18)),
-                    { waiveOnTestnet: true },
-                  ).standardFeeBaseUnits
-                : calculateScheduleFee(BigInt(run.totalBaseUnits), {
-                    tier: 'team',
-                    waiveOnTestnet: true,
-                  }).standardFeeBaseUnits;
+                    known.map((i) => ({
+                      amountBaseUnits: parseUnits(i.amount, 18),
+                      scheduled: (i.paymentType ?? 'schedule') === 'schedule',
+                    })),
+                  ).feeBaseUnits
+                : undefined;
             return (
               <article className="schedule-card" key={run._id}>
                 <h3>{run.name}</h3>
@@ -432,8 +430,9 @@ export function TeamOperations({
                   {unknown ? ` · ${unknown} unverified` : ''}
                 </p>
                 <p className="hint">
-                  Standard 25 bps run fee: {musd(runFee.toString())} MUSD
-                  (waived to 0 MUSD on Mezo Testnet)
+                  {runFee !== undefined
+                    ? `Runway schedule fees for this run: ${musd(runFee.toString())} MUSD (0.25% per scheduled payment, max 25 MUSD each; one-time payments are free).`
+                    : 'Runway schedule fees: 0.25% per scheduled payment, max 25 MUSD each. Some invoices are outside this view.'}
                 </p>
                 <p>
                   {run.approval?.approvedBy.length ?? 0}/
