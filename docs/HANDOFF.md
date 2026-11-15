@@ -1,6 +1,34 @@
 ﻿# Runway project handoff
 
-## Latest local work — Ask Runway improvements, November 14, 2026
+## Start here — Wave 2 judge feedback: borrow-to-fund, schedule fee, new contract, November 15, 2026
+
+Responds to the Wave 1 judge comment (act on Mezo instead of only reading it, model Recovery Mode, borrowing fee and minimum debt in headroom, add a business model). **Deployed November 15, 2026:** commits `b5b4c47` (feature), `498ce95` (explorer evidence) and `eb5ac9d` (fork test fee assertions) on `main`; GitHub Checks passed; Vercel production serves the new contract address (old address absent from the bundle); live `/api/health` ready with the database connected. Render deploy status was **not** confirmed from here (Render MCP needs the user to choose a workspace — do not pick one without asking).
+
+**Hard switch to a fee-enabled RunwayPayments.** The user signed the deployment with their own wallet via `corepack pnpm deploy:browser`.
+- New contract `0x96d16598974F28B373553A4D8d8d5D31Af02B24D`, deployment block `16789575`, tx `0x966de017c8afc3a4b36c10eae1eabddcd3f44863377d9c5c8b07c8a67af5d47b`, runtime codehash `0x22e7a8389ff99ae555678d86541b636c2dccebc20cc826aca932ef72e1993c30`. Exact-match verified on the explorer (`deployments/mezo-testnet-v2.explorer.check.json`, `deployments/verification/RunwayPayments-v2.standard-input.json`).
+- Wave 1 contract `0x01A1662F2EB6C15Bfb2c8fd010c53c9055478b7D` is archived in `deployments/mezo-testnet.payments-v1.json`; its evidence files are untouched. `deployments/mezo-testnet.payments.json`, `.dependencies.json`, `.frontend.json`, `.env.example`, `apps/web/src/history.ts` and the Vercel `VITE_PAYMENT_CONTRACT_ADDRESS` (set by the user) point at the new contract. The Render API reads the address from `deployments/mezo-testnet.payments.json`.
+- Constructor `(token, feeRecipient, feeBps, feeCap)`, `Ownable2Step`. Live config: 25 bps, cap 25 MUSD, hard ceilings 1% / 100 MUSD; owner and fee recipient are the founder wallet. `createScheduleWithMaxFee(..., maxFee)` bounds the fee the sender signs; legacy `createSchedule` still works. The fee is paid on top, sent straight to the treasury, recorded in `totalFeesCollected` and `FeeCharged`, and is not refunded on cancel. Recipient always receives 100% of the schedule. Tests: `contracts/test/RunwayPaymentsFees.t.sol` (11 cases).
+
+**App changes.**
+- `packages/mezo/src/pricing.ts` mirrors the contract's `scheduleFee` exactly; `readScheduleFeeConfig` falls back to "no fee" when `feeBps` reverts (legacy contract). `useScheduleFee` hook feeds the UI.
+- New schedule form shows recipient amount, Runway fee and total; approval and balance checks use principal + fee. One-time transfers stay free.
+- "Borrow the shortfall against BTC" saves a funding plan, measures wallet MUSD against principal + fee and opens `/borrowing?intent=…&borrowAmount=…`. The funding plan panel shows a 4-step stepper (Plan saved → Borrow MUSD → Approve → Fund schedule).
+- Borrowing page refresh: 3-step flow when no plan is active, loan controls always visible beside the live trove read, "Open in Mezo ↗" link, aligned account form.
+- Business model: on-chain schedule fee (live), free tier, Team workspace 49 MUSD/month (off chain, not billed in the pilot). Docs updated: `README.md`, `docs/borrowing.md` (write actions table, borrow→fund flow, protocol-aware headroom), `SECURITY.md`, user guide, assistant knowledge (version 2026-11-15) and eval facts.
+
+**Verified November 15, 2026.**
+- Local: 200 unit tests, 121 browser tests, 50 contract tests, typecheck, build and format check.
+- Live RPC: `feeBps` 25, `feeCap` 25e18, MUSD binding correct, 0 schedules and 0 fees collected so far. Client fee math matches on-chain `scheduleFee` for 10, 1,234.567, 50,000 (capped) MUSD and dust; the v1 contract reverts on `feeBps` so the app treats it as fee-free.
+- Live fork (`node scripts/verify-loan-fork.mjs`, block 16790093): open trove, add collateral, borrow, repay, fund a 100 MUSD schedule with borrowed MUSD (sender debited 100.25, 0.25 fee to treasury, `totalFeesCollected` +0.25), recipient claims 100 MUSD.
+- API indexer `verify()` passes against the new contract, scanning from block 16789575.
+
+**Open items.**
+- Confirm the Render deploy once the user names a workspace.
+- The founder trove was closed by redemption; open a new one (user signs) before recording the demo.
+- No real schedule has been funded on the new contract yet — the first live fee will appear in `/admin` and `totalFeesCollected`.
+- `docs/pitch-video-2min.md` is the user's untracked draft; keep it out of commits.
+
+## Previous release — Ask Runway improvements, November 14, 2026
 
 User asked to implement all 14 proposed Ask Runway improvements. **Deployed November 14, 2026:** commit `7862002` on `main` and `deploy/render-backend-2026-10-13`; Render deploy `dep-dbrs9l5ckfvc73cv71b0` live, Vercel production `dpl_5gtdB1FtarvHAHxM2BQcCE4Aaz4V` READY. Hosted checks: a real streamed answer directly from Render and through the Vercel proxy (4.4 s with follow-ups). The `GEMINI_API_KEY` repository secret was added by the user; the evaluation workflow has not been run yet.
 
