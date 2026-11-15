@@ -35,6 +35,10 @@ interface ForkPayments {
     function musd() external view returns (address);
     function outstandingObligations() external view returns (uint256);
     function createSchedule(address, uint256, uint64, uint64, bytes32) external returns (uint256);
+    function createScheduleWithMaxFee(address, uint256, uint64, uint64, bytes32, uint256) external returns (uint256);
+    function scheduleFee(uint256) external view returns (uint256);
+    function feeRecipient() external view returns (address);
+    function totalFeesCollected() external view returns (uint256);
     function getSchedule(uint256) external view returns (Schedule memory);
     function claim(uint256) external;
 }
@@ -55,12 +59,26 @@ contract MezoForkTest {
     function debt(address actor) internal view returns (uint256 value) {
         (, value,,,,) = ForkManager(MANAGER).getEntireDebtAndColl(actor);
     }
+    /// Borrowed MUSD funds the schedule; the 0.25% Runway fee is charged on top.
+    function fundWithFee(ForkPayments payments, ForkToken token, address actor, address recipient) internal returns (uint256 id) {
+        uint256 fee = payments.scheduleFee(100 ether);
+        require(fee == 0.25 ether, "schedule fee mismatch");
+        address treasury = payments.feeRecipient();
+        uint256 treasuryBefore = token.balanceOf(treasury);
+        uint256 feesBefore = payments.totalFeesCollected();
+        uint256 actorBefore = token.balanceOf(actor);
+        vm.prank(actor); require(token.approve(PAYMENTS, 100 ether + fee), "funding approval rejected");
+        vm.prank(actor); id = payments.createScheduleWithMaxFee(recipient, 100 ether, uint64(block.timestamp + 120), uint64(block.timestamp + 3600), bytes32(0), fee);
+        require(actorBefore - token.balanceOf(actor) == 100 ether + fee, "sender debit mismatch");
+        require(token.balanceOf(treasury) == treasuryBefore + fee, "fee not paid to treasury");
+        require(payments.totalFeesCollected() == feesBefore + fee, "fee total mismatch");
+    }
     function testForkBorrowTopUpRepayFundAndClaim() public {
         if (!vm.envOr("RUNWAY_FORK_ENABLED", false)) vm.skip(true);
         require(block.chainid == 31611, "fork network mismatch");
         require(address(uint160(uint256(vm.load(OPERATIONS, SLOT)))) == IMPLEMENTATION, "implementation changed");
         require(IMPLEMENTATION.codehash == 0x87a175620a5e54bb59b8c80ed45631f94e2b03afbd7f062e58ce6451546862f5, "implementation bytecode changed");
-        require(PAYMENTS.codehash == 0xc7eb8df864b38e1d68e27564eaeeeff4f8d5058391ef873a7ef673bdaee4a0c2, "payment bytecode changed");
+        require(PAYMENTS.codehash == 0x22e7a8389ff99ae555678d86541b636c2dccebc20cc826aca932ef72e1993c30, "payment bytecode changed");
         vm.mockCall(ORACLE, abi.encodeWithSignature("latestRoundData()"), vm.envBytes("RUNWAY_FORK_ORACLE_ROUND"));
         vm.mockCall(ORACLE, abi.encodeWithSignature("decimals()"), vm.envBytes("RUNWAY_FORK_ORACLE_DECIMALS"));
         ForkBorrowing borrowing = ForkBorrowing(OPERATIONS);
@@ -91,8 +109,7 @@ contract MezoForkTest {
         require(token.balanceOf(actor) == beforeBalance + 2050 ether, "repayment balance mismatch");
         uint256 obligationBefore = payments.outstandingObligations();
         uint256 escrowBefore = token.balanceOf(PAYMENTS);
-        vm.prank(actor); require(token.approve(PAYMENTS, 100.25 ether), "funding approval rejected"); // 100 MUSD + 0.25% schedule fee
-        vm.prank(actor); uint256 id = payments.createSchedule(recipient, 100 ether, uint64(block.timestamp + 120), uint64(block.timestamp + 3600), bytes32(0));
+        uint256 id = fundWithFee(payments, token, actor, recipient);
         ForkPayments.Schedule memory schedule = payments.getSchedule(id);
         require(schedule.sender == actor && schedule.recipient == recipient && schedule.total == 100 ether, "payment terms mismatch");
         require(ForkManager(MANAGER).getTroveStatus(actor) == 1, "founder lost position ownership");
