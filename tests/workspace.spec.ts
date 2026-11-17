@@ -64,10 +64,16 @@ async function wallet(page: Page, reject = false) {
   );
   await page.route('**/api/**', async (route) => {
     const url = new URL(route.request().url());
-    const response = await route.fetch({
-      url: `${backend.url}${url.pathname}${url.search}`,
-    });
-    await route.fulfill({ response });
+    // The page may cancel this request (e.g. on an account switch) while it is
+    // proxied; fulfilling it then throws, so only surface real failures.
+    try {
+      const response = await route.fetch({
+        url: `${backend.url}${url.pathname}${url.search}`,
+      });
+      await route.fulfill({ response });
+    } catch (error) {
+      if (!/disposed|closed|already handled/i.test(String(error))) throw error;
+    }
   });
 }
 async function connect(page: Page) {

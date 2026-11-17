@@ -42,10 +42,17 @@ test.beforeEach(async ({ page }) => {
   await backend.db.collection('rateLimits').deleteMany({});
   for (const path of ['chat', 'feedback'])
     await page.route(`**/api/assistant/${path}`, async (route) => {
-      const response = await route.fetch({
-        url: `${backend.url}/api/assistant/${path}`,
-      });
-      await route.fulfill({ response });
+      // The page may cancel this request (e.g. on an account switch) while it is
+      // proxied; fulfilling it then throws, so only surface real failures.
+      try {
+        const response = await route.fetch({
+          url: `${backend.url}/api/assistant/${path}`,
+        });
+        await route.fulfill({ response });
+      } catch (error) {
+        if (!/disposed|closed|already handled/i.test(String(error)))
+          throw error;
+      }
     });
 });
 
